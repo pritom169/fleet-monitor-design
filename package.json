@@ -1,0 +1,24 @@
+{
+  "name": "fleet-monitor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "test": "npm test -w shared",
+    "typecheck": "tsc -p shared --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "concurrently": "9.1.0",
+    "vitest": "5.1.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
