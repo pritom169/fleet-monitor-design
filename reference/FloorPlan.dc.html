@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Floor plan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.fp{--page:#FFFFFF;--tile:#F5F5F7;--raise:#FFFFFF;--bar:rgba(255,255,255,.82);--glass:rgba(255,255,255,.72);--line:rgba(0,0,0,.1);--sep:rgba(0,0,0,.07);--fill:rgba(0,0,0,.05);--fill2:rgba(0,0,0,.08);--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#86868B;--dotok:#3A3A3C;--accent:#0066CC;--sel:rgba(0,102,204,.08);--err:#D70015;--err-text:#D70015;--err-tint:rgba(215,0,21,.08);--amb:#C77700;--amb-text:#A15C00;--amb-tint:rgba(199,119,0,.1);--off:#8E8E93;--off-text:#636366;--off-tint:rgba(120,120,128,.12);--floor:#FBFBFD;--zone:#F0F0F3;--rack:#D9D9DE;--rackline:#C9C9CF;--knock:#FFFFFF;--pop:0 0 0 .5px rgba(0,0,0,.08),0 12px 36px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.05);--pin:0 1px 2px rgba(0,0,0,.2),0 4px 12px rgba(0,0,0,.12);--ease:cubic-bezier(.28,.11,.32,1);--spring:cubic-bezier(.32,.72,0,1);font-family:Inter,system-ui,sans-serif;font-optical-sizing:auto;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
+.fp[data-theme="dark"]{--page:#000000;--tile:#161618;--raise:#232325;--bar:rgba(0,0,0,.72);--glass:rgba(30,30,32,.72);--line:rgba(255,255,255,.14);--sep:rgba(255,255,255,.08);--fill:rgba(255,255,255,.08);--fill2:rgba(255,255,255,.12);--ink:#F5F5F7;--ink2:#A1A1A6;--ink3:#86868B;--dotok:#E5E5EA;--accent:#2997FF;--sel:rgba(41,151,255,.16);--err:#FF453A;--err-text:#FF5A4F;--err-tint:rgba(255,69,58,.15);--amb:#FFB340;--amb-text:#FFB340;--amb-tint:rgba(255,179,64,.14);--off:#8E8E93;--off-text:#AEAEB2;--off-tint:rgba(142,142,147,.18);--floor:#0E0E10;--zone:#1C1C1F;--rack:#38383C;--rackline:#48484D;--knock:#161618;--pop:0 0 0 .5px rgba(255,255,255,.14),0 16px 40px rgba(0,0,0,.6);--pin:0 1px 2px rgba(0,0,0,.6),0 4px 14px rgba(0,0,0,.5);color-scheme:dark}
+.fp *{box-sizing:border-box}
+.fp button,.fp input{font:inherit;color:inherit;letter-spacing:inherit}
+.fp ::selection{background:var(--sel)}
+.fp :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:2px;border-radius:10px}
+.fp-wrap{width:100%;max-width:1440px;margin:0 auto;padding:0 40px}
+.fp-tab{font-size:12px;color:var(--ink2);text-decoration:none;padding:6px 0;transition:color 200ms var(--ease)}
+.fp-tab:hover{color:var(--ink)}
+.fp-tab[aria-current="page"]{color:var(--ink);font-weight:600}
+.fp-seg{display:inline-flex;padding:3px;border-radius:12px;background:var(--fill)}
+.fp-seg button{border:0;background:transparent;height:32px;padding:0 18px;border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;transition:background-color 300ms var(--spring),box-shadow 300ms var(--spring),transform 150ms var(--ease)}
+.fp-seg button:active{transform:scale(.97)}
+.fp-seg button[aria-pressed="true"]{background:var(--raise);box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 3px 8px rgba(0,0,0,.12),0 1px 1px rgba(0,0,0,.06);font-weight:600}
+.fp-stage{position:relative;height:620px;border-radius:22px;background:var(--floor);overflow:hidden;box-shadow:inset 0 0 0 .5px var(--line)}
+.fp-grid{position:absolute;inset:0;background-image:radial-gradient(circle,var(--fill2) .8px,transparent 1px);background-size:20px 20px;opacity:.7}
+.fp-canvas{position:absolute;left:372px;right:96px;top:50%;aspect-ratio:64 / 28;transition:transform 700ms var(--spring)}
+.fp-rack{position:absolute;background:var(--rack);border-radius:2px;box-shadow:inset 0 0 0 .5px var(--rackline)}
+.fp-zone{position:absolute;background:var(--zone);border-radius:10px}
+.fp-zlabel{position:absolute;left:10px;top:8px;font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:.01em;white-space:nowrap}
+.fp-bay{position:absolute;border-radius:4px;box-shadow:inset 0 0 0 1px var(--rackline);display:flex;align-items:center;justify-content:center;color:var(--ink3)}
+.fp-alabel{position:absolute;transform:translate(-50%,-50%);font-size:10px;font-weight:600;color:var(--ink3)}
+.fp-mark{position:absolute;width:0;height:0;border:0;padding:0;background:none;cursor:pointer;transition:left 1000ms linear,top 1000ms linear,opacity 300ms var(--ease)}
+.fp-dot{position:absolute;left:0;top:0;width:9px;height:9px;border-radius:50%;background:var(--dotok);box-shadow:0 0 0 2px var(--floor);transform:translate(-50%,-50%) scale(var(--inv));transition:transform 400ms var(--spring)}
+.fp-mark:hover .fp-dot{transform:translate(-50%,-50%) scale(calc(var(--inv) * 1.5))}
+.fp-ghost{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--dotok);transform:translate(-50%,-50%);pointer-events:none;transition:left 1000ms linear,top 1000ms linear}
+.fp-pin{position:absolute;left:0;top:0;transform:translate(-50%,-100%) scale(var(--inv));transform-origin:50% 100%;display:flex;flex-direction:column;align-items:center;transition:transform 400ms var(--spring)}
+.fp-mark:hover .fp-pin{transform:translate(-50%,-100%) scale(calc(var(--inv) * 1.12))}
+.fp-head{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:var(--pin),0 0 0 2px var(--raise)}
+.fp-tail{width:2px;height:7px;border-radius:1px;margin-top:-1px}
+.fp-foot{position:absolute;left:0;top:0;width:6px;height:3px;border-radius:50%;background:rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+.fp-plabel{position:absolute;left:18px;top:-30px;white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:-.01em;padding:2px 7px;border-radius:7px;background:var(--raise);box-shadow:var(--pin);transform:scale(var(--inv));transform-origin:0 50%}
+.fp-ring{position:absolute;left:0;top:0;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%) scale(var(--inv));box-shadow:0 0 0 2px var(--accent);animation:fpring 1800ms var(--spring) infinite}
+@keyframes fpring{0%{box-shadow:0 0 0 2px var(--accent),0 0 0 2px var(--sel)}70%{box-shadow:0 0 0 2px var(--accent),0 0 0 16px transparent}100%{box-shadow:0 0 0 2px var(--accent),0 0 0 2px transparent}}
+.fp-olabel{position:absolute;left:8px;top:-6px;font-size:10px;font-weight:500;color:var(--ink2);white-space:nowrap;transform:scale(var(--inv));transform-origin:0 50%;pointer-events:none}
+.fp-panel{position:absolute;left:16px;top:16px;bottom:16px;width:332px;display:flex;flex-direction:column;border-radius:18px;background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);box-shadow:var(--pop);overflow:hidden;z-index:20}
+.fp-item{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;column-gap:10px;width:100%;min-height:52px;padding:0 10px;border:0;border-radius:12px;background:transparent;text-align:left;cursor:pointer;transition:background-color 200ms var(--ease),transform 150ms var(--ease)}
+.fp-item:hover{background:var(--fill)}
+.fp-item:active{transform:scale(.985)}
+.fp-item[aria-pressed="true"]{background:var(--sel)}
+.fp-ico{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.fp-switch{position:relative;width:38px;height:23px;flex:none;border:0;border-radius:12px;background:var(--fill2);cursor:pointer;transition:background-color 250ms var(--ease)}
+.fp-switch[aria-checked="true"]{background:var(--accent)}
+.fp-switch span{position:absolute;left:2px;top:2px;width:19px;height:19px;border-radius:50%;background:#FFFFFF;box-shadow:0 2px 4px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.04);transition:transform 300ms var(--spring)}
+.fp-switch[aria-checked="true"] span{transform:translateX(15px)}
+.fp-ctrl{position:absolute;right:16px;display:flex;flex-direction:column;border-radius:14px;background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);box-shadow:var(--pop);overflow:hidden;z-index:20}
+.fp-ctrl button{width:44px;height:44px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);transition:background-color 200ms var(--ease)}
+.fp-ctrl button:hover{background:var(--fill)}
+.fp-ctrl button:active{background:var(--fill2)}
+.fp-ctrl button[aria-pressed="true"]{color:var(--accent)}
+.fp-ctrl hr{margin:0 8px;border:0;height:.5px;background:var(--line)}
+.fp-link{display:inline-flex;align-items:center;gap:2px;font-size:14px;color:var(--accent);text-decoration:none}
+.fp-link:hover{text-decoration:underline}
+.fp-site{display:flex;flex-direction:column;gap:14px;padding:22px 22px 20px;border:0;border-radius:18px;background:var(--tile);text-align:left;cursor:pointer;transition:transform 400ms var(--spring),box-shadow 400ms var(--spring),background-color 300ms var(--ease)}
+.fp-site:hover{transform:scale(1.012);box-shadow:0 4px 20px rgba(0,0,0,.08);background:var(--raise)}
+.fp-site:active{transform:scale(.99)}
+.fp-site[aria-pressed="true"]{background:var(--raise);box-shadow:0 0 0 2px var(--ink)}
+.fp-mini{position:relative;width:100%;aspect-ratio:64 / 28;border-radius:10px;background:var(--floor);box-shadow:inset 0 0 0 .5px var(--line)}
+.fp-scroll{overflow-y:auto;scrollbar-width:thin}
+.fp-live{animation:fplive 2400ms ease-in-out infinite}
+@keyframes fplive{0%,100%{opacity:1}50%{opacity:.3}}
+.fp-h1{text-wrap:balance}
+@media (max-width:1100px){.fp-wrap{padding:0 24px}.fp-canvas{left:24px;right:72px}.fp-panel{display:none}.fp-sites{grid-template-columns:1fr !important}}
+@media (prefers-reduced-motion:reduce){.fp *{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div class="fp" data-theme="{{theme}}" style="min-height: 100vh; background: var(--page); color: var(--ink)">
+
+<header style="position: sticky; top: 0; z-index: 40; background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 0.5px solid var(--line)">
+<div class="fp-wrap" style="display: flex; align-items: center; gap: 28px; height: 52px">
+<span style="display: flex; align-items: center; gap: 9px">
+<svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--ink)"></rect><circle cx="9" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="9" cy="17" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="17" r="2.6" fill="var(--page)"></circle></svg>
+<span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em">Fleet Monitor</span>
+</span>
+<nav aria-label="Sections" style="display: flex; gap: 24px">
+<a class="fp-tab" href="Main.dc.html">Overview</a>
+<a class="fp-tab" href="FloorPlan.dc.html" aria-current="page">Floor Plan</a>
+</nav>
+<span style="margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500"><span class="fp-live" style="width: 7px; height: 7px; border-radius: 50%; background: var(--ink)"></span>Live <span style="color: var(--ink2); font-weight: 400">{{clock}}</span></span>
+</div>
+</header>
+
+<main class="fp-wrap" style="padding-top: 48px; padding-bottom: 56px">
+
+<section aria-label="Summary" style="display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; padding-bottom: 28px">
+<h1 class="fp-h1" aria-live="polite" style="margin: 0; flex: 1 1 640px; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.035em">{{headA}} <span style="color: var(--ink3)">{{headB}}</span></h1>
+<nav class="fp-seg" aria-label="Site">
+<sc-for list="{{siteTabs}}" as="t" hint-placeholder-count="3">
+<button aria-pressed="{{t.pressed}}" onClick="{{t.pick}}">{{t.label}}</button>
+</sc-for>
+</nav>
+</section>
+
+<section class="fp-stage" aria-label="{{stageLabel}}">
+<div class="fp-grid" aria-hidden="true"></div>
+
+<div class="fp-canvas" style="--inv: {{inv}}; transform: translateY(-50%) scale({{zoom}}); transform-origin: {{origin}}">
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="2">
+<div class="fp-zone" style="left: {{z.l}}%; top: {{z.t}}%; width: {{z.w}}%; height: {{z.h}}%"><span class="fp-zlabel">{{z.label}}</span></div>
+</sc-for>
+<sc-for list="{{bays}}" as="b" hint-placeholder-count="4">
+<div class="fp-bay" style="left: {{b.l}}%; top: {{b.t}}%; width: {{b.w}}%; height: {{b.h}}%" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M9.2 1.75 3.6 9h4.1l-1 5.25L12.4 7H8.3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></div>
+</sc-for>
+<sc-for list="{{racks}}" as="k" hint-placeholder-count="6">
+<div class="fp-rack" style="left: {{k.l}}%; top: {{k.t}}%; width: {{k.w}}%; height: {{k.h}}%"></div>
+</sc-for>
+<sc-for list="{{alabels}}" as="al" hint-placeholder-count="5">
+<span class="fp-alabel" style="left: {{al.l}}%; top: {{al.t}}%">{{al.n}}</span>
+</sc-for>
+<sc-if value="{{showTrails}}" hint-placeholder-val="{{true}}">
+<sc-for list="{{ghosts}}" as="g" hint-placeholder-count="12">
+<span class="fp-ghost" style="left: {{g.l}}%; top: {{g.t}}%; opacity: {{g.op}}"></span>
+</sc-for>
+</sc-if>
+<sc-for list="{{oks}}" as="d" hint-placeholder-count="12">
+<button class="fp-mark" aria-label="{{d.aria}}" onClick="{{d.pick}}" style="left: {{d.l}}%; top: {{d.t}}%; opacity: {{d.op}}; z-index: {{d.z}}">
+<sc-if value="{{d.sel}}" hint-placeholder-val="{{false}}"><span class="fp-ring"></span></sc-if>
+<span class="fp-dot"></span>
+<sc-if value="{{showLabels}}" hint-placeholder-val="{{false}}"><span class="fp-olabel">{{d.id}}</span></sc-if>
+</button>
+</sc-for>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="2">
+<button class="fp-mark" aria-label="{{p.aria}}" onClick="{{p.pick}}" style="left: {{p.l}}%; top: {{p.t}}%; z-index: {{p.z}}">
+<span class="fp-foot"></span>
+<sc-if value="{{p.sel}}" hint-placeholder-val="{{false}}"><span class="fp-ring"></span></sc-if>
+<span class="fp-pin">
+<span class="fp-head" style="{{p.headCss}}">
+<sc-if value="{{p.isLow}}" hint-placeholder-val="{{true}}"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.6"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{p.isErr}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.2v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><circle cx="8" cy="12.9" r="1.35" fill="currentColor"></circle></svg></sc-if>
+<sc-if value="{{p.isOff}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+</span>
+<span class="fp-tail" style="background: {{p.tail}}"></span>
+</span>
+<span class="fp-plabel" style="color: {{p.tone}}">{{p.id}}</span>
+</button>
+</sc-for>
+<div aria-hidden="true" style="position: absolute; left: 0; top: calc(100% + 18px); width: 15.625%; display: flex; flex-direction: column; gap: 4px">
+<span style="height: 6px; border: 1.5px solid var(--ink2); border-top: 0"></span>
+<span style="font-size: 10px; font-weight: 600; color: var(--ink2)">10 m</span>
+</div>
+</div>
+
+<aside class="fp-panel" aria-label="Robots on this floor">
+<sc-if value="{{noSel}}" hint-placeholder-val="{{true}}">
+<div style="padding: 18px 18px 10px; display: flex; flex-direction: column; gap: 12px; border-bottom: 0.5px solid var(--line)">
+<span style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 21px; font-weight: 700; letter-spacing: -0.025em">{{siteName}}</span><span style="font-size: 13px; color: var(--ink2)">{{siteCount}}</span></span>
+<span style="position: relative; display: block">
+<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="position: absolute; left: 10px; top: 9px; color: var(--ink2)"><circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"></circle><path d="m10.5 10.5 3.25 3.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+<input type="search" aria-label="Find a robot on this floor" placeholder="Find a robot" value="{{q}}" onChange="{{onSearch}}" style="width: 100%; height: 32px; padding: 0 10px 0 31px; border: 0; border-radius: 10px; background: var(--fill); font-size: 14px; outline: none">
+</span>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px">
+<span id="fp-only">Only robots that need attention</span>
+<button class="fp-switch" role="switch" aria-checked="{{onlyAtt}}" aria-labelledby="fp-only" onClick="{{toggleOnly}}"><span></span></button>
+</span>
+</div>
+<div class="fp-scroll" style="flex: 1 1 auto; min-height: 0; padding: 8px 8px 12px">
+<sc-if value="{{hasAtt}}" hint-placeholder-val="{{true}}">
+<span style="display: block; padding: 10px 10px 6px; font-size: 12px; font-weight: 600; color: var(--ink2)">Needs attention</span>
+<sc-for list="{{attList}}" as="i" hint-placeholder-count="2">
+<button class="fp-item" aria-pressed="{{i.pressed}}" onClick="{{i.pick}}" onMouseEnter="{{i.enter}}" onMouseLeave="{{i.leave}}">
+<span class="fp-ico" style="background: {{i.tint}}; color: {{i.tone}}; --knock: var(--knock)">
+<sc-if value="{{i.isLow}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.5"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{i.isErr}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.62 2.4a1.6 1.6 0 0 1 2.76 0l5.36 9.4a1.6 1.6 0 0 1-1.38 2.4H2.64a1.6 1.6 0 0 1-1.38-2.4Z" fill="currentColor"></path><path d="M8 6.1v3.3" stroke="var(--knock)" stroke-width="1.6" stroke-linecap="round"></path><circle cx="8" cy="11.6" r=".95" fill="var(--knock)"></circle></svg></sc-if>
+<sc-if value="{{i.isOff}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></sc-if>
+</span>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 14px; font-weight: 600">{{i.id}}</span>
+<span style="font-size: 12px; color: {{i.subColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{i.sub}}</span>
+</span>
+<span style="font-size: 13px; font-weight: 500; color: {{i.battColor}}">{{i.battery}}%</span>
+</button>
+</sc-for>
+</sc-if>
+<sc-if value="{{hasOk}}" hint-placeholder-val="{{true}}">
+<span style="display: block; padding: 14px 10px 6px; font-size: 12px; font-weight: 600; color: var(--ink2)">Running normally</span>
+<sc-for list="{{okList}}" as="i" hint-placeholder-count="6">
+<button class="fp-item" aria-pressed="{{i.pressed}}" onClick="{{i.pick}}" onMouseEnter="{{i.enter}}" onMouseLeave="{{i.leave}}">
+<span class="fp-ico" style="background: var(--fill); color: var(--ink2)"><sc-if value="{{i.charging}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.2 1.75 3.6 9h4.1l-1 5.25L12.4 7H8.3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></sc-if><sc-if value="{{i.moving}}" hint-placeholder-val="{{true}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--dotok)"></span></sc-if></span>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 14px; font-weight: 600">{{i.id}}</span>
+<span style="font-size: 12px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{i.sub}}</span>
+</span>
+<span style="font-size: 13px; color: var(--ink2)">{{i.battery}}%</span>
+</button>
+</sc-for>
+</sc-if>
+<sc-if value="{{listEmpty}}" hint-placeholder-val="{{false}}">
+<div style="padding: 32px 16px; text-align: center; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 15px; font-weight: 600">No matching robots</span>
+<span style="font-size: 13px; color: var(--ink2)">Try another name or ID.</span>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+<div style="padding: 14px 18px 0">
+<button onClick="{{clearSel}}" class="fp-link" style="border: 0; background: none; padding: 4px 0; cursor: pointer"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{siteName}}</button>
+</div>
+<div class="fp-scroll" style="flex: 1 1 auto; min-height: 0; padding: 10px 18px 18px; display: flex; flex-direction: column">
+<span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 5px; height: 24px; padding: 0 10px 0 8px; border-radius: 12px; font-size: 12px; font-weight: 600; {{s.pillCss}}">{{s.statusLabel}}</span>
+<span style="margin-top: 12px; font-size: 34px; line-height: 38px; font-weight: 700; letter-spacing: -0.035em">{{s.id}}</span>
+<span style="margin-top: 2px; font-size: 14px; color: var(--ink2)">{{s.model}} · {{s.ago}}</span>
+<span style="margin-top: 16px; font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.02em; color: {{s.reasonColor}}">{{s.reason}}</span>
+<dl style="margin: 18px 0 0; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 40px; border-bottom: 0.5px solid var(--line); font-size: 14px"><dt style="color: var(--ink2)">Battery</dt><dd style="margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 600; color: {{s.battColor}}"><span aria-hidden="true" style="position: relative; width: 25px; height: 12px; border-radius: 3.5px; box-shadow: inset 0 0 0 1px {{s.battRim}}; padding: 2px"><span style="display: block; height: 100%; width: {{s.battW}}; border-radius: 1.5px; background: {{s.battFill}}"></span><span style="position: absolute; right: -3px; top: 4px; width: 1.5px; height: 4px; border-radius: 0 1px 1px 0; background: {{s.battRim}}"></span></span>{{s.battery}}%</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 40px; border-bottom: 0.5px solid var(--line); font-size: 14px"><dt style="color: var(--ink2)">Task</dt><dd style="margin: 0; font-weight: 500; text-align: right">{{s.task}}</dd></div>
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 40px; border-bottom: 0.5px solid var(--line); font-size: 14px"><dt style="color: var(--ink2)">Position</dt><dd style="margin: 0; font-weight: 500">{{s.pos}}</dd></div>
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 40px; font-size: 14px"><dt style="color: var(--ink2)">Site</dt><dd style="margin: 0; font-weight: 500">{{siteName}}</dd></div>
+</dl>
+<a class="fp-link" href="{{s.href}}" style="margin-top: 18px">{{s.linkLabel}} <span aria-hidden="true">›</span></a>
+</div>
+</sc-if>
+</aside>
+
+<div class="fp-ctrl" role="group" aria-label="Zoom" style="top: 16px">
+<button aria-label="Zoom in" onClick="{{zoomIn}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path></svg></button>
+<hr>
+<button aria-label="Zoom out" onClick="{{zoomOut}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path></svg></button>
+<hr>
+<button aria-label="Fit floor to view" onClick="{{zoomFit}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.75 6V3.75a1 1 0 0 1 1-1H6M10 2.75h2.25a1 1 0 0 1 1 1V6M13.25 10v2.25a1 1 0 0 1-1 1H10M6 13.25H3.75a1 1 0 0 1-1-1V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></button>
+</div>
+<div class="fp-ctrl" role="group" aria-label="Map layers" style="top: 172px">
+<button aria-label="Show robot labels" aria-pressed="{{labelsPressed}}" onClick="{{toggleLabels}}"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 3.75A1.75 1.75 0 0 1 3.75 2h4.1a1.75 1.75 0 0 1 1.24.51l4.4 4.4a1.75 1.75 0 0 1 0 2.48l-4.1 4.1a1.75 1.75 0 0 1-2.48 0l-4.4-4.4A1.75 1.75 0 0 1 2 7.85Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><circle cx="5.5" cy="5.5" r="1.1" fill="currentColor"></circle></svg></button>
+<hr>
+<button aria-label="Show movement trails" aria-pressed="{{trailsPressed}}" onClick="{{toggleTrails}}"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="12.5" cy="3.5" r="1.75" fill="currentColor"></circle><circle cx="8.6" cy="6.4" r="1.25" fill="currentColor" opacity=".6"></circle><circle cx="5.6" cy="9.6" r="1" fill="currentColor" opacity=".38"></circle><circle cx="3.2" cy="12.8" r=".8" fill="currentColor" opacity=".2"></circle></svg></button>
+</div>
+
+<div aria-hidden="true" style="position: absolute; right: 16px; bottom: 16px; z-index: 20; display: flex; align-items: center; gap: 14px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px); box-shadow: var(--pop); font-size: 12px; color: var(--ink2)">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--dotok)"></span>OK</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 50%; background: var(--amb)"></span>Low battery</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 50%; background: var(--err)"></span>Error</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 50%; background: var(--raise); box-shadow: inset 0 0 0 1.5px var(--off)"></span>Offline</span>
+<span style="width: 1px; height: 14px; background: var(--line)"></span>
+<span>{{zoomLabel}}</span>
+</div>
+</section>
+
+<section aria-label="Sites" class="fp-sites" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding-top: 24px">
+<sc-for list="{{siteCards}}" as="c" hint-placeholder-count="3">
+<button class="fp-site" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}">
+<span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%">
+<span style="font-size: 21px; font-weight: 600; letter-spacing: -0.025em">{{c.name}}</span>
+<span style="font-size: 13px; color: var(--ink2)">{{c.count}}</span>
+</span>
+<span class="fp-mini">
+<sc-for list="{{c.zones}}" as="z" hint-placeholder-count="2">
+<span style="position: absolute; left: {{z.l}}%; top: {{z.t}}%; width: {{z.w}}%; height: {{z.h}}%; border-radius: 5px; background: var(--zone)"></span>
+</sc-for>
+<sc-for list="{{c.racks}}" as="k" hint-placeholder-count="5">
+<span style="position: absolute; left: {{k.l}}%; top: {{k.t}}%; width: {{k.w}}%; height: {{k.h}}%; border-radius: 1px; background: var(--rack)"></span>
+</sc-for>
+<sc-for list="{{c.dots}}" as="d" hint-placeholder-count="10">
+<span style="position: absolute; left: {{d.l}}%; top: {{d.t}}%; width: {{d.s}}px; height: {{d.s}}px; border-radius: 50%; transform: translate(-50%, -50%); {{d.css}}"></span>
+</sc-for>
+</span>
+<span style="font-size: 14px; font-weight: 600; color: {{c.attColor}}">{{c.att}}</span>
+</button>
+</sc-for>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"site":{"editor":"enum","options":["hh","le","mu"],"default":"hh"},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tick: 0, site: null, sel: null, hover: null, q: '', only: false, labels: false, trails: true, zoom: 1 };
+  }
+  componentDidMount() { this._iv = setInterval(() => this.setState((s) => ({ tick: ((s && s.tick) || 0) + 1 })), 1000); }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  sites() {
+    return [
+      { key: 'hh', name: 'Hamburg DC', pre: 'A',
+        racks: [[3,3.6,38,1.6],[3,8.6,38,1.6],[3,13.6,38,1.6],[3,18.6,38,1.6],[3,23.6,38,1.6]],
+        aisles: [[3,6.1,41,6.1],[3,11.1,41,11.1],[3,16.1,41,16.1],[3,21.1,41,21.1],[44,3,44,25]],
+        zones: [[47,2,14,10,'Charging'],[47,14,14,12,'Pack-out']], charge: [47,2,14,10] },
+      { key: 'le', name: 'Leipzig Hub', pre: 'B',
+        racks: [[4,3,1.6,22],[9,3,1.6,22],[14,3,1.6,22],[19,3,1.6,22],[24,3,1.6,22],[29,3,1.6,22],[34,3,1.6,22]],
+        aisles: [[7.3,3,7.3,25],[12.3,3,12.3,25],[17.3,3,17.3,25],[22.3,3,22.3,25],[27.3,3,27.3,25],[32.3,3,32.3,25],[38,3,38,25]],
+        zones: [[41,2,20,10,'Inbound'],[41,15,11,11,'Charging'],[54,15,7,11,'Out']], charge: [41,15,11,11] },
+      { key: 'mu', name: 'Munich North', pre: 'C',
+        racks: [[3,3,26,1.6],[3,7.5,26,1.6],[3,12,26,1.6],[3,16.5,26,1.6],[35,3,26,1.6],[35,7.5,26,1.6],[35,12,26,1.6],[35,16.5,26,1.6]],
+        aisles: [[3,5.3,29,5.3],[3,9.8,29,9.8],[3,14.3,29,14.3],[35,5.3,61,5.3],[35,9.8,61,9.8],[35,14.3,61,14.3],[32,2,32,19]],
+        zones: [[3,21,18,5,'Charging'],[24,21,37,5,'Staging']], charge: [3,21,18,5] }
+    ];
+  }
+
+  fleet() {
+    if (this._fleet) return this._fleet;
+    const sites = this.sites();
+    let seed = 20261104;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const models = ['Tote picker', 'Tote picker', 'Pallet mover', 'Sorter shuttle'];
+    const special = {
+      'R-009': { status: 'offline', base: 58, agoBase: 34, task: 'Pick order #4468', x: 22.6, y: 16.1, fixed: true },
+      'R-017': { status: 'low', base: 14, task: 'Returning to dock', x: 44.0, y: 9.2, fixed: true },
+      'R-024': { status: 'error', base: 71, task: 'Motor overcurrent', x: 17.3, y: 12.4, fixed: true },
+      'R-032': { status: 'low', base: 9, task: 'Idle — waiting for dock', x: 38.0, y: 20.4, fixed: true },
+      'R-041': { status: 'offline', base: 63, agoBase: 184, task: 'Pick order #4502', x: 48.2, y: 9.8, fixed: true }
+    };
+    const robots = [];
+    for (let i = 1; i <= 50; i++) {
+      const id = 'R-' + String(i).padStart(3, '0');
+      const st = i <= 18 ? sites[0] : (i <= 35 ? sites[1] : sites[2]);
+      const roll = rnd();
+      let task;
+      if (roll < 0.55) task = 'Pick order #' + (4400 + Math.floor(rnd() * 110));
+      else if (roll < 0.7) task = 'Charging';
+      else if (roll < 0.86) task = 'Idle';
+      else task = 'Returning to dock';
+      let x, y, aisle = null, t0 = 0;
+      if (task === 'Charging') {
+        const c = st.charge; x = c[0] + 1.5 + rnd() * (c[2] - 3); y = c[1] + 2 + rnd() * (c[3] - 3);
+      } else {
+        aisle = st.aisles[Math.floor(rnd() * st.aisles.length)]; t0 = rnd();
+        x = aisle[0] + (aisle[2] - aisle[0]) * t0; y = aisle[1] + (aisle[3] - aisle[1]) * t0;
+      }
+      const r = { id, model: models[Math.floor(rnd() * models.length)], site: st.name, siteKey: st.key, status: 'ok',
+        base: task === 'Charging' ? 30 + Math.floor(rnd() * 50) : 26 + Math.floor(rnd() * 72),
+        agoBase: 1, task, x, y, aisle, t0, speed: 0.008 + rnd() * 0.012, fixed: task === 'Charging' || task === 'Idle', phase: Math.floor(rnd() * 90) };
+      robots.push(Object.assign(r, special[id] || {}));
+    }
+    this._fleet = { sites, robots };
+    return this._fleet;
+  }
+
+  at(r, tick) {
+    if (r.fixed || !r.aisle) return { x: r.x, y: r.y };
+    const u = (r.t0 + r.speed * tick) % 2;
+    const t = u < 1 ? u : 2 - u;
+    const a = r.aisle;
+    return { x: a[0] + (a[2] - a[0]) * t, y: a[1] + (a[3] - a[1]) * t };
+  }
+
+  ago(s) {
+    if (s < 60) return s + ' s ago';
+    return Math.floor(s / 60) + ' min ' + (s % 60) + ' s ago';
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const p = this.props || {};
+    const tick = s.tick || 0;
+    const fleet = this.fleet();
+    const siteKey = s.site || p.site || 'hh';
+    const site = fleet.sites.filter((x) => x.key === siteKey)[0];
+    const W = 64, H = 28;
+    const pc = (v, d) => (v / d * 100).toFixed(3);
+    const labels = { ok: 'OK', low: 'Low Battery', error: 'Error', offline: 'Offline' };
+    const tone = (st) => st === 'error' ? 'var(--err-text)' : st === 'low' ? 'var(--amb-text)' : st === 'offline' ? 'var(--off-text)' : 'var(--ink)';
+    const tint = (st) => st === 'error' ? 'var(--err-tint)' : st === 'low' ? 'var(--amb-tint)' : st === 'offline' ? 'var(--off-tint)' : 'var(--fill)';
+    const rank = { offline: 0, error: 1, low: 2, ok: 3 };
+
+    const all = fleet.robots.map((b) => {
+      const r = Object.assign({}, b);
+      const pos = this.at(r, tick);
+      r.cx = pos.x; r.cy = pos.y;
+      r.battery = r.status === 'ok' ? Math.max(20, Math.min(100, r.base + (r.task === 'Charging' ? Math.floor((tick + r.phase) / 45) : -Math.floor((tick + r.phase) / 95)))) : r.base;
+      r.agoS = r.status === 'offline' ? r.agoBase + tick : 1 + ((tick + r.phase) % 2);
+      return r;
+    });
+    const here = all.filter((r) => r.siteKey === siteKey);
+    const ql = (s.q || '').trim().toLowerCase();
+    const match = (r) => !ql || r.id.toLowerCase().indexOf(ql) >= 0 || r.task.toLowerCase().indexOf(ql) >= 0;
+    const att = here.filter((r) => r.status !== 'ok').sort((a, b) => (rank[a.status] - rank[b.status]) || (a.id < b.id ? -1 : 1));
+    const oks = here.filter((r) => r.status === 'ok');
+    const selId = s.sel;
+    const focus = s.hover || selId;
+    const only = !!s.only;
+
+    const pick = (id) => () => this.setState({ sel: id, zoom: Math.max(s.zoom || 1, 1.6) });
+
+    const okDots = oks.map((r) => ({
+      id: r.id, l: pc(r.cx, W), t: pc(r.cy, H),
+      sel: focus === r.id,
+      op: only ? 0.14 : (match(r) ? 1 : 0.2),
+      z: focus === r.id ? 6 : 1,
+      aria: r.id + ', OK, ' + r.task,
+      pick: pick(r.id)
+    }));
+    const ghosts = [];
+    if (s.trails !== false) {
+      oks.forEach((r) => {
+        if (r.fixed || !r.aisle) return;
+        [1, 2, 3].forEach((k) => {
+          const g = this.at(r, Math.max(0, tick - k * 2));
+          ghosts.push({ l: pc(g.x, W), t: pc(g.y, H), op: only ? 0 : (0.22 - k * 0.06).toFixed(2) });
+        });
+      });
+    }
+    const pins = att.map((r) => ({
+      id: r.id, l: pc(r.cx, W), t: pc(r.cy, H), sel: focus === r.id, z: focus === r.id ? 12 : 8,
+      isLow: r.status === 'low', isErr: r.status === 'error', isOff: r.status === 'offline',
+      headCss: r.status === 'error' ? 'background: var(--err); color: #FFFFFF' : r.status === 'low' ? 'background: var(--amb); color: #FFFFFF' : 'background: var(--raise); color: var(--off-text); box-shadow: var(--pin), 0 0 0 2px var(--raise), inset 0 0 0 1.5px var(--off)',
+      tail: r.status === 'error' ? 'var(--err)' : r.status === 'low' ? 'var(--amb)' : 'var(--off)',
+      tone: tone(r.status),
+      aria: r.id + ', ' + labels[r.status] + ', ' + (r.status === 'offline' ? 'last seen ' + this.ago(r.agoS) : r.task),
+      pick: pick(r.id)
+    }));
+
+    const item = (r) => ({
+      id: r.id, battery: r.battery,
+      isLow: r.status === 'low', isErr: r.status === 'error', isOff: r.status === 'offline',
+      charging: r.task === 'Charging', moving: r.task !== 'Charging',
+      tint: tint(r.status), tone: tone(r.status),
+      sub: r.status === 'offline' ? 'Last seen ' + this.ago(r.agoS) : r.task,
+      subColor: r.status === 'error' ? 'var(--err-text)' : 'var(--ink2)',
+      battColor: r.status === 'low' ? 'var(--amb-text)' : 'var(--ink2)',
+      pressed: selId === r.id ? 'true' : 'false',
+      pick: pick(r.id),
+      enter: () => this.setState({ hover: r.id }),
+      leave: () => this.setState({ hover: null })
+    });
+    const attList = att.filter(match).map(item);
+    const okList = only ? [] : oks.filter(match).sort((a, b) => (a.id < b.id ? -1 : 1)).map(item);
+
+    const selR = selId ? here.filter((r) => r.id === selId)[0] : null;
+    let sv = {};
+    if (selR) {
+      const st = selR.status;
+      sv = {
+        id: selR.id, model: selR.model, statusLabel: labels[st], ago: 'Last seen ' + this.ago(selR.agoS),
+        pillCss: st === 'error' ? 'background: var(--err); color: #FFFFFF' : st === 'ok' ? 'background: var(--fill); color: var(--ink2)' : 'background: ' + tint(st) + '; color: ' + tone(st) + (st === 'offline' ? '; box-shadow: inset 0 0 0 1px var(--off)' : ''),
+        reason: st === 'low' ? selR.battery + '% battery. ' + selR.task + '.' : st === 'error' ? selR.task + '. The robot has stopped.' : st === 'offline' ? 'No report for ' + this.ago(selR.agoS).replace(' ago', '') + '.' : selR.task === 'Charging' ? 'Charging in the dock.' : 'Running normally.',
+        reasonColor: st === 'ok' ? 'var(--ink)' : tone(st),
+        battery: selR.battery, battW: selR.battery + '%',
+        battFill: st === 'low' ? 'var(--amb)' : st === 'offline' ? 'var(--off)' : 'var(--ink)',
+        battRim: st === 'low' ? 'var(--amb)' : 'var(--ink2)',
+        battColor: st === 'low' ? 'var(--amb-text)' : st === 'offline' ? 'var(--off-text)' : 'var(--ink)',
+        task: selR.task, pos: selR.cx.toFixed(1) + ', ' + selR.cy.toFixed(1) + ' m',
+        href: selR.id === 'R-017' ? 'Detail.dc.html' : selR.id === 'R-041' ? 'Detail-Offline.dc.html' : '#',
+        linkLabel: 'View robot details'
+      };
+    }
+
+    const zoom = s.zoom || 1;
+    const origin = selR ? pc(selR.cx, W) + '% ' + pc(selR.cy, H) + '%' : '50% 50%';
+    const c = site.charge;
+    const bays = [0, 1, 2, 3].map((i) => {
+      const bw = (c[2] - 2) / 4;
+      return { l: pc(c[0] + 1 + i * bw + 0.3, W), t: pc(c[1] + c[3] - 3.6, H), w: pc(bw - 0.6, W), h: pc(2.6, H) };
+    });
+    const alabels = site.aisles.map((a, i) => {
+      const horiz = a[1] === a[3];
+      return { n: site.pre + (i + 1), l: pc(horiz ? a[0] - 1.5 : a[0], W), t: pc(horiz ? a[1] : a[1] - 1.3, H) };
+    });
+
+    const siteCards = fleet.sites.map((st) => {
+      const rs = all.filter((r) => r.siteKey === st.key);
+      const a = rs.filter((r) => r.status !== 'ok').length;
+      return {
+        name: st.name, count: rs.length + ' robots',
+        att: a ? a + (a === 1 ? ' needs' : ' need') + ' attention' : 'All running normally',
+        attColor: a ? 'var(--ink)' : 'var(--ink2)',
+        pressed: st.key === siteKey ? 'true' : 'false',
+        pick: () => this.setState({ site: st.key, sel: null, zoom: 1, q: '' }),
+        racks: st.racks.map((k) => ({ l: pc(k[0], W), t: pc(k[1], H), w: pc(k[2], W), h: pc(k[3], H) })),
+        zones: st.zones.map((z) => ({ l: pc(z[0], W), t: pc(z[1], H), w: pc(z[2], W), h: pc(z[3], H) })),
+        dots: rs.map((r) => ({ l: pc(r.cx, W), t: pc(r.cy, H), s: r.status === 'ok' ? 5 : 9,
+          css: r.status === 'ok' ? 'background: var(--dotok); opacity: .55' : r.status === 'offline' ? 'background: var(--floor); box-shadow: inset 0 0 0 1.5px var(--off)' : 'background: ' + (r.status === 'error' ? 'var(--err)' : 'var(--amb)') + '; box-shadow: 0 0 0 1.5px var(--floor)' }))
+      };
+    });
+
+    const base = 14 * 3600 + 3 * 60 + 12 + tick;
+    const two = (v) => String(v).padStart(2, '0');
+    const nAtt = att.length;
+
+    return {
+      theme: p.theme === 'dark' ? 'dark' : 'light',
+      clock: two(Math.floor(base / 3600) % 24) + ':' + two(Math.floor(base / 60) % 60) + ':' + two(base % 60),
+      headA: site.name + '.',
+      headB: here.length + ' robots on the floor. ' + (nAtt ? nAtt + (nAtt === 1 ? ' needs' : ' need') + ' your attention.' : 'All are running normally.'),
+      siteTabs: fleet.sites.map((st) => ({ label: st.name, pressed: st.key === siteKey ? 'true' : 'false', pick: () => this.setState({ site: st.key, sel: null, zoom: 1, q: '' }) })),
+      stageLabel: 'Floor plan of ' + site.name,
+      siteName: site.name, siteCount: here.length + ' robots',
+      zones: site.zones.map((z) => ({ l: pc(z[0], W), t: pc(z[1], H), w: pc(z[2], W), h: pc(z[3], H), label: z[4] })),
+      racks: site.racks.map((k) => ({ l: pc(k[0], W), t: pc(k[1], H), w: pc(k[2], W), h: pc(k[3], H) })),
+      bays, alabels, ghosts, oks: okDots, pins,
+      showTrails: s.trails !== false, showLabels: !!s.labels,
+      labelsPressed: s.labels ? 'true' : 'false', trailsPressed: s.trails !== false ? 'true' : 'false',
+      toggleLabels: () => this.setState({ labels: !s.labels }),
+      toggleTrails: () => this.setState({ trails: s.trails === false }),
+      zoom: zoom.toFixed(2), inv: (1 / zoom).toFixed(3), origin,
+      zoomLabel: Math.round(zoom * 100) + '%',
+      zoomIn: () => this.setState({ zoom: Math.min(3, Math.round(((s.zoom || 1) + 0.4) * 10) / 10) }),
+      zoomOut: () => this.setState({ zoom: Math.max(1, Math.round(((s.zoom || 1) - 0.4) * 10) / 10) }),
+      zoomFit: () => this.setState({ zoom: 1, sel: null }),
+      noSel: !selR, hasSel: !!selR, s: sv,
+      clearSel: () => this.setState({ sel: null, zoom: 1 }),
+      q: s.q || '', onSearch: (e) => this.setState({ q: e.target.value }),
+      onlyAtt: only ? 'true' : 'false', toggleOnly: () => this.setState({ only: !only }),
+      hasAtt: attList.length > 0, attList, hasOk: okList.length > 0, okList,
+      listEmpty: attList.length === 0 && okList.length === 0,
+      siteCards
+    };
+  }
+}
+</script>
+</body>
+</html>

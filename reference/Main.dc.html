@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.fm{--page:#FFFFFF;--tile:#F5F5F7;--raise:#FFFFFF;--bar:rgba(255,255,255,.8);--line:rgba(0,0,0,.1);--sep:rgba(0,0,0,.07);--fill:rgba(0,0,0,.05);--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#86868B;--dotok:#48484A;--accent:#0066CC;--sel:rgba(0,102,204,.07);--err:#D70015;--err-text:#D70015;--err-tint:rgba(215,0,21,.08);--amb:#C77700;--amb-text:#A15C00;--amb-tint:rgba(199,119,0,.1);--off:#8E8E93;--off-text:#636366;--off-tint:rgba(120,120,128,.12);--plan:#FFFFFF;--zone:#F0F0F2;--rack:#DCDCE0;--pop:0 0 0 .5px rgba(0,0,0,.08),0 12px 36px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.05);--lift:0 4px 20px rgba(0,0,0,.08);--ease:cubic-bezier(.28,.11,.32,1);--spring:cubic-bezier(.32,.72,0,1);font-family:Inter,system-ui,sans-serif;font-optical-sizing:auto;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
+.fm[data-theme="dark"]{--page:#000000;--tile:#161618;--raise:#232325;--bar:rgba(0,0,0,.72);--line:rgba(255,255,255,.14);--sep:rgba(255,255,255,.08);--fill:rgba(255,255,255,.08);--ink:#F5F5F7;--ink2:#A1A1A6;--ink3:#86868B;--dotok:#D1D1D6;--accent:#2997FF;--sel:rgba(41,151,255,.16);--err:#FF453A;--err-text:#FF5A4F;--err-tint:rgba(255,69,58,.15);--amb:#FFB340;--amb-text:#FFB340;--amb-tint:rgba(255,179,64,.14);--off:#8E8E93;--off-text:#AEAEB2;--off-tint:rgba(142,142,147,.18);--plan:#0B0B0C;--zone:#1E1E20;--rack:#3A3A3C;--pop:0 0 0 .5px rgba(255,255,255,.14),0 16px 40px rgba(0,0,0,.6);--lift:0 4px 24px rgba(0,0,0,.5);color-scheme:dark}
+.fm *{box-sizing:border-box}
+.fm button,.fm input{font:inherit;color:inherit;letter-spacing:inherit}
+.fm :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:2px;border-radius:10px}
+.fm-wrap{width:100%;max-width:1440px;margin:0 auto;padding:0 40px}
+.fm-nav{font-size:12px;color:var(--ink2);text-decoration:none;border:0;background:none;padding:6px 2px;cursor:pointer;transition:color 200ms var(--ease)}
+.fm-nav:hover{color:var(--ink)}
+.fm-nav[aria-pressed="true"]{color:var(--ink);font-weight:600}
+.fm-tile{background:var(--tile);border-radius:18px}
+.fm-card{display:flex;flex-direction:column;min-height:176px;padding:20px 20px 18px;border-radius:18px;background:var(--tile);text-decoration:none;transition:transform 400ms var(--spring),box-shadow 400ms var(--spring),background-color 300ms var(--ease)}
+.fm-card:hover,.fm-card-hl{transform:scale(1.015);box-shadow:var(--lift);background:var(--raise)}
+.fm-in{animation:fmin 900ms var(--spring) 1}
+@keyframes fmin{0%{opacity:0;transform:translateY(14px) scale(.97)}100%{opacity:1;transform:none}}
+.fm-more{display:inline-flex;align-items:center;gap:2px;margin-top:auto;padding-top:14px;font-size:14px;font-weight:400;color:var(--accent);border:0;background:none;cursor:pointer;text-decoration:none}
+.fm-more:hover{text-decoration:underline}
+.fm-fp{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px 0 14px;border:0;border-radius:18px;background:var(--tile);font-size:14px;font-weight:500;cursor:pointer;transition:background-color 250ms var(--ease),color 250ms var(--ease)}
+.fm-fp:hover{background:var(--fill)}
+.fm-fp[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+.fm-fp[aria-pressed="true"] .fm-fpn{color:inherit !important}
+.fm-cols{display:grid;grid-template-columns:110px 104px 120px 84px 112px minmax(0,1fr) 84px;align-items:center}
+.fm-row{height:44px;margin:0 10px;padding:0 10px;border-radius:10px;position:relative;transition:background-color 200ms var(--ease)}
+.fm-row::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:1px;background:var(--sep)}
+.fm-row:hover{background:var(--raise)}
+.fm-flash{animation:fmflash 1800ms var(--spring) 1}
+@keyframes fmflash{0%{background:var(--fl)}30%{background:var(--fl)}100%{background:transparent}}
+.fm-pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 7px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.fm-live{animation:fmlive 2400ms ease-in-out infinite}
+@keyframes fmlive{0%,100%{opacity:1}50%{opacity:.3}}
+.fm-spin{animation:fmspin 1100ms linear infinite}
+@keyframes fmspin{to{transform:rotate(360deg)}}
+.fm-pin{position:absolute;width:0;height:0}
+.fm-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);border-radius:50%;transition:transform 400ms var(--spring),opacity 300ms var(--ease)}
+.fm-dot-ok{width:8px;height:8px;background:var(--dotok);box-shadow:0 0 0 1.5px var(--plan)}
+.fm-dot-low{width:12px;height:12px;background:var(--amb);box-shadow:0 0 0 2px var(--plan),0 0 0 6px var(--amb-tint)}
+.fm-dot-error{width:13px;height:13px;background:var(--err);box-shadow:0 0 0 2px var(--plan);animation:fmhalo 2200ms var(--spring) infinite}
+@keyframes fmhalo{0%{box-shadow:0 0 0 2px var(--plan),0 0 0 2px var(--err-tint)}60%{box-shadow:0 0 0 2px var(--plan),0 0 0 12px transparent}100%{box-shadow:0 0 0 2px var(--plan),0 0 0 2px transparent}}
+.fm-dot-offline{width:12px;height:12px;background:var(--plan);border:1.5px dashed var(--off)}
+.fm-dot-hl{transform:translate(-50%,-50%) scale(1.5)}
+.fm-tag{position:absolute;left:11px;top:0;transform:translateY(-50%);font-size:11px;font-weight:600;white-space:nowrap;background:var(--raise);padding:2px 6px;border-radius:6px;box-shadow:var(--pop)}
+.fm-pop{position:absolute;top:0;width:210px;padding:14px;border-radius:14px;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:var(--pop);font-size:12px;z-index:10;pointer-events:none}
+.fm-rack{position:absolute;background:var(--rack);border-radius:2px}
+.fm-zone{position:absolute;background:var(--zone);border-radius:8px}
+.fm-zlabel{position:absolute;left:8px;top:6px;font-size:10px;font-weight:600;color:var(--ink2)}
+.fm-tab{font-size:12px;color:var(--ink2);text-decoration:none;padding:6px 0;transition:color 200ms var(--ease)}
+.fm-tab:hover{color:var(--ink)}
+.fm-tab[aria-current="page"]{color:var(--ink);font-weight:600}
+.fm ::selection{background:var(--sel)}
+.fm-h1{text-wrap:balance}
+.fm-card:active{transform:scale(.99)}
+.fm-fp{transition:background-color 250ms var(--ease),color 250ms var(--ease),transform 150ms var(--ease)}
+.fm-fp:active,.fm-nav:active{transform:scale(.97)}
+.fm-foot{position:absolute;left:0;top:0;width:6px;height:3px;border-radius:50%;background:rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+.fm-pinm{position:absolute;left:0;top:0;transform:translate(-50%,-100%);transform-origin:50% 100%;display:flex;flex-direction:column;align-items:center;transition:transform 400ms var(--spring),opacity 300ms var(--ease)}
+.fm-pinm.fm-dot-hl{transform:translate(-50%,-100%) scale(1.25)}
+.fm-phead{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.2),0 3px 10px rgba(0,0,0,.12),0 0 0 1.5px var(--raise)}
+.fm-phead-err{animation:fmpinhalo 2200ms var(--spring) infinite}
+@keyframes fmpinhalo{0%{box-shadow:0 1px 2px rgba(0,0,0,.2),0 0 0 1.5px var(--raise),0 0 0 1.5px color-mix(in srgb,var(--err) 45%,transparent)}60%{box-shadow:0 1px 2px rgba(0,0,0,.2),0 0 0 1.5px var(--raise),0 0 0 12px transparent}100%{box-shadow:0 1px 2px rgba(0,0,0,.2),0 0 0 1.5px var(--raise),0 0 0 1.5px transparent}}
+.fm-ptail{width:2px;height:5px;margin-top:-1px;border-radius:1px}
+.fm-tag{top:-17px !important;left:13px !important}
+@media (prefers-reduced-motion:reduce){.fm *{animation:none !important;transition:none !important}}
+.fm-narrow{display:none}
+@media (max-width:1279px){
+.fm-wrap{padding:0 28px}
+.fm-tablecol{grid-column:span 8 !important}
+.fm-mapcol{grid-column:span 4 !important}
+.fm-cols{grid-template-columns:112px 120px 84px 108px minmax(0,1fr)}
+.fm-c-site,.fm-c-pos,.fm-wide{display:none !important}
+.fm-narrow{display:block}
+.fm-h1{font-size:40px !important;line-height:44px !important}
+}
+@media (max-width:767px){
+.fm-wrap{padding:0 16px}
+.fm-tablecol,.fm-mapcol{grid-column:1 / -1 !important}
+.fm-scroll{overflow-x:auto}
+.fm-tableinner{min-width:620px}
+.fm-h1{font-size:32px !important;line-height:36px !important}
+.fm-sites{display:none !important}
+}
+</style>
+</helmet>
+<div class="fm" data-theme="{{theme}}" style="min-height: 100vh; background: var(--page); color: var(--ink)">
+
+<header style="position: sticky; top: 0; z-index: 30; background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 0.5px solid var(--line)">
+<div class="fm-wrap" style="display: flex; align-items: center; gap: 24px; height: 52px">
+<span style="display: flex; align-items: center; gap: 9px">
+<svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--ink)"></rect><circle cx="9" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="9" cy="17" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="17" r="2.6" fill="var(--page)"></circle></svg>
+<span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em">Fleet Monitor</span>
+</span>
+<nav aria-label="Sections" style="display: flex; gap: 24px; margin-left: 8px">
+<a class="fm-tab" href="Main.dc.html" aria-current="page">Overview</a>
+<a class="fm-tab" href="FloorPlan.dc.html">Floor Plan</a>
+</nav>
+<nav class="fm-sites" aria-label="Site" style="margin-left: auto; display: flex; align-items: center; gap: 22px">
+<sc-for list="{{siteTabs}}" as="t" hint-placeholder-count="4">
+<button class="fm-nav" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}">{{t.label}}</button>
+</sc-for>
+</nav>
+<span style="position: relative; display: inline-flex">
+<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="position: absolute; left: 10px; top: 8px; color: var(--ink2)"><circle cx="6" cy="6" r="4.4" stroke="currentColor" stroke-width="1.5"></circle><path d="m9.4 9.4 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+<input type="search" aria-label="Find robot by name or ID" placeholder="Search robots" value="{{q}}" onChange="{{onSearch}}" style="width: 180px; height: 29px; padding: 0 10px 0 29px; border: 0; border-radius: 15px; background: var(--fill); font-size: 12px; outline: none">
+</span>
+<sc-if value="{{isLive}}" hint-placeholder-val="{{true}}">
+<span style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; white-space: nowrap"><span class="fm-live" style="width: 7px; height: 7px; border-radius: 50%; background: var(--ink)"></span>Live <span style="color: var(--ink2); font-weight: 400">{{clock}}</span></span>
+</sc-if>
+<sc-if value="{{isLost}}" hint-placeholder-val="{{false}}">
+<span style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--amb-text); white-space: nowrap"><svg class="fm-spin" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M6 1.25a4.75 4.75 0 1 0 4.75 4.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>Reconnecting…</span>
+</sc-if>
+</div>
+<sc-if value="{{isLost}}" hint-placeholder-val="{{false}}">
+<div role="status" style="border-top: 0.5px solid var(--line); background: var(--amb-tint)">
+<div class="fm-wrap" style="display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 40px; flex-wrap: wrap; font-size: 13px">
+<span style="font-weight: 600; color: var(--ink)">Live updates paused. Reconnecting… Data shown may be outdated.</span>
+<span style="color: var(--ink2)">Last update 14:03:00 · {{lostFor}} ago</span>
+<button class="fm-more" style="margin: 0; padding: 0">Retry now ›</button>
+</div>
+</div>
+</sc-if>
+</header>
+
+<main class="fm-wrap" style="padding-top: 48px; padding-bottom: 48px">
+
+<section aria-label="Answer" style="padding-bottom: 28px">
+<h1 class="fm-h1" aria-live="polite" style="margin: 0; max-width: 1100px; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.035em">{{headA}} <span style="color: var(--ink3)">{{headB}}</span></h1>
+</section>
+
+<sc-if value="{{hasCards}}" hint-placeholder-val="{{true}}">
+<section aria-label="Robots that need attention" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 16px; padding-bottom: 48px">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="5">
+<article class="fm-card {{c.cls}}" onMouseEnter="{{c.enter}}" onMouseLeave="{{c.leave}}">
+<span>
+<sc-if value="{{c.isLow}}" hint-placeholder-val="{{false}}"><span class="fm-pill" style="background: var(--amb-tint); color: var(--amb-text)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.4"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>Low Battery</span></sc-if>
+<sc-if value="{{c.isErr}}" hint-placeholder-val="{{true}}"><span class="fm-pill" style="background: var(--err); color: #FFFFFF"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.9 1.6a1.27 1.27 0 0 1 2.2 0l5.3 9.4A1.27 1.27 0 0 1 12.3 13H1.7A1.27 1.27 0 0 1 .6 11L5.9 1.6Z" fill="currentColor"></path><path d="M7 4.9v3.2" stroke="var(--err)" stroke-width="1.5" stroke-linecap="round"></path><circle cx="7" cy="10.2" r=".85" fill="var(--err)"></circle></svg>Error</span></sc-if>
+<sc-if value="{{c.isOff}}" hint-placeholder-val="{{false}}"><span class="fm-pill" style="background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>Offline</span></sc-if>
+</span>
+<h2 style="margin: 14px 0 0; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em">{{c.id}}</h2>
+<span style="display: block; margin-top: 4px; font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.02em; color: {{c.reasonColor}}">{{c.reason}}</span>
+<span style="display: block; margin-top: 4px; font-size: 13px; line-height: 18px; color: var(--ink2)">{{c.meta}}</span>
+<a class="fm-more" href="{{c.href}}" onClick="{{c.go}}">{{c.link}} <span aria-hidden="true">›</span></a>
+</article>
+</sc-for>
+</section>
+</sc-if>
+
+<section aria-label="Filter" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 20px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<button class="fm-fp" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}">{{c.label}} <span class="fm-fpn" style="font-weight: 600; color: {{c.numColor}}">{{c.count}}</span></button>
+</sc-for>
+<span style="margin-left: auto; font-size: 13px; color: var(--ink2)">{{showing}} · most urgent first</span>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px">
+
+<section class="fm-tablecol fm-tile" aria-label="Robots" style="grid-column: span 7; display: flex; flex-direction: column; overflow: hidden">
+<div style="padding: 22px 24px 12px">
+<h2 style="margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -0.025em">Robots</h2>
+</div>
+<div class="fm-scroll" style="height: 572px; overflow-y: auto; padding-bottom: 10px">
+<div class="fm-tableinner" role="table" aria-label="Robots, most urgent first">
+<div role="row" class="fm-cols" style="position: sticky; top: 0; z-index: 3; height: 32px; padding: 0 20px; background: var(--tile); border-bottom: 0.5px solid var(--line); font-size: 12px; font-weight: 500; color: var(--ink2)">
+<span role="columnheader">Robot</span>
+<span role="columnheader" class="fm-c-site">Site</span>
+<span role="columnheader">Status</span>
+<span role="columnheader">Battery</span>
+<span role="columnheader">Last seen</span>
+<span role="columnheader">Current task</span>
+<span role="columnheader" class="fm-c-pos" style="text-align: right">Position</span>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<div role="row" class="fm-cols fm-row {{r.flash}}" style="--fl: {{r.flashTint}}; background: {{r.rowBg}}; color: {{r.valueColor}}; font-size: 13px" onMouseEnter="{{r.enter}}" onMouseLeave="{{r.leave}}">
+<span role="cell" style="display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 16px">
+<a href="{{r.href}}" style="font-weight: 600; text-decoration: none; color: var(--ink)">{{r.id}}</a>
+<span class="fm-wide" style="font-size: 11px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.model}}</span>
+<span class="fm-narrow" style="font-size: 11px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.site}}</span>
+</span>
+<span role="cell" class="fm-c-site" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px">{{r.site}}</span>
+<span role="cell">
+<sc-if value="{{r.isOk}}" hint-placeholder-val="{{true}}"><span style="display: inline-flex; align-items: center; gap: 7px; color: var(--ink2)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"></circle><path d="m5.3 8.2 1.8 1.8 3.6-3.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></sc-if>
+<sc-if value="{{r.isLow}}" hint-placeholder-val="{{false}}"><span class="fm-pill" style="background: var(--amb-tint); color: var(--amb-text)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.4"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>Low Battery</span></sc-if>
+<sc-if value="{{r.isErr}}" hint-placeholder-val="{{false}}"><span class="fm-pill" style="background: var(--err-tint); color: var(--err-text)"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.9 1.6a1.27 1.27 0 0 1 2.2 0l5.3 9.4A1.27 1.27 0 0 1 12.3 13H1.7A1.27 1.27 0 0 1 .6 11L5.9 1.6Z" fill="currentColor"></path><path d="M7 4.9v3.2" stroke="var(--tile)" stroke-width="1.5" stroke-linecap="round"></path><circle cx="7" cy="10.2" r=".85" fill="var(--tile)"></circle></svg>Error</span></sc-if>
+<sc-if value="{{r.isOff}}" hint-placeholder-val="{{false}}"><span class="fm-pill" style="background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>Offline</span></sc-if>
+</span>
+<span role="cell" style="display: flex; align-items: center; gap: 7px">
+<span aria-hidden="true" style="position: relative; width: 25px; height: 12px; border-radius: 3.5px; box-shadow: inset 0 0 0 1px {{r.battRim}}; padding: 2px">
+<span style="display: block; height: 100%; width: {{r.battW}}; min-width: 2px; border-radius: 1.5px; background: {{r.battFill}}; transition: width 700ms var(--spring)"></span>
+<span style="position: absolute; right: -3px; top: 4px; width: 1.5px; height: 4px; border-radius: 0 1px 1px 0; background: {{r.battRim}}"></span>
+</span>
+<span style="color: {{r.battColor}}; font-weight: {{r.battWeight}}">{{r.battery}}%</span>
+</span>
+<span role="cell" style="white-space: nowrap; color: {{r.agoColor}}; font-weight: {{r.agoWeight}}">{{r.ago}}</span>
+<span role="cell" title="{{r.task}}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px; color: {{r.taskColor}}; font-weight: {{r.taskWeight}}"><sc-if value="{{r.isCharging}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="vertical-align: -1px; margin-right: 4px; color: var(--ink2)"><path d="M9.2 1.75 3.6 9h4.1l-1 5.25L12.4 7H8.3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></sc-if>{{r.task}}</span>
+<span role="cell" class="fm-c-pos" style="text-align: right; color: var(--ink2); font-size: 12px">{{r.pos}}</span>
+</div>
+</sc-for>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+<div style="padding: 72px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px">
+<span style="font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em">No matching robots.</span>
+<span style="font-size: 17px; line-height: 24px; color: var(--ink3); max-width: 380px">{{noResultsDetail}}</span>
+<button onClick="{{clearFilters}}" style="margin-top: 16px; height: 36px; padding: 0 20px; border: 0; border-radius: 18px; background: var(--accent); color: #FFFFFF; font-size: 14px; font-weight: 500; cursor: pointer">Clear filters</button>
+</div>
+</sc-if>
+</div>
+</div>
+</section>
+
+<section class="fm-mapcol fm-tile" aria-label="Floor plans" style="grid-column: span 5; display: flex; flex-direction: column; overflow: hidden">
+<div style="display: flex; align-items: baseline; gap: 12px; padding: 22px 24px 12px; flex-wrap: wrap">
+<h2 style="margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -0.025em">Floor plan</h2>
+<a class="fm-more" href="FloorPlan.dc.html" style="margin: 0; padding: 0; font-size: 13px">Open <span aria-hidden="true">›</span></a>
+<span style="margin-left: auto; display: flex; gap: 12px; font-size: 11px; color: var(--ink2); align-items: center">
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--dotok)"></span>OK</span>
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--amb)"></span>Low</span>
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--err)"></span>Error</span>
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px dashed var(--off)"></span>Offline</span>
+</span>
+</div>
+<div style="height: 572px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding: 4px 24px 24px">
+<sc-for list="{{mapSites}}" as="st" hint-placeholder-count="3">
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 8px">
+<figcaption style="display: flex; align-items: baseline; gap: 8px; font-size: 13px">
+<span style="font-weight: 600">{{st.name}}</span>
+<span style="color: var(--ink2)">{{st.meta}}</span>
+<span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{st.attColor}}">{{st.att}}</span>
+</figcaption>
+<div style="position: relative; width: 100%; aspect-ratio: 64 / 28; border-radius: 12px; background: var(--plan)">
+<sc-for list="{{st.zones}}" as="z" hint-placeholder-count="2">
+<div class="fm-zone" style="left: {{z.l}}%; top: {{z.t}}%; width: {{z.w}}%; height: {{z.h}}%"><span class="fm-zlabel">{{z.label}}</span></div>
+</sc-for>
+<sc-for list="{{st.racks}}" as="k" hint-placeholder-count="6">
+<div class="fm-rack" style="left: {{k.l}}%; top: {{k.t}}%; width: {{k.w}}%; height: {{k.h}}%"></div>
+</sc-for>
+<sc-for list="{{st.dots}}" as="d" hint-placeholder-count="12">
+<div class="fm-pin" style="left: {{d.l}}%; top: {{d.t}}%; z-index: {{d.z}}" onMouseEnter="{{d.enter}}" onMouseLeave="{{d.leave}}">
+<sc-if value="{{d.isOk}}" hint-placeholder-val="{{true}}"><span class="fm-dot fm-dot-ok {{d.hl}}" style="opacity: {{d.op}}"></span></sc-if>
+<sc-if value="{{d.isProb}}" hint-placeholder-val="{{false}}">
+<span class="fm-foot"></span>
+<span class="fm-pinm {{d.hl}}" style="opacity: {{d.op}}">
+<span class="fm-phead {{d.headCls}}" style="{{d.headCss}}">
+<sc-if value="{{d.isLow}}" hint-placeholder-val="{{false}}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.7"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{d.isErr}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.2v6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"></path><circle cx="8" cy="12.9" r="1.45" fill="currentColor"></circle></svg></sc-if>
+<sc-if value="{{d.isOff}}" hint-placeholder-val="{{false}}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg></sc-if>
+</span>
+<span class="fm-ptail" style="background: {{d.tail}}"></span>
+</span>
+</sc-if>
+<sc-if value="{{d.showTag}}" hint-placeholder-val="{{false}}"><span class="fm-tag" style="color: {{d.labelColor}}">{{d.id}}</span></sc-if>
+<sc-if value="{{d.showPop}}" hint-placeholder-val="{{false}}">
+<div class="fm-pop" style="left: {{d.popLeft}}; transform: {{d.popX}}">
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 15px; font-weight: 700; letter-spacing: -0.02em">{{d.id}}</span><span style="font-size: 11px; font-weight: 600; color: {{d.labelColor}}">{{d.statusLabel}}</span></span>
+<span style="display: block; margin-top: 2px; color: var(--ink2)">{{d.model}} · {{d.ago}}</span>
+<span style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid var(--line)"><span style="color: var(--ink2)">Battery</span><span style="font-weight: 600">{{d.battery}}%</span></span>
+<span style="display: flex; justify-content: space-between; gap: 12px; margin-top: 4px"><span style="color: var(--ink2)">Task</span><span style="font-weight: 500; text-align: right">{{d.task}}</span></span>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</figure>
+</sc-for>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"filter":{"editor":"enum","options":["all","ok","low","error","offline"],"default":"all"},"connection":{"editor":"enum","options":["live","lost"],"default":"live"},"simulate":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tick: 0, hover: null, q: '', filter: null, site: 'all' };
+  }
+  componentDidMount() {
+    this._iv = setInterval(() => this.setState((s) => ({ tick: ((s && s.tick) || 0) + 1 })), 1000);
+  }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  sites() {
+    return [
+      { key: 'hh', name: 'Hamburg DC',
+        racks: [[3,3.6,38,1.6],[3,8.6,38,1.6],[3,13.6,38,1.6],[3,18.6,38,1.6],[3,23.6,38,1.6]],
+        aisles: [[3,6.1,41,6.1],[3,11.1,41,11.1],[3,16.1,41,16.1],[3,21.1,41,21.1],[44,3,44,25]],
+        zones: [[47,2,14,10,'Charging'],[47,14,14,12,'Pack-out']], charge: [47,2,14,10] },
+      { key: 'le', name: 'Leipzig Hub',
+        racks: [[4,3,1.6,22],[9,3,1.6,22],[14,3,1.6,22],[19,3,1.6,22],[24,3,1.6,22],[29,3,1.6,22],[34,3,1.6,22]],
+        aisles: [[7.3,3,7.3,25],[12.3,3,12.3,25],[17.3,3,17.3,25],[22.3,3,22.3,25],[27.3,3,27.3,25],[32.3,3,32.3,25],[38,3,38,25]],
+        zones: [[41,2,20,10,'Inbound'],[41,15,11,11,'Charging'],[54,15,7,11,'Out']], charge: [41,15,11,11] },
+      { key: 'mu', name: 'Munich North',
+        racks: [[3,3,26,1.6],[3,7.5,26,1.6],[3,12,26,1.6],[3,16.5,26,1.6],[35,3,26,1.6],[35,7.5,26,1.6],[35,12,26,1.6],[35,16.5,26,1.6]],
+        aisles: [[3,5.3,29,5.3],[3,9.8,29,9.8],[3,14.3,29,14.3],[35,5.3,61,5.3],[35,9.8,61,9.8],[35,14.3,61,14.3],[32,2,32,19]],
+        zones: [[3,21,18,5,'Charging'],[24,21,37,5,'Staging']], charge: [3,21,18,5] }
+    ];
+  }
+
+  fleet() {
+    if (this._fleet) return this._fleet;
+    const sites = this.sites();
+    let seed = 20261104;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const models = ['Tote picker', 'Tote picker', 'Pallet mover', 'Sorter shuttle'];
+    const special = {
+      'R-009': { status: 'offline', base: 58, agoBase: 34, task: 'Pick order #4468', x: 22.6, y: 16.1 },
+      'R-017': { status: 'low', base: 14, task: 'Returning to dock', x: 44.0, y: 9.2 },
+      'R-024': { status: 'error', base: 71, task: 'Motor overcurrent', x: 17.3, y: 12.4 },
+      'R-028': { status: 'ok', base: 21, task: 'Pick order #4490', x: 27.3, y: 7.8, phase: 0 },
+      'R-032': { status: 'low', base: 9, task: 'Idle — waiting for dock', x: 38.0, y: 20.4 },
+      'R-041': { status: 'offline', base: 63, agoBase: 184, task: 'Pick order #4502', x: 48.2, y: 9.8 }
+    };
+    const robots = [];
+    for (let i = 1; i <= 50; i++) {
+      const id = 'R-' + String(i).padStart(3, '0');
+      const st = i <= 18 ? sites[0] : (i <= 35 ? sites[1] : sites[2]);
+      const roll = rnd();
+      let task;
+      if (roll < 0.55) task = 'Pick order #' + (4400 + Math.floor(rnd() * 110));
+      else if (roll < 0.7) task = 'Charging';
+      else if (roll < 0.86) task = 'Idle';
+      else task = 'Returning to dock';
+      let x, y;
+      if (task === 'Charging') {
+        const c = st.charge; x = c[0] + 1.5 + rnd() * (c[2] - 3); y = c[1] + 2 + rnd() * (c[3] - 3);
+      } else {
+        const a = st.aisles[Math.floor(rnd() * st.aisles.length)]; const t = rnd();
+        x = a[0] + (a[2] - a[0]) * t; y = a[1] + (a[3] - a[1]) * t;
+      }
+      const r = { id, model: models[Math.floor(rnd() * models.length)], site: st.name, siteKey: st.key, status: 'ok',
+        base: task === 'Charging' ? 30 + Math.floor(rnd() * 50) : 26 + Math.floor(rnd() * 72),
+        agoBase: 1, task, x, y, phase: Math.floor(rnd() * 90) };
+      robots.push(Object.assign(r, special[id] || {}));
+    }
+    this._fleet = { sites, robots };
+    return this._fleet;
+  }
+
+  live(b, tick, lost, sim) {
+    const r = Object.assign({}, b);
+    const t = lost ? 0 : tick;
+    if (r.status === 'ok' || r.status === 'low') {
+      const drift = r.task === 'Charging' ? Math.floor((t + r.phase) / 45) : -Math.floor((t + r.phase) / 95);
+      r.battery = Math.max(0, Math.min(100, r.base + drift));
+    } else r.battery = r.base;
+    if (sim && !lost && r.id === 'R-028' && tick >= 6) {
+      r.battery = 19; r.status = 'low'; r.task = 'Returning to dock'; r.changedAt = 6;
+    }
+    if (lost) r.agoS = (r.status === 'offline' ? r.agoBase : 1) + 12 + tick;
+    else r.agoS = r.status === 'offline' ? r.agoBase + tick : 1 + ((tick + r.phase) % 2);
+    return r;
+  }
+
+  ago(s) {
+    if (s < 60) return s + ' s ago';
+    return Math.floor(s / 60) + ' min ' + (s % 60) + ' s ago';
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const p = this.props || {};
+    const tick = s.tick || 0;
+    const theme = p.theme === 'dark' ? 'dark' : 'light';
+    const lost = p.connection === 'lost';
+    const sim = p.simulate !== false;
+    const filter = s.filter != null ? s.filter : (p.filter || 'all');
+    const site = s.site || 'all';
+    const q = (s.q || '').trim();
+    const fleet = this.fleet();
+    const all = fleet.robots.map((b) => this.live(b, tick, lost, sim));
+    const inSite = all.filter((r) => site === 'all' || r.siteKey === site);
+    const n = { all: inSite.length, ok: 0, low: 0, error: 0, offline: 0 };
+    inSite.forEach((r) => { n[r.status]++; });
+    const rank = { offline: 0, error: 1, low: 2, ok: 3 };
+    const byRank = (a, b) => (rank[a.status] - rank[b.status]) || (a.id < b.id ? -1 : 1);
+    const hover = s.hover;
+    const labels = { ok: 'OK', low: 'Low Battery', error: 'Error', offline: 'Offline' };
+    const tone = (st) => st === 'error' ? 'var(--err-text)' : st === 'low' ? 'var(--amb-text)' : st === 'offline' ? 'var(--off-text)' : 'var(--ink)';
+    const siteName = { all: 'all sites', hh: 'Hamburg DC', le: 'Leipzig Hub', mu: 'Munich North' }[site];
+    const where = site === 'all' ? ' across 3 sites.' : ' at ' + siteName + '.';
+
+    const siteTabs = [['all', 'All Sites'], ['hh', 'Hamburg DC'], ['le', 'Leipzig Hub'], ['mu', 'Munich North']].map(([k, label]) => ({
+      label, pressed: site === k ? 'true' : 'false', pick: () => this.setState({ site: k })
+    }));
+
+    const att = n.low + n.error + n.offline;
+    let headA, headB;
+    if (lost) { headA = 'Live updates paused.'; headB = 'Showing the fleet as of 14:03:00. ' + att + ' robot' + (att === 1 ? '' : 's') + ' needed attention then.'; }
+    else if (att === 0) { headA = 'All robots are running normally.'; headB = n.all + ' robots' + where; }
+    else { headA = att + ' robot' + (att === 1 ? ' needs' : 's need') + ' your attention.'; headB = n.ok + ' of ' + n.all + ' are running normally' + where; }
+
+    const cards = inSite.filter((r) => r.status !== 'ok').sort(byRank).map((r) => {
+      const st = r.status;
+      const page = r.id === 'R-017' ? 'Detail.dc.html' : (r.id === 'R-041' ? 'Detail-Offline.dc.html' : null);
+      return {
+        id: r.id, isLow: st === 'low', isErr: st === 'error', isOff: st === 'offline',
+        reason: st === 'low' ? r.battery + '% battery' : st === 'error' ? r.task : 'Last seen ' + this.ago(r.agoS),
+        reasonColor: st === 'offline' ? 'var(--ink)' : tone(st),
+        meta: st === 'low' ? r.task + ' · ' + r.site : st === 'error' ? 'Stopped · ' + r.site : 'Last task: ' + r.task + ' · ' + r.site,
+        href: page || '#',
+        link: page ? 'View details' : 'Show on map',
+        go: page ? undefined : (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ hover: r.id }); },
+        cls: (hover === r.id ? 'fm-card-hl' : '') + (r.changedAt != null && tick - r.changedAt < 2 ? ' fm-in' : ''),
+        enter: () => this.setState({ hover: r.id }),
+        leave: () => this.setState({ hover: null })
+      };
+    });
+
+    const defs = [['all', 'All'], ['ok', 'OK'], ['low', 'Low battery'], ['error', 'Error'], ['offline', 'Offline']];
+    const chips = defs.map(([key, label]) => {
+      const count = n[key];
+      const problem = key === 'low' || key === 'error' || key === 'offline';
+      const active = filter === key;
+      return { label, count,
+        numColor: problem && count > 0 ? (key === 'offline' ? 'var(--ink)' : tone(key)) : 'var(--ink2)',
+        pressed: active ? 'true' : 'false',
+        pick: () => this.setState({ filter: active && key !== 'all' ? 'all' : key }) };
+    });
+
+    const ql = q.toLowerCase();
+    const list = inSite
+      .filter((r) => filter === 'all' || r.status === filter)
+      .filter((r) => !ql || r.id.toLowerCase().indexOf(ql) >= 0 || r.model.toLowerCase().indexOf(ql) >= 0 || r.task.toLowerCase().indexOf(ql) >= 0)
+      .sort(byRank);
+
+    const rows = list.map((r) => {
+      const st = r.status;
+      const changed = r.changedAt != null && tick - r.changedAt < 2;
+      return {
+        id: r.id, site: r.site, model: r.model,
+        href: r.id === 'R-017' ? 'Detail.dc.html' : (r.id === 'R-041' ? 'Detail-Offline.dc.html' : '#'),
+        isOk: st === 'ok', isLow: st === 'low', isErr: st === 'error', isOff: st === 'offline',
+        battery: r.battery, battW: r.battery + '%',
+        battFill: st === 'low' ? 'var(--amb)' : (st === 'offline' ? 'var(--off)' : 'var(--ink)'),
+        battRim: st === 'low' ? 'var(--amb)' : 'var(--ink2)',
+        battColor: st === 'low' ? 'var(--amb-text)' : (st === 'offline' ? 'var(--off-text)' : 'inherit'),
+        battWeight: st === 'low' ? 600 : 400,
+        ago: this.ago(r.agoS),
+        agoColor: st === 'offline' ? 'var(--ink)' : (lost ? 'var(--amb-text)' : 'var(--ink2)'),
+        agoWeight: st === 'offline' || lost ? 600 : 400,
+        task: r.task,
+        taskColor: st === 'error' ? 'var(--err-text)' : (st === 'offline' ? 'var(--off-text)' : 'inherit'),
+        taskWeight: st === 'error' ? 600 : 400,
+        isCharging: r.task === 'Charging',
+        pos: r.x.toFixed(1) + ', ' + r.y.toFixed(1) + ' m',
+        rowBg: hover === r.id ? 'var(--raise)' : 'transparent',
+        valueColor: lost ? 'var(--ink2)' : 'var(--ink)',
+        flash: changed ? 'fm-flash' : '',
+        flashTint: st === 'low' ? 'var(--amb-tint)' : st === 'error' ? 'var(--err-tint)' : 'var(--sel)',
+        enter: () => this.setState({ hover: r.id }),
+        leave: () => this.setState({ hover: null })
+      };
+    });
+
+    const W = 64, H = 28;
+    const pc = (v, d) => (v / d * 100).toFixed(2);
+    const shown = site === 'all' ? fleet.sites : fleet.sites.filter((x) => x.key === site);
+    const visible = {};
+    list.forEach((r) => { visible[r.id] = true; });
+    const mapSites = shown.map((st) => {
+      const rs = all.filter((r) => r.siteKey === st.key);
+      const a = rs.filter((r) => r.status !== 'ok').length;
+      return {
+        name: st.name, meta: rs.length + ' robots',
+        att: a ? a + ' need attention' : 'All OK',
+        attColor: a ? 'var(--ink)' : 'var(--ink2)',
+        racks: st.racks.map((k) => ({ l: pc(k[0], W), t: pc(k[1], H), w: pc(k[2], W), h: pc(k[3], H) })),
+        zones: st.zones.map((z) => ({ l: pc(z[0], W), t: pc(z[1], H), w: pc(z[2], W), h: pc(z[3], H), label: z[4] })),
+        dots: rs.map((r) => {
+          const problem = r.status !== 'ok';
+          const hl = hover === r.id;
+          const right = r.x > 38;
+          return {
+            id: r.id, status: r.status, l: pc(r.x, W), t: pc(r.y, H),
+            isOk: !problem, isProb: problem,
+            isLow: r.status === 'low', isErr: r.status === 'error', isOff: r.status === 'offline',
+            headCls: r.status === 'error' ? 'fm-phead-err' : '',
+            headCss: r.status === 'error' ? 'background: var(--err); color: #FFFFFF' : r.status === 'low' ? 'background: var(--amb); color: #FFFFFF' : 'background: var(--raise); color: var(--off-text); box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 3px 10px rgba(0,0,0,.12), inset 0 0 0 1.5px var(--off)',
+            tail: r.status === 'error' ? 'var(--err)' : r.status === 'low' ? 'var(--amb)' : 'var(--off)',
+            z: hl ? 9 : (problem ? 3 : 1),
+            hl: hl ? 'fm-dot-hl' : '',
+            op: visible[r.id] ? 1 : 0.2,
+            showTag: problem && !hl, showPop: hl,
+            popLeft: right ? '-16px' : '16px',
+            popX: right ? 'translate(-100%, -50%)' : 'translateY(-50%)',
+            statusLabel: labels[r.status], model: r.model, ago: this.ago(r.agoS), battery: r.battery, task: r.task,
+            labelColor: tone(r.status),
+            enter: () => this.setState({ hover: r.id }),
+            leave: () => this.setState({ hover: null })
+          };
+        })
+      };
+    });
+
+    const base = 14 * 3600 + 3 * 60 + 12 + tick;
+    const two = (v) => String(v).padStart(2, '0');
+    const filterName = { all: 'all robots', ok: 'OK', low: 'Low battery', error: 'Error', offline: 'Offline' }[filter];
+
+    return {
+      theme, isLost: lost, isLive: !lost,
+      clock: two(Math.floor(base / 3600) % 24) + ':' + two(Math.floor(base / 60) % 60) + ':' + two(base % 60),
+      lostFor: this.ago(12 + tick).replace(' ago', ''),
+      siteTabs, q: s.q || '',
+      onSearch: (e) => this.setState({ q: e.target.value }),
+      clearFilters: () => this.setState({ q: '', filter: 'all', site: 'all' }),
+      headA, headB, hasCards: cards.length > 0, cards,
+      chips, rows, mapSites,
+      showing: rows.length + ' of ' + n.all + ' robots',
+      noResults: rows.length === 0,
+      noResultsDetail: 'Nothing matches ' + (q ? '“' + q + '” in ' : '') + filterName + ' at ' + siteName + '.'
+    };
+  }
+}
+</script>
+</body>
+</html>

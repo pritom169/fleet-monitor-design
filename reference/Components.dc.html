@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor components</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&amp;display=swap">
+<style>
+body{margin:0}
+.fc{--page:#FFFFFF;--tile:#F5F5F7;--raise:#FFFFFF;--bar:rgba(255,255,255,.8);--line:rgba(0,0,0,.1);--sep:rgba(0,0,0,.07);--fill:rgba(0,0,0,.05);--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#86868B;--dotok:#48484A;--accent:#0066CC;--sel:rgba(0,102,204,.07);--err:#D70015;--err-text:#D70015;--err-tint:rgba(215,0,21,.08);--amb:#C77700;--amb-text:#A15C00;--amb-tint:rgba(199,119,0,.1);--off:#8E8E93;--off-text:#636366;--off-tint:rgba(120,120,128,.12);--plan:#FFFFFF;--zone:#F0F0F2;--rack:#DCDCE0;--pop:0 0 0 .5px rgba(0,0,0,.08),0 12px 36px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.05);--lift:0 4px 20px rgba(0,0,0,.08);--spring:cubic-bezier(.32,.72,0,1);font-family:Inter,system-ui,sans-serif;font-optical-sizing:auto;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
+.fc-dark{--page:#000000;--tile:#161618;--raise:#232325;--line:rgba(255,255,255,.14);--sep:rgba(255,255,255,.08);--fill:rgba(255,255,255,.08);--ink:#F5F5F7;--ink2:#A1A1A6;--ink3:#86868B;--accent:#2997FF;--err:#FF453A;--err-text:#FF5A4F;--err-tint:rgba(255,69,58,.15);--amb:#FFB340;--amb-text:#FFB340;--amb-tint:rgba(255,179,64,.14);--off:#8E8E93;--off-text:#AEAEB2;--off-tint:rgba(142,142,147,.18)}
+.fc *{box-sizing:border-box}
+.fc-tile{background:var(--tile);border-radius:18px}
+.fc-sec{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;padding:56px 0;border-top:1px solid var(--sep)}
+.fc-h{grid-column:span 4}
+.fc-h h2{margin:0;font-size:32px;line-height:36px;font-weight:600;letter-spacing:-.035em}
+.fc-h h2 span{color:var(--ink3)}
+.fc-num{display:block;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--ink2)}
+.fc-body{grid-column:span 8}
+.fc-k{display:block;font-size:12px;font-weight:600;color:var(--ink2)}
+.fc-pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 7px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.fc-fp{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px 0 14px;border-radius:18px;background:var(--tile);font-size:14px;font-weight:500}
+.fc-cols{display:grid;grid-template-columns:96px 104px 120px 76px 108px minmax(0,1fr);align-items:center;height:44px;padding:0 10px;margin:0 10px;border-radius:10px;font-size:13px;position:relative}
+.fc-cols::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:1px;background:var(--sep)}
+.fc-more{display:inline-block;margin-top:auto;padding-top:14px;font-size:14px;color:var(--accent)}
+.fc-live{animation:fclive 2400ms ease-in-out infinite}
+@keyframes fclive{0%,100%{opacity:1}50%{opacity:.3}}
+.fc-spin{animation:fcspin 1100ms linear infinite}
+@keyframes fcspin{to{transform:rotate(360deg)}}
+.fc-skel{display:block;height:10px;border-radius:5px;background:rgba(0,0,0,.07)}
+.fc-shimmer{animation:fcsh 1600ms ease-in-out infinite}
+@keyframes fcsh{0%,100%{opacity:1}50%{opacity:.5}}
+.fc-halo{animation:fchalo 2200ms var(--spring) infinite}
+@keyframes fchalo{0%{box-shadow:0 0 0 2px var(--plan),0 0 0 2px var(--err-tint)}60%{box-shadow:0 0 0 2px var(--plan),0 0 0 12px transparent}100%{box-shadow:0 0 0 2px var(--plan),0 0 0 2px transparent}}
+</style>
+</helmet>
+<div class="fc" style="width: 1440px; min-height: 3400px; box-sizing: border-box; padding: 88px 40px 64px; background: var(--page); color: var(--ink)">
+
+<header style="padding-bottom: 72px">
+<span style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px">
+<svg width="28" height="28" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--ink)"></rect><circle cx="9" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="9" cy="17" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="17" r="2.6" fill="var(--page)"></circle></svg>
+<span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em">Fleet Monitor</span>
+</span>
+<h1 style="margin: 0; max-width: 1100px; font-size: 72px; line-height: 76px; font-weight: 600; letter-spacing: -0.045em">Components. <span style="color: var(--ink3)">Calm when everything is fine. Clear the moment something is not.</span></h1>
+</header>
+
+<section class="fc-sec" aria-label="Headline">
+<div class="fc-h"><span class="fc-num">01</span><h2>The headline. <span>It is the answer.</span></h2></div>
+<div class="fc-body" style="display: flex; flex-direction: column; gap: 16px">
+<div class="fc-tile" style="padding: 32px">
+<span class="fc-k" style="margin-bottom: 12px">Problems · overview</span>
+<span style="display: block; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.035em">5 robots need your attention. <span style="color: var(--ink3)">45 of 50 are running normally across 3 sites.</span></span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div class="fc-tile" style="padding: 28px"><span class="fc-k" style="margin-bottom: 10px">Nothing wrong</span><span style="display: block; font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em">All robots are running normally. <span style="color: var(--ink3)">18 robots at Hamburg DC.</span></span></div>
+<div class="fc-tile" style="padding: 28px"><span class="fc-k" style="margin-bottom: 10px">Robot detail · offline</span><span style="display: block; font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em">R-041 is offline. <span style="color: var(--ink3)">No report for 3 min 4 s. We do not know its state.</span></span></div>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: var(--ink2)">The ink sentence is the fact, and the grey sentence is the context. The headline is written from live data, so it always answers “Which robots need my attention right now?” first. The grey #86868B is for text at 24 px and larger only (3.6:1, AA large).</p>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Type">
+<div class="fc-h"><span class="fc-num">02</span><h2>Type. <span>One family, many voices.</span></h2></div>
+<div class="fc-body fc-tile" style="padding: 12px 28px">
+<div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--sep)"><span class="fc-k">112 · Bold · −6%</span><span style="font-size: 112px; line-height: 104px; font-weight: 700; letter-spacing: -0.06em; color: var(--amb-text)">14<span style="font-size: 44px; letter-spacing: -0.03em">%</span></span></div>
+<div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--sep)"><span class="fc-k">56 / 48 · Semibold · −4%</span><span style="font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.035em">Headline sentence.</span></div>
+<div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--sep)"><span class="fc-k">28 · Bold · −3%</span><span style="font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em">R-017</span></div>
+<div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--sep)"><span class="fc-k">21 / 17 · Semibold</span><span style="font-size: 21px; line-height: 26px; font-weight: 600; letter-spacing: -0.025em">Robots · Floor plan · 14% battery</span></div>
+<div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--sep)"><span class="fc-k">14 / 13 · Regular</span><span style="font-size: 14px; line-height: 20px">Body and table cells. Pick order #4471 · 23.4, 9.8 m</span></div>
+<div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; padding: 14px 0"><span class="fc-k">12 · Medium / Semibold</span><span style="font-size: 12px; font-weight: 500; color: var(--ink2)">Navigation, captions, column headers, pill labels</span></div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Colour">
+<div class="fc-h"><span class="fc-num">03</span><h2>Colour. <span>Grey for fine. Colour for problems. Blue for links.</span></h2></div>
+<div class="fc-body" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="width: 36px; height: 36px; border-radius: 50%; background: #1D1D1F"></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em">Ink</span><span style="font-size: 12px; color: var(--ink2)">#1D1D1F · 16.8:1<br>Dark #F5F5F7</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="width: 36px; height: 36px; border-radius: 50%; background: #6E6E73"></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em">Secondary</span><span style="font-size: 12px; color: var(--ink2)">#6E6E73 · 4.8:1 on tile<br>Dark #A1A1A6 · 6.9:1</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="width: 36px; height: 36px; border-radius: 50%; background: #86868B"></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em">Headline grey</span><span style="font-size: 12px; color: var(--ink2)">#86868B · 3.6:1<br>24 px and larger only</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="width: 36px; height: 36px; border-radius: 50%; background: #0066CC"></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--accent)">Link</span><span style="font-size: 12px; color: var(--ink2)">#0066CC · 5.1:1 on tile<br>Dark #2997FF · 5.6:1</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="width: 36px; height: 36px; border-radius: 50%; background: #D70015"></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--err-text)">Error</span><span style="font-size: 12px; color: var(--ink2)">#D70015 · 4.9:1 on tile<br>Dark #FF5A4F · 5.5:1</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="display: flex; gap: 6px"><span style="width: 36px; height: 36px; border-radius: 50%; background: #A15C00"></span><span style="width: 36px; height: 36px; border-radius: 50%; background: #C77700"></span></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--amb-text)">Low battery</span><span style="font-size: 12px; color: var(--ink2)">Text #A15C00 · 4.8:1<br>Mark #C77700 · 3.5:1 · Dark #FFB340</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="display: flex; gap: 6px"><span style="width: 36px; height: 36px; border-radius: 50%; background: #636366"></span><span style="width: 36px; height: 36px; border-radius: 50%; border: 2px dashed #8E8E93"></span></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--off-text)">Offline</span><span style="font-size: 12px; color: var(--ink2)">Text #636366 · 5.5:1<br>Mark #8E8E93, always dashed</span></div>
+<div class="fc-tile" style="padding: 22px; min-height: 168px; display: flex; flex-direction: column"><span style="display: flex; gap: 6px"><span style="width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12)"></span><span style="width: 36px; height: 36px; border-radius: 50%; background: #000000"></span><span style="width: 36px; height: 36px; border-radius: 50%; background: #161618; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12)"></span></span><span style="margin-top: auto; font-size: 17px; font-weight: 600; letter-spacing: -0.02em">Surfaces</span><span style="font-size: 12px; color: var(--ink2)">Page #FFF · tile #F5F5F7<br>Dark page #000 · tile #161618</span></div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Attention cards">
+<div class="fc-h"><span class="fc-num">04</span><h2>Attention cards. <span>One per robot that needs you.</span></h2><p style="margin: 16px 0 0; font-size: 14px; line-height: 21px; color: var(--ink2)">Cards appear only for problems, most urgent first. A new problem rises in over 0.9 s. Hover lifts the card and links it to the row and the map dot.</p></div>
+<div class="fc-body" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<article class="fc-tile" style="display: flex; flex-direction: column; min-height: 188px; padding: 20px">
+<span><span class="fc-pill" style="background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>Offline</span></span>
+<span style="margin-top: 14px; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em">R-041</span>
+<span style="margin-top: 4px; font-size: 17px; font-weight: 600; letter-spacing: -0.02em">Last seen 3 min 4 s ago</span>
+<span style="margin-top: 4px; font-size: 13px; color: var(--ink2)">Last task: Pick order #4502 · Munich North</span>
+<span class="fc-more">View details ›</span>
+</article>
+<article class="fc-tile" style="display: flex; flex-direction: column; min-height: 188px; padding: 20px">
+<span><span class="fc-pill" style="background: var(--err); color: #FFFFFF"><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.9 1.6a1.27 1.27 0 0 1 2.2 0l5.3 9.4A1.27 1.27 0 0 1 12.3 13H1.7A1.27 1.27 0 0 1 .6 11L5.9 1.6Z" fill="currentColor"></path><path d="M7 4.9v3.2" stroke="var(--err)" stroke-width="1.5" stroke-linecap="round"></path><circle cx="7" cy="10.2" r=".85" fill="var(--err)"></circle></svg>Error</span></span>
+<span style="margin-top: 14px; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em">R-024</span>
+<span style="margin-top: 4px; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--err-text)">Motor overcurrent</span>
+<span style="margin-top: 4px; font-size: 13px; color: var(--ink2)">Stopped · Leipzig Hub</span>
+<span class="fc-more">Show on map ›</span>
+</article>
+<article class="fc-tile" style="display: flex; flex-direction: column; min-height: 188px; padding: 20px; background: var(--raise); box-shadow: var(--lift); transform: scale(1.015)">
+<span><span class="fc-pill" style="background: var(--amb-tint); color: var(--amb-text)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.4"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>Low Battery</span></span>
+<span style="margin-top: 14px; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em">R-017</span>
+<span style="margin-top: 4px; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--amb-text)">14% battery</span>
+<span style="margin-top: 4px; font-size: 13px; color: var(--ink2)">Returning to dock · Hamburg DC</span>
+<span class="fc-more">View details ›</span>
+</article>
+<div style="display: flex; flex-direction: column; justify-content: center; gap: 6px; font-size: 13px; line-height: 19px; color: var(--ink2)">
+<span style="font-weight: 600; color: var(--ink)">Anatomy</span>
+<span>Status capsule</span>
+<span>Robot ID · 28 Bold</span>
+<span>The reason · 17 Semibold, in the status colour</span>
+<span>Context · 13</span>
+<span>One action · link ›</span>
+<span style="margin-top: 6px">Third card: the hover state.</span>
+</div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Navigation and filters">
+<div class="fc-h"><span class="fc-num">05</span><h2>Navigation and filters. <span>Small, quiet, always there.</span></h2></div>
+<div class="fc-body" style="display: flex; flex-direction: column; gap: 16px">
+<div class="fc-tile" style="padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 22px; font-size: 12px">
+<span style="display: flex; align-items: center; gap: 9px"><svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--ink)"></rect><circle cx="9" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="9" cy="17" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="17" r="2.6" fill="var(--page)"></circle></svg><span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em">Fleet Monitor</span></span>
+<span style="margin-left: auto; font-weight: 600">All Sites</span><span style="color: var(--ink2)">Hamburg DC</span><span style="color: var(--ink2)">Leipzig Hub</span><span style="color: var(--ink2)">Munich North</span>
+<span style="display: inline-flex; align-items: center; gap: 7px; width: 170px; height: 29px; padding: 0 10px; border-radius: 15px; background: var(--fill); color: var(--ink2)"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="4.4" stroke="currentColor" stroke-width="1.5"></circle><path d="m9.4 9.4 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>Search robots</span>
+<span style="display: inline-flex; align-items: center; gap: 7px; font-weight: 500"><span class="fc-live" style="width: 7px; height: 7px; border-radius: 50%; background: var(--ink)"></span>Live <span style="color: var(--ink2); font-weight: 400">14:03:12</span></span>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+<span class="fc-fp" style="background: var(--ink); color: var(--page)">All <span style="font-weight: 600">50</span></span>
+<span class="fc-fp">OK <span style="font-weight: 600; color: var(--ink2)">45</span></span>
+<span class="fc-fp">Low battery <span style="font-weight: 600; color: var(--amb-text)">2</span></span>
+<span class="fc-fp">Error <span style="font-weight: 600; color: var(--err-text)">1</span></span>
+<span class="fc-fp">Offline <span style="font-weight: 600">2</span></span>
+<span class="fc-fp" style="background: var(--fill)">Hover</span>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 21px; color: var(--ink2)">The frosted bar stays at the top while the page scrolls. The selected filter is a solid ink capsule, because selection is neutral. A count turns red or amber only when it is above zero. Blue is kept for links that go somewhere.</p>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Table rows">
+<div class="fc-h"><span class="fc-num">06</span><h2>Table rows. <span>Dense, but never crowded.</span></h2><p style="margin: 16px 0 0; font-size: 14px; line-height: 21px; color: var(--ink2)">Rows re-order only when a status changes. Then the row fills with the new status tint and fades out over 1.8 s. Battery and time values update in place, and tabular numerals keep each column still.</p></div>
+<div class="fc-body fc-tile" style="padding: 12px 0">
+<div class="fc-cols" style="height: 32px; font-size: 12px; font-weight: 500; color: var(--ink2)"><span>Robot</span><span>Site</span><span>Status</span><span>Battery</span><span>Last seen</span><span>Current task</span></div>
+<div class="fc-cols"><span style="font-weight: 600">R-003</span><span>Hamburg DC</span><span style="display: inline-flex; align-items: center; gap: 7px; color: var(--ink2)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"></circle><path d="m5.3 8.2 1.8 1.8 3.6-3.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span><span>78%</span><span style="color: var(--ink2)">1 s ago</span><span>Pick order #4433</span></div>
+<div class="fc-cols" style="background: var(--raise)"><span style="font-weight: 600">R-004</span><span>Hamburg DC</span><span style="display: inline-flex; align-items: center; gap: 7px; color: var(--ink2)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"></circle><path d="m5.3 8.2 1.8 1.8 3.6-3.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span><span>55%</span><span style="color: var(--ink2)">2 s ago</span><span>Idle <span style="color: var(--ink2)">· hover</span></span></div>
+<div class="fc-cols"><span style="font-weight: 600">R-017</span><span>Hamburg DC</span><span><span class="fc-pill" style="background: var(--amb-tint); color: var(--amb-text)">Low Battery</span></span><span style="color: var(--amb-text); font-weight: 600">14%</span><span style="color: var(--ink2)">1 s ago</span><span>Returning to dock</span></div>
+<div class="fc-cols"><span style="font-weight: 600">R-024</span><span>Leipzig Hub</span><span><span class="fc-pill" style="background: var(--err-tint); color: var(--err-text)">Error</span></span><span>71%</span><span style="color: var(--ink2)">1 s ago</span><span style="color: var(--err-text); font-weight: 600">Motor overcurrent</span></div>
+<div class="fc-cols"><span style="font-weight: 600">R-041</span><span>Munich North</span><span><span class="fc-pill" style="background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)">Offline</span></span><span style="color: var(--off-text)">63%</span><span style="font-weight: 600">3 min 4 s ago</span><span style="color: var(--off-text)">Pick order #4502</span></div>
+<div class="fc-cols" style="background: var(--amb-tint)"><span style="font-weight: 600">R-028</span><span>Leipzig Hub</span><span><span class="fc-pill" style="background: var(--amb-tint); color: var(--amb-text)">Low Battery</span></span><span style="color: var(--amb-text); font-weight: 600">19%</span><span style="color: var(--ink2)">1 s ago</span><span>Returning to dock <span style="color: var(--ink2)">· just changed</span></span></div>
+<div class="fc-cols"><span style="font-weight: 600">R-051</span><span>Munich North</span><span><span class="fc-pill" style="color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)">Never reported</span></span><span style="color: var(--off-text)">—</span><span style="color: var(--off-text)">Never</span><span style="color: var(--off-text)">Registered 13:20 · waiting for first report</span></div>
+<div class="fc-cols" style="color: var(--ink2)"><span style="font-weight: 600; color: var(--ink)">R-003</span><span>Hamburg DC</span><span style="display: inline-flex; align-items: center; gap: 7px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"></circle><path d="m5.3 8.2 1.8 1.8 3.6-3.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span><span>78%</span><span style="color: var(--amb-text); font-weight: 600">27 s ago</span><span>Pick order #4433 · stale, link lost</span></div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Map">
+<div class="fc-h"><span class="fc-num">07</span><h2>Map and popover. <span>Problems lift off the floor.</span></h2></div>
+<div class="fc-body fc-tile" style="padding: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: center">
+<div style="position: relative; height: 220px; border-radius: 14px; background: var(--plan)">
+<div style="position: absolute; left: 8%; top: 24%; width: 56%; height: 7%; border-radius: 2px; background: var(--rack)"></div>
+<div style="position: absolute; left: 8%; top: 56%; width: 56%; height: 7%; border-radius: 2px; background: var(--rack)"></div>
+<div style="position: absolute; left: 70%; top: 10%; width: 24%; height: 80%; border-radius: 8px; background: var(--zone)"><span style="position: absolute; left: 8px; top: 6px; font-size: 10px; font-weight: 600; color: var(--ink2)">Charging</span></div>
+<span style="position: absolute; left: 16%; top: 42%; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--dotok); box-shadow: 0 0 0 1.5px var(--plan)"></span>
+<span style="position: absolute; left: 30%; top: 42%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--amb); box-shadow: 0 0 0 2px var(--plan), 0 0 0 6px var(--amb-tint)"></span>
+<span class="fc-halo" style="position: absolute; left: 44%; top: 42%; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--err)"></span>
+<span style="position: absolute; left: 58%; top: 42%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--plan); border: 1.5px dashed var(--off)"></span>
+<span style="position: absolute; left: 16%; top: 78%; transform: translateX(-50%); font-size: 11px; color: var(--ink2)">OK</span>
+<span style="position: absolute; left: 30%; top: 78%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--amb-text)">Low</span>
+<span style="position: absolute; left: 44%; top: 78%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--err-text)">Error</span>
+<span style="position: absolute; left: 58%; top: 78%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--off-text)">Offline</span>
+</div>
+<div style="width: 220px; padding: 14px; border-radius: 14px; background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); box-shadow: var(--pop); font-size: 12px">
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 15px; font-weight: 700; letter-spacing: -0.02em">R-024</span><span style="font-size: 11px; font-weight: 600; color: var(--err-text)">Error</span></span>
+<span style="display: block; margin-top: 2px; color: var(--ink2)">Tote picker · 1 s ago</span>
+<span style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid var(--line)"><span style="color: var(--ink2)">Battery</span><span style="font-weight: 600">71%</span></span>
+<span style="display: flex; justify-content: space-between; margin-top: 4px"><span style="color: var(--ink2)">Task</span><span style="font-weight: 500">Motor overcurrent</span></span>
+</div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Banner and states">
+<div class="fc-h"><span class="fc-num">08</span><h2>Banner and states. <span>Honest about what we know.</span></h2></div>
+<div class="fc-body" style="display: flex; flex-direction: column; gap: 16px">
+<div role="status" style="border-radius: 14px; background: var(--amb-tint); min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; padding: 0 16px">
+<span style="font-weight: 600">Live updates paused. Reconnecting… Data shown may be outdated.</span>
+<span style="color: var(--ink2)">Last update 14:03:00 · 27 s ago</span>
+<span style="color: var(--accent)">Retry now ›</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<div class="fc-tile" style="padding: 24px 20px 12px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 10px"><svg class="fc-spin" width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true" style="color: var(--ink2)"><path d="M6 1.25a4.75 4.75 0 1 0 4.75 4.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>Connecting to fleet…</span>
+<div class="fc-shimmer" style="display: grid; grid-template-columns: 48px 1fr 60px; gap: 14px; align-items: center; height: 44px; border-bottom: 1px solid var(--sep)"><span class="fc-skel"></span><span class="fc-skel" style="width: 70%"></span><span class="fc-skel" style="height: 20px; border-radius: 10px"></span></div>
+<div class="fc-shimmer" style="display: grid; grid-template-columns: 48px 1fr 60px; gap: 14px; align-items: center; height: 44px; border-bottom: 1px solid var(--sep)"><span class="fc-skel"></span><span class="fc-skel" style="width: 52%"></span><span class="fc-skel" style="height: 20px; border-radius: 10px"></span></div>
+<div class="fc-shimmer" style="display: grid; grid-template-columns: 48px 1fr 60px; gap: 14px; align-items: center; height: 44px; border-bottom: 1px solid var(--sep)"><span class="fc-skel"></span><span class="fc-skel" style="width: 80%"></span><span class="fc-skel" style="height: 20px; border-radius: 10px"></span></div>
+<div class="fc-shimmer" style="display: grid; grid-template-columns: 48px 1fr 60px; gap: 14px; align-items: center; height: 44px"><span class="fc-skel"></span><span class="fc-skel" style="width: 46%"></span><span class="fc-skel" style="height: 20px; border-radius: 10px"></span></div>
+<span style="display: block; margin-top: 8px; font-size: 12px; color: var(--ink2)">The headline reads “Connecting to your fleet.” until the first report.</span>
+</div>
+<div class="fc-tile" style="padding: 40px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px">
+<span style="font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: -0.03em">No robots here yet.</span>
+<span style="font-size: 15px; line-height: 21px; color: var(--ink2)">Berlin South has no robots assigned. A robot appears after its first report.</span>
+<span style="margin-top: 10px; font-size: 14px; color: var(--accent)">Show all sites ›</span>
+</div>
+<div class="fc-tile" style="padding: 40px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px">
+<span style="font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: -0.03em">No matching robots.</span>
+<span style="font-size: 15px; line-height: 21px; color: var(--ink2)">Nothing matches “R-09” in Error at Hamburg DC.</span>
+<span style="margin-top: 14px; display: inline-flex; align-items: center; height: 36px; padding: 0 20px; border-radius: 18px; background: var(--accent); color: #FFFFFF; font-size: 14px; font-weight: 500">Clear filters</span>
+</div>
+</div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Dark">
+<div class="fc-h"><span class="fc-num">09</span><h2>Dark. <span>For the night shift.</span></h2></div>
+<div class="fc-body fc-dark" style="border-radius: 18px; background: var(--page); color: var(--ink); padding: 32px; display: flex; flex-direction: column; gap: 20px">
+<span style="font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em">5 robots need your attention. <span style="color: var(--ink3)">45 of 50 are running normally.</span></span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="background: var(--tile); border-radius: 18px; padding: 18px"><span class="fc-pill" style="background: var(--err-tint); color: var(--err-text)">Error</span><span style="display: block; margin-top: 12px; font-size: 24px; font-weight: 700; letter-spacing: -0.03em">R-024</span><span style="display: block; font-size: 15px; font-weight: 600; color: var(--err-text)">Motor overcurrent</span></div>
+<div style="background: var(--tile); border-radius: 18px; padding: 18px"><span class="fc-pill" style="background: var(--amb-tint); color: var(--amb-text)">Low Battery</span><span style="display: block; margin-top: 12px; font-size: 24px; font-weight: 700; letter-spacing: -0.03em">R-017</span><span style="display: block; font-size: 15px; font-weight: 600; color: var(--amb-text)">14% battery</span></div>
+<div style="background: var(--tile); border-radius: 18px; padding: 18px"><span class="fc-pill" style="background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)">Offline</span><span style="display: block; margin-top: 12px; font-size: 24px; font-weight: 700; letter-spacing: -0.03em">R-041</span><span style="display: block; font-size: 15px; font-weight: 600">Last seen 3 min 4 s ago</span></div>
+</div>
+<span style="font-size: 13px; color: var(--ink2)">On black, the error capsule is tinted, not filled, so it does not glare.</span>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Icons">
+<div class="fc-h"><span class="fc-num">10</span><h2>Icons. <span>One grid, one stroke, one voice.</span></h2><p style="margin: 16px 0 0; font-size: 14px; line-height: 21px; color: var(--ink2)">All icons sit on a 16 px grid with a 1.5 px stroke and round caps and joins. Only Error is a filled shape, so the worst state carries the most ink. A glyph inside a map pin is 0.2 px heavier, so it still reads at 13 px.</p></div>
+<div class="fc-body" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink2)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.25"></circle><path d="m5.3 8.2 1.8 1.8 3.6-3.9" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">OK</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--amb-text)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.25"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"></path></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">Low battery</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--err-text)"><svg width="28" height="28" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.62 2.4a1.6 1.6 0 0 1 2.76 0l5.36 9.4a1.6 1.6 0 0 1-1.38 2.4H2.64a1.6 1.6 0 0 1-1.38-2.4Z" fill="currentColor"></path><path d="M8 6.1v3.3" stroke="var(--tile)" stroke-width="1.4" stroke-linecap="round"></path><circle cx="8" cy="11.6" r=".85" fill="var(--tile)"></circle></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">Error</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--off-text)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"></path></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">Offline</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--off-text)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.25" stroke-dasharray="1.6 2.2" stroke-linecap="round"></circle><circle cx="8" cy="8" r="1" fill="currentColor"></circle></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">Never reported</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink2)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.2 1.75 3.6 9h4.1l-1 5.25L12.4 7H8.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"></path></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">Charging</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.25"></circle><path d="m10.5 10.5 3.25 3.25" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"></path></svg><span style="font-size: 12px; font-weight: 500">Search</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"></path></svg><span style="font-size: 12px; font-weight: 500">Zoom in</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.75 6V3.75a1 1 0 0 1 1-1H6M10 2.75h2.25a1 1 0 0 1 1 1V6M13.25 10v2.25a1 1 0 0 1-1 1H10M6 13.25H3.75a1 1 0 0 1-1-1V10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"></path></svg><span style="font-size: 12px; font-weight: 500">Fit to view</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 3.75A1.75 1.75 0 0 1 3.75 2h4.1a1.75 1.75 0 0 1 1.24.51l4.4 4.4a1.75 1.75 0 0 1 0 2.48l-4.1 4.1a1.75 1.75 0 0 1-2.48 0l-4.4-4.4A1.75 1.75 0 0 1 2 7.85Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"></path><circle cx="5.5" cy="5.5" r="1" fill="currentColor"></circle></svg><span style="font-size: 12px; font-weight: 500">Labels</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="12.5" cy="3.5" r="1.75" fill="currentColor"></circle><circle cx="8.6" cy="6.4" r="1.25" fill="currentColor" opacity=".6"></circle><circle cx="5.6" cy="9.6" r="1" fill="currentColor" opacity=".38"></circle><circle cx="3.2" cy="12.8" r=".8" fill="currentColor" opacity=".2"></circle></svg><span style="font-size: 12px; font-weight: 500">Trails</span></div>
+<div class="fc-tile" style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--accent)"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-size: 12px; font-weight: 500; color: var(--ink)">Go to</span></div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Map pins and controls">
+<div class="fc-h"><span class="fc-num">11</span><h2>Pins and map controls. <span>Problems stand up. The rest stays flat.</span></h2><p style="margin: 16px 0 0; font-size: 14px; line-height: 21px; color: var(--ink2)">A problem robot is a pin with a glyph and a short tail to its exact spot. A healthy robot is a 9 px dot. A pin keeps its size on screen when you zoom, because its scale is the inverse of the map zoom. A selected robot gets a blue ring that breathes.</p></div>
+<div class="fc-body" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div style="position: relative; height: 260px; border-radius: 22px; background: var(--plan); box-shadow: inset 0 0 0 .5px var(--line); overflow: hidden">
+<div aria-hidden="true" style="position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(0,0,0,.08) .8px, transparent 1px); background-size: 20px 20px"></div>
+<div style="position: absolute; left: 8%; top: 64%; width: 84%; height: 5%; border-radius: 2px; background: var(--rack)"></div>
+<span style="position: absolute; left: 18%; top: 50%; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%); background: #3A3A3C; box-shadow: 0 0 0 2px var(--plan)"></span>
+<span style="position: absolute; left: 18%; top: 82%; transform: translateX(-50%); font-size: 11px; color: var(--ink2)">OK</span>
+<span style="position: absolute; left: 38%; top: 50%; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%)"><span style="width: 28px; height: 28px; border-radius: 50%; background: var(--amb); color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.12), 0 0 0 2px #FFFFFF"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.6"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></span><span style="width: 2px; height: 7px; margin-top: -1px; border-radius: 1px; background: var(--amb)"></span></span>
+<span style="position: absolute; left: 38%; top: 82%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--amb-text)">Low</span>
+<span style="position: absolute; left: 58%; top: 50%; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%)"><span style="width: 28px; height: 28px; border-radius: 50%; background: var(--err); color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.12), 0 0 0 2px #FFFFFF"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.2v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><circle cx="8" cy="12.9" r="1.35" fill="currentColor"></circle></svg></span><span style="width: 2px; height: 7px; margin-top: -1px; border-radius: 1px; background: var(--err)"></span></span>
+<span style="position: absolute; left: 58%; top: 82%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--err-text)">Error</span>
+<span style="position: absolute; left: 78%; top: 50%; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%)"><span style="width: 28px; height: 28px; border-radius: 50%; background: #FFFFFF; color: var(--off-text); display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.12), inset 0 0 0 1.5px var(--off)"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></span><span style="width: 2px; height: 7px; margin-top: -1px; border-radius: 1px; background: var(--off)"></span></span>
+<span style="position: absolute; left: 78%; top: 82%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--off-text)">Offline</span>
+<span style="position: absolute; left: 18%; top: 26%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--accent), 0 0 0 9px var(--sel)"></span>
+<span style="position: absolute; left: 22%; top: 26%; transform: translateY(-50%); font-size: 11px; color: var(--ink2)">Selected</span>
+</div>
+<div class="fc-tile" style="padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<span class="fc-k">Floating controls · frosted</span>
+<span style="display: flex; gap: 16px; align-items: flex-start">
+<span style="display: flex; flex-direction: column; border-radius: 14px; background: var(--raise); box-shadow: var(--pop); overflow: hidden">
+<span style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path></svg></span>
+<span style="margin: 0 8px; height: .5px; background: var(--line)"></span>
+<span style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path></svg></span>
+<span style="margin: 0 8px; height: .5px; background: var(--line)"></span>
+<span style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.75 6V3.75a1 1 0 0 1 1-1H6M10 2.75h2.25a1 1 0 0 1 1 1V6M13.25 10v2.25a1 1 0 0 1-1 1H10M6 13.25H3.75a1 1 0 0 1-1-1V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span>
+</span>
+<span style="display: flex; flex-direction: column; gap: 14px; flex: 1">
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px">Only robots that need attention <span style="position: relative; width: 38px; height: 23px; border-radius: 12px; background: var(--accent)"><span style="position: absolute; left: 17px; top: 2px; width: 19px; height: 19px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,.2)"></span></span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px">Show labels <span style="position: relative; width: 38px; height: 23px; border-radius: 12px; background: rgba(0,0,0,.08)"><span style="position: absolute; left: 2px; top: 2px; width: 19px; height: 19px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,.2)"></span></span></span>
+<span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 3px; padding: 3px; border-radius: 12px; background: var(--fill); font-size: 14px"><span style="height: 32px; padding: 0 16px; border-radius: 9px; background: var(--raise); box-shadow: 0 3px 8px rgba(0,0,0,.12); display: flex; align-items: center; font-weight: 600">Hamburg DC</span><span style="height: 32px; padding: 0 16px; display: flex; align-items: center; font-weight: 500">Leipzig Hub</span></span>
+</span>
+</span>
+<span style="font-size: 13px; line-height: 19px; color: var(--ink2)">The controls are 44 × 44 px, so they are easy to hit. The switch and the selected segment use the link blue, because they are interaction and never a status.</span>
+</div>
+</div>
+</section>
+
+<section class="fc-sec" aria-label="Motion and shape">
+<div class="fc-h"><span class="fc-num">12</span><h2>Motion and shape. <span>Movement means change.</span></h2></div>
+<div class="fc-body" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<div class="fc-tile" style="padding: 24px; font-size: 14px; line-height: 22px; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px">Motion</span><span>Spring: cubic-bezier(.32, .72, 0, 1)</span><span>Fade: cubic-bezier(.28, .11, .32, 1)</span><span>Card rise 900 ms · row fade 1.8 s</span><span>Lift on hover: scale 1.015</span><span style="color: var(--ink2); margin-top: 8px">When nothing changes, nothing moves.</span></div>
+<div class="fc-tile" style="padding: 24px; font-size: 14px; line-height: 22px; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px">Shape</span><span>Tile 18 · plan 14 · row 10</span><span>Capsules: radius = half the height</span><span>No borders. Grey on white makes the edge.</span><span style="color: var(--ink2); margin-top: 8px">Shadows only on things that float: popovers and a lifted card.</span></div>
+<div class="fc-tile" style="padding: 24px; font-size: 14px; line-height: 22px; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px">Space</span><span>Max width 1440 · margin 40</span><span>Gutter 16 · between sections 48–56</span><span>Row 44 · nav bar 52</span><span style="color: var(--ink2); margin-top: 8px">Wide space around the headline, tight space inside the data.</span></div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3400}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

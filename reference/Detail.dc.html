@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Robot detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.fd{--page:#FFFFFF;--tile:#F5F5F7;--raise:#FFFFFF;--bar:rgba(255,255,255,.8);--line:rgba(0,0,0,.1);--sep:rgba(0,0,0,.07);--fill:rgba(0,0,0,.05);--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#86868B;--accent:#0066CC;--err:#D70015;--err-text:#D70015;--amb:#C77700;--amb-text:#A15C00;--amb-tint:rgba(199,119,0,.1);--off:#8E8E93;--off-text:#636366;--off-tint:rgba(120,120,128,.12);--plan:#FFFFFF;--zone:#F0F0F2;--rack:#DCDCE0;--ctx:#C7C7CC;--pop:0 0 0 .5px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.12);--ease:cubic-bezier(.28,.11,.32,1);--spring:cubic-bezier(.32,.72,0,1);font-family:Inter,system-ui,sans-serif;font-optical-sizing:auto;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;letter-spacing:-.011em}
+.fd[data-theme="dark"]{--page:#000000;--tile:#161618;--raise:#232325;--bar:rgba(0,0,0,.72);--line:rgba(255,255,255,.14);--sep:rgba(255,255,255,.08);--fill:rgba(255,255,255,.08);--ink:#F5F5F7;--ink2:#A1A1A6;--ink3:#86868B;--accent:#2997FF;--err:#FF453A;--err-text:#FF5A4F;--amb:#FFB340;--amb-text:#FFB340;--amb-tint:rgba(255,179,64,.14);--off:#8E8E93;--off-text:#AEAEB2;--off-tint:rgba(142,142,147,.18);--plan:#0B0B0C;--zone:#1E1E20;--rack:#3A3A3C;--ctx:#48484A;--pop:0 0 0 .5px rgba(255,255,255,.14),0 16px 40px rgba(0,0,0,.6);color-scheme:dark}
+.fd *{box-sizing:border-box}
+.fd :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:2px;border-radius:10px}
+.fd-wrap{width:100%;max-width:1440px;margin:0 auto;padding:0 40px}
+.fd-tile{background:var(--tile);border-radius:18px}
+.fd-back{display:inline-flex;align-items:center;gap:2px;font-size:12px;color:var(--accent);text-decoration:none}
+.fd-back:hover{text-decoration:underline}
+.fd-live{animation:fdlive 2400ms ease-in-out infinite}
+@keyframes fdlive{0%,100%{opacity:1}50%{opacity:.3}}
+.fd-k{display:block;font-size:14px;font-weight:600;color:var(--ink2)}
+.fd-pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px 0 10px;border-radius:14px;font-size:13px;font-weight:600;white-space:nowrap}
+.fd-rack{position:absolute;background:var(--rack);border-radius:2px}
+.fd-zone{position:absolute;background:var(--zone);border-radius:8px}
+.fd-zlabel{position:absolute;left:8px;top:6px;font-size:10px;font-weight:600;color:var(--ink2)}
+.fd-ctx{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--ctx);transform:translate(-50%,-50%);box-shadow:0 0 0 1.5px var(--plan)}
+.fd-gap{background-image:repeating-linear-gradient(135deg,var(--fill) 0 1.5px,transparent 1.5px 8px)}
+.fd-me-low{background:var(--amb);box-shadow:0 0 0 2.5px var(--plan),0 0 0 10px var(--amb-tint),0 2px 8px rgba(0,0,0,.2)}
+.fd-me-off{background:var(--plan);border:2px dashed var(--off);box-shadow:0 0 0 8px var(--off-tint)}
+.fd-rise{animation:fdrise 900ms var(--spring) both}
+@keyframes fdrise{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:none}}
+.fd-tab{font-size:12px;color:var(--ink2);text-decoration:none;padding:6px 0;transition:color 200ms var(--ease)}
+.fd-tab:hover{color:var(--ink)}
+.fd ::selection{background:rgba(0,102,204,.12)}
+.fd-h1{text-wrap:balance}
+@media (prefers-reduced-motion:reduce){.fd *{animation:none !important;transition:none !important}}
+@media (max-width:1100px){.fd-wrap{padding:0 28px}.fd-wide{grid-column:1 / -1 !important}.fd-m{grid-column:span 6 !important}.fd-h1{font-size:40px !important;line-height:44px !important}.fd-facts{grid-template-columns:repeat(3,minmax(0,1fr)) !important}}
+@media (max-width:700px){.fd-wrap{padding:0 16px}.fd-m{grid-column:1 / -1 !important}.fd-h1{font-size:32px !important;line-height:36px !important}.fd-facts{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+</style>
+</helmet>
+<div class="fd" data-theme="{{theme}}" style="min-height: 100vh; background: var(--page); color: var(--ink)">
+
+<header style="position: sticky; top: 0; z-index: 30; background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 0.5px solid var(--line)">
+<div class="fd-wrap" style="display: flex; align-items: center; gap: 20px; height: 52px">
+<span style="display: flex; align-items: center; gap: 9px">
+<svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--ink)"></rect><circle cx="9" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="9" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="9" cy="17" r="2" fill="var(--page)" opacity=".45"></circle><circle cx="17" cy="17" r="2.6" fill="var(--page)"></circle></svg>
+<span style="font-size: 19px; font-weight: 600; letter-spacing: -0.02em">{{id}}</span>
+</span>
+<nav aria-label="Breadcrumb" style="margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 12px; color: var(--ink2)">
+<a class="fd-tab" href="Main.dc.html">Overview</a>
+<a class="fd-tab" href="FloorPlan.dc.html">Floor Plan</a>
+<span aria-hidden="true" style="width: 1px; height: 14px; background: var(--line)"></span>
+<a class="fd-back" href="Main.dc.html"><span aria-hidden="true">‹</span> All robots</a>
+<span>{{site}}</span>
+<span style="display: inline-flex; align-items: center; gap: 7px; font-weight: 500; color: var(--ink)"><span class="fd-live" style="width: 7px; height: 7px; border-radius: 50%; background: var(--ink)"></span>Live <span style="color: var(--ink2); font-weight: 400">{{clock}}</span></span>
+</nav>
+</div>
+</header>
+
+<main class="fd-wrap" style="padding-top: 56px; padding-bottom: 64px">
+
+<section aria-label="Summary" class="fd-rise" style="padding-bottom: 40px">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px">
+<span class="fd-pill" style="{{badgeCss}}">
+<sc-if value="{{isLow}}" hint-placeholder-val="{{true}}"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.4"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{isOff}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></sc-if>
+{{statusLabel}}
+</span>
+<span style="font-size: 14px; color: var(--ink2)">{{model}} · {{site}} · Last seen <span style="color: {{agoColor}}; font-weight: {{agoWeight}}">{{ago}}</span></span>
+</div>
+<h1 class="fd-h1" aria-live="off" style="margin: 0; max-width: 1080px; font-size: 56px; line-height: 60px; font-weight: 600; letter-spacing: -0.04em">{{headA}} <span style="color: var(--ink3)">{{headB}}</span></h1>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px">
+
+<section class="fd-tile fd-wide fd-rise" aria-label="Battery" style="grid-column: span 4; padding: 28px 28px 30px; display: flex; flex-direction: column; animation-delay: 60ms">
+<span class="fd-k">{{battLabel}}</span>
+<span style="display: flex; align-items: baseline; margin-top: auto; padding-top: 24px">
+<span style="font-size: 112px; line-height: 104px; font-weight: 700; letter-spacing: -0.06em; color: {{battColor}}">{{battery}}</span>
+<span style="font-size: 44px; font-weight: 600; letter-spacing: -0.03em; color: {{battColor}}; margin-left: 4px">%</span>
+</span>
+<span aria-hidden="true" style="position: relative; display: block; margin-top: 22px; height: 12px; border-radius: 6px; background: var(--fill)">
+<span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{battW}}; border-radius: 6px; background: {{battFill}}"></span>
+<span style="position: absolute; left: 20%; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; background: var(--ink2); opacity: .5"></span>
+</span>
+<span aria-hidden="true" style="position: relative; display: block; height: 16px; margin-top: 8px; font-size: 12px; color: var(--ink2)"><span style="position: absolute; left: 0">0</span><span style="position: absolute; left: 20%; transform: translateX(-50%)">20</span><span style="position: absolute; right: 0">100</span></span>
+<span style="display: block; margin-top: 14px; font-size: 14px; line-height: 20px; color: var(--ink2)">{{battSub}}</span>
+</section>
+
+<section class="fd-tile fd-wide fd-rise" aria-label="Battery trend" style="grid-column: span 8; padding: 28px 28px 44px; animation-delay: 120ms">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<span class="fd-k">Battery, last 15 minutes</span>
+<span style="margin-left: auto; font-size: 13px; color: var(--ink2)">{{trendNote}}</span>
+</div>
+<div style="position: relative; height: 250px; margin: 28px 4px 0 30px">
+<sc-for list="{{rules}}" as="g" hint-placeholder-count="4">
+<div style="position: absolute; left: 0; right: 0; top: {{g.top}}%; height: 1px; background: var(--sep)"></div>
+<span style="position: absolute; left: -30px; top: {{g.top}}%; transform: translateY(-50%); font-size: 11px; color: var(--ink2)">{{g.v}}</span>
+</sc-for>
+<sc-if value="{{hasGap}}" hint-placeholder-val="{{false}}">
+<div class="fd-gap" style="position: absolute; top: 0; bottom: 0; left: {{gapLeft}}%; right: 0; border-radius: 10px"></div>
+<span style="position: absolute; top: 12px; left: {{gapLeft}}%; margin-left: 12px; padding: 4px 9px; border-radius: 8px; background: var(--raise); box-shadow: var(--pop); font-size: 12px; font-weight: 600; color: var(--off-text)">No data since 14:00:08</span>
+</sc-if>
+<div style="position: absolute; left: 0; right: 0; top: {{thrTop}}%; border-top: 1.5px dashed var(--ink2); opacity: .6"></div>
+<span style="position: absolute; left: -30px; top: {{thrTop}}%; transform: translateY(-50%); font-size: 11px; font-weight: 700">20</span>
+<span style="position: absolute; left: 10px; top: {{thrTop}}%; transform: translateY(-50%); padding: 3px 8px; border-radius: 7px; background: var(--raise); font-size: 11px; font-weight: 500; color: var(--ink2)">Low-battery threshold</span>
+<svg viewBox="0 0 600 200" preserveAspectRatio="none" role="img" aria-label="{{chartLabel}}" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible">
+<defs>
+<linearGradient id="fdA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--ink2); stop-opacity: .16"></stop><stop offset="1" style="stop-color: var(--ink2); stop-opacity: 0"></stop></linearGradient>
+<linearGradient id="fdB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--amb); stop-opacity: .36"></stop><stop offset="1" style="stop-color: var(--amb); stop-opacity: 0"></stop></linearGradient>
+</defs>
+<polygon points="{{areaA}}" fill="url(#fdA)"></polygon>
+<polygon points="{{areaB}}" fill="url(#fdB)"></polygon>
+<polyline points="{{ptsA}}" fill="none" style="stroke: {{lineA}}" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+<polyline points="{{ptsB}}" fill="none" style="stroke: var(--amb)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+</svg>
+<div style="position: absolute; left: {{endL}}%; top: {{endT}}%; width: 11px; height: 11px; border-radius: 50%; transform: translate(-50%, -50%); {{endCss}}"></div>
+<sc-for list="{{xLabels}}" as="xl" hint-placeholder-count="6">
+<span style="position: absolute; top: 100%; left: {{xl.l}}%; transform: translateX({{xl.tx}}); padding-top: 12px; font-size: 11px; color: var(--ink2); white-space: nowrap">{{xl.t}}</span>
+</sc-for>
+</div>
+</section>
+
+<sc-for list="{{metrics}}" as="m" hint-placeholder-count="3">
+<section class="fd-tile fd-m fd-rise" aria-label="{{m.label}}" style="grid-column: span 4; padding: 26px 28px 28px; animation-delay: 180ms">
+<span class="fd-k">{{m.label}}</span>
+<span style="display: block; margin-top: 14px; font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em; color: {{m.color}}">{{m.value}}</span>
+<span style="display: block; margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--ink2)">{{m.sub}}</span>
+</section>
+</sc-for>
+
+<section class="fd-tile fd-wide fd-rise" aria-label="Position" style="grid-column: span 7; padding: 26px 28px 28px; animation-delay: 240ms">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<span class="fd-k">Position</span>
+<span style="margin-left: auto; font-size: 13px; color: var(--ink2)">Trail, last 4 min</span>
+<a class="fd-back" href="FloorPlan.dc.html" style="font-size: 13px; margin-left: 14px">Open floor plan <span aria-hidden="true">›</span></a>
+</div>
+<div style="position: relative; width: 100%; aspect-ratio: 64 / 28; margin-top: 20px; border-radius: 14px; background: var(--plan)">
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="2">
+<div class="fd-zone" style="left: {{z.l}}%; top: {{z.t}}%; width: {{z.w}}%; height: {{z.h}}%"><span class="fd-zlabel">{{z.label}}</span></div>
+</sc-for>
+<sc-for list="{{racks}}" as="k" hint-placeholder-count="6">
+<div class="fd-rack" style="left: {{k.l}}%; top: {{k.t}}%; width: {{k.w}}%; height: {{k.h}}%"></div>
+</sc-for>
+<sc-for list="{{ctx}}" as="c" hint-placeholder-count="10">
+<span class="fd-ctx" style="left: {{c.l}}%; top: {{c.t}}%"></span>
+</sc-for>
+<svg viewBox="0 0 64 28" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<line x1="{{s1.x1}}" y1="{{s1.y1}}" x2="{{s1.x2}}" y2="{{s1.y2}}" style="stroke: {{trail}}" stroke-width="3.5" stroke-opacity="0.1" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+<line x1="{{s2.x1}}" y1="{{s2.y1}}" x2="{{s2.x2}}" y2="{{s2.y2}}" style="stroke: {{trail}}" stroke-width="3.5" stroke-opacity="0.22" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+<line x1="{{s3.x1}}" y1="{{s3.y1}}" x2="{{s3.x2}}" y2="{{s3.y2}}" style="stroke: {{trail}}" stroke-width="3.5" stroke-opacity="0.36" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+<line x1="{{s4.x1}}" y1="{{s4.y1}}" x2="{{s4.x2}}" y2="{{s4.y2}}" style="stroke: {{trail}}" stroke-width="3.5" stroke-opacity="0.52" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+<line x1="{{s5.x1}}" y1="{{s5.y1}}" x2="{{s5.x2}}" y2="{{s5.y2}}" style="stroke: {{trail}}" stroke-width="3.5" stroke-opacity="0.7" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+<line x1="{{s6.x1}}" y1="{{s6.y1}}" x2="{{s6.x2}}" y2="{{s6.y2}}" style="stroke: {{trail}}" stroke-width="3.5" stroke-opacity="0.9" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+</svg>
+<div style="position: absolute; left: {{meL}}%; top: {{meT}}%; width: 0; height: 0">
+<span class="{{meCls}}" style="position: absolute; left: 0; top: 0; width: 15px; height: 15px; border-radius: 50%; transform: translate(-50%, -50%)"></span>
+<span style="position: absolute; left: 0; bottom: 18px; transform: translateX(-50%); white-space: nowrap; background: var(--bar); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); padding: 5px 10px; border-radius: 10px; box-shadow: var(--pop); font-size: 12px; line-height: 16px; font-weight: 600">{{id}}<span style="font-weight: 400; color: var(--ink2)">{{meTag}}</span></span>
+</div>
+</div>
+<span style="display: block; margin-top: 12px; font-size: 13px; color: var(--ink2)">Grey dots are the other robots on this site.</span>
+</section>
+
+<section class="fd-tile fd-wide fd-rise" aria-label="Activity" style="grid-column: span 5; padding: 26px 16px 14px; animation-delay: 300ms">
+<div style="display: flex; align-items: baseline; padding: 0 12px 10px">
+<span class="fd-k">Activity today</span>
+<span style="margin-left: auto; font-size: 13px; color: var(--ink2)">Newest first</span>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{events}}" as="e" hint-placeholder-count="6">
+<li style="display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; min-height: 56px; padding: 0 12px">
+<span aria-hidden="true" style="width: 30px; height: 30px; border-radius: 50%; background: {{e.tint}}; color: {{e.color}}; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{e.isInfo}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="2.5" fill="currentColor"></circle></svg></sc-if>
+<sc-if value="{{e.isLow}}" hint-placeholder-val="{{false}}"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.25" y="4.25" width="11.5" height="7.5" rx="2.25" stroke="currentColor" stroke-width="1.5"></rect><rect x="3" y="6" width="2.5" height="4" rx=".75" fill="currentColor"></rect><path d="M14.75 6.9v2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{e.isWarn}}" hint-placeholder-val="{{false}}"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.9 1.6a1.27 1.27 0 0 1 2.2 0l5.3 9.4A1.27 1.27 0 0 1 12.3 13H1.7A1.27 1.27 0 0 1 .6 11L5.9 1.6Z" fill="currentColor"></path><path d="M7 4.9v3.2" stroke="var(--tile)" stroke-width="1.5" stroke-linecap="round"></path><circle cx="7" cy="10.2" r=".85" fill="var(--tile)"></circle></svg></sc-if>
+<sc-if value="{{e.isOff}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.9 6.5a8.7 8.7 0 0 1 12.2 0M4.1 8.9a5.5 5.5 0 0 1 7.8 0M6.3 11.3a2.4 2.4 0 0 1 3.4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="m2.5 2.5 11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></sc-if>
+</span>
+<span style="display: flex; flex-direction: column; min-width: 0; padding: 9px 0; border-bottom: 1px solid var(--sep)">
+<span style="font-size: 14px; font-weight: {{e.weight}}; color: {{e.textColor}}">{{e.text}}</span>
+<span style="font-size: 12px; color: var(--ink2)">{{e.sub}}</span>
+</span>
+<span style="align-self: stretch; display: flex; align-items: center; padding-left: 12px; font-size: 12px; color: var(--ink2); border-bottom: 1px solid var(--sep)">{{e.t}}</span>
+</li>
+</sc-for>
+</ol>
+</section>
+
+<section class="fd-tile fd-rise" aria-label="Details" style="grid-column: 1 / -1; padding: 26px 28px 28px; animation-delay: 360ms">
+<span class="fd-k">Details</span>
+<dl class="fd-facts" style="margin: 16px 0 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px">
+<sc-for list="{{facts}}" as="f" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<dt style="font-size: 12px; color: var(--ink2)">{{f.k}}</dt>
+<dd style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.02em">{{f.v}}</dd>
+</div>
+</sc-for>
+</dl>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"robot":{"editor":"enum","options":["R-017","R-041"],"default":"R-017"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1640}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tick: 0 }; }
+  componentDidMount() { this._iv = setInterval(() => this.setState((s) => ({ tick: ((s && s.tick) || 0) + 1 })), 1000); }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  sites() {
+    return {
+      hh: { name: 'Hamburg DC',
+        racks: [[3,3.6,38,1.6],[3,8.6,38,1.6],[3,13.6,38,1.6],[3,18.6,38,1.6],[3,23.6,38,1.6]],
+        aisles: [[3,6.1,41,6.1],[3,11.1,41,11.1],[3,16.1,41,16.1],[3,21.1,41,21.1],[44,3,44,25]],
+        zones: [[47,2,14,10,'Charging'],[47,14,14,12,'Pack-out']], charge: [47,2,14,10], first: 1, last: 18 },
+      mu: { name: 'Munich North',
+        racks: [[3,3,26,1.6],[3,7.5,26,1.6],[3,12,26,1.6],[3,16.5,26,1.6],[35,3,26,1.6],[35,7.5,26,1.6],[35,12,26,1.6],[35,16.5,26,1.6]],
+        aisles: [[3,5.3,29,5.3],[3,9.8,29,9.8],[3,14.3,29,14.3],[35,5.3,61,5.3],[35,9.8,61,9.8],[35,14.3,61,14.3],[32,2,32,19]],
+        zones: [[3,21,18,5,'Charging'],[24,21,37,5,'Staging']], charge: [3,21,18,5], first: 36, last: 50 }
+    };
+  }
+
+  context(siteKey, selfId) {
+    const site = this.sites()[siteKey];
+    const pts = [];
+    let seed = 7 + siteKey.charCodeAt(0);
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let i = site.first; i <= site.last; i++) {
+      const id = 'R-' + String(i).padStart(3, '0');
+      if (id === selfId) continue;
+      let x, y;
+      if (rnd() < 0.2) { const c = site.charge; x = c[0] + 1.5 + rnd() * (c[2] - 3); y = c[1] + 2 + rnd() * (c[3] - 3); }
+      else { const a = site.aisles[Math.floor(rnd() * site.aisles.length)]; const t = rnd(); x = a[0] + (a[2] - a[0]) * t; y = a[1] + (a[3] - a[1]) * t; }
+      pts.push({ x, y });
+    }
+    return pts;
+  }
+
+  data(id) {
+    if (id === 'R-041') return {
+      id: 'R-041', model: 'Tote picker', siteKey: 'mu', status: 'offline', battery: 63, agoBase: 184,
+      yMax: 100, rules: [0, 50, 75, 100],
+      series: (t) => 66 - (t + 15) * 0.25 + 0.2 * Math.sin(t * 3.1), tEnd: -3.07,
+      x: 48.2, y: 9.8,
+      trail: [[33,9.8],[36,9.8],[39,9.8],[42,9.8],[44.5,9.8],[46.5,9.8],[48.2,9.8]],
+      battSub: 'Last known value, reported at 14:00:08. The real level is unknown.',
+      trendNote: 'Steady until the last report',
+      metrics: [
+        ['Current task', 'Pick order #4502', 'var(--off-text)', 'Last known. Current state unknown.'],
+        ['Uptime', '4 h 46 min', 'var(--off-text)', 'Until the last report at 14:00:08'],
+        ['Position', '48.2, 9.8 m', 'var(--off-text)', 'Last known · aisle B2, weak Wi-Fi zone']
+      ],
+      events: [
+        ['14:00:18', 'off', 'Went offline', 'No report for 10 s'],
+        ['14:00:08', 'info', 'Last report received', 'Battery 63% · aisle B2'],
+        ['13:57:02', 'warn', 'Wi-Fi signal weak', '−82 dBm in aisle B2'],
+        ['13:51:20', 'info', 'Task started: Pick order #4502', 'Aisle B2 → Staging'],
+        ['13:51:11', 'info', 'Task completed: Pick order #4497', '14 totes'],
+        ['09:14:30', 'info', 'Came online', 'Battery 100%']
+      ],
+      facts: [['Model', 'Tote picker AMR-2'], ['Site', 'Munich North'], ['Firmware', '4.12.1'], ['Last charge', '08:40 → 09:12'], ['Network', 'AP MUN-B2-03']]
+    };
+    return {
+      id: 'R-017', model: 'Tote picker', siteKey: 'hh', status: 'low', battery: 14, agoBase: 1,
+      yMax: 40, rules: [0, 10, 30, 40],
+      series: (t) => 14 - t * 0.8 + 0.18 * Math.sin(t * 2.3), tEnd: 0,
+      x: 44.0, y: 9.2,
+      trail: [[24,11.1],[30,11.1],[36,11.1],[41,11.1],[44,11.1],[44,10.1],[44,9.2]],
+      battSub: 'Falling 0.8% per minute. About 17 minutes left at this rate.',
+      trendNote: 'Below 20% since 13:55:40',
+      metrics: [
+        ['Current task', 'Returning to dock', 'var(--ink)', 'Charging bay 3 · arrives in about 1 min 40 s'],
+        ['Uptime', '6 h 12 min', 'var(--ink)', 'Online since 07:51'],
+        ['Position', '44.0, 9.2 m', 'var(--ink)', 'Cross aisle, moving to Charging']
+      ],
+      events: [
+        ['14:02:40', 'info', 'Charging bay 3 assigned', 'Arrives in about 1 min 40 s'],
+        ['13:58:30', 'info', 'Task paused: Pick order #4459', 'Returning to dock'],
+        ['13:55:40', 'low', 'Battery below 20%', 'Low-battery threshold reached'],
+        ['13:40:02', 'info', 'Task started: Pick order #4459', 'Aisle 3 → Pack-out'],
+        ['13:39:47', 'info', 'Task completed: Pick order #4452', '9 totes'],
+        ['07:51:05', 'info', 'Came online', 'Battery 98%']
+      ],
+      facts: [['Model', 'Tote picker AMR-2'], ['Site', 'Hamburg DC'], ['Firmware', '4.12.1'], ['Last charge', '07:12 → 07:49'], ['Network', 'AP HAM-X-01']]
+    };
+  }
+
+  ago(s) {
+    if (s < 60) return s + ' s ago';
+    return Math.floor(s / 60) + ' min ' + (s % 60) + ' s ago';
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const p = this.props || {};
+    const tick = s.tick || 0;
+    const d = this.data(p.robot === 'R-041' ? 'R-041' : 'R-017');
+    const site = this.sites()[d.siteKey];
+    const off = d.status === 'offline';
+    const W = 64, H = 28;
+    const pc = (v, m) => (v / m * 100).toFixed(2);
+
+    const X = (t) => ((t + 15) / 15 * 600).toFixed(1);
+    const Y = (v) => (200 * (1 - v / d.yMax)).toFixed(1);
+    const a = [], b = [];
+    const cross = -7.5;
+    for (let t = -15; t <= d.tEnd + 0.0001; t += 0.25) {
+      const v = d.series(t);
+      if (d.status === 'low' && t > cross) b.push(X(t) + ',' + Y(v));
+      else a.push(X(t) + ',' + Y(v));
+    }
+    if (d.status === 'low') { const cp = X(cross) + ',' + Y(20); a.push(cp); b.unshift(cp); }
+    if (off) a.push(X(d.tEnd) + ',' + Y(d.series(d.tEnd)));
+    const endV = d.series(d.tEnd);
+    const area = (pts) => {
+      if (!pts.length) return '';
+      const first = pts[0].split(',')[0], last = pts[pts.length - 1].split(',')[0];
+      return first + ',200 ' + pts.join(' ') + ' ' + last + ',200';
+    };
+    const ticks = [-15, -12, -9, -6, -3, 0];
+    const tl = ['13:48', '13:51', '13:54', '13:57', '14:00', 'Now'];
+    const xLabels = ticks.map((t, i) => ({ l: ((t + 15) / 15 * 100).toFixed(2), t: tl[i], tx: i === 0 ? '0' : (i === ticks.length - 1 ? '-100%' : '-50%') }));
+    const seg = (i) => ({ x1: d.trail[i][0], y1: d.trail[i][1], x2: d.trail[i + 1][0], y2: d.trail[i + 1][1] });
+    const agoS = off ? d.agoBase + tick : 1 + (tick % 2);
+    const agoTxt = this.ago(agoS);
+    const base = 14 * 3600 + 3 * 60 + 12 + tick;
+    const two = (v) => String(v).padStart(2, '0');
+
+    return {
+      theme: p.theme === 'dark' ? 'dark' : 'light',
+      clock: two(Math.floor(base / 3600) % 24) + ':' + two(Math.floor(base / 60) % 60) + ':' + two(base % 60),
+      id: d.id, model: d.model, site: site.name,
+      isLow: d.status === 'low', isOff: off,
+      statusLabel: off ? 'Offline' : 'Low Battery',
+      badgeCss: off ? 'background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off)' : 'background: var(--amb-tint); color: var(--amb-text)',
+      headA: off ? d.id + ' is offline.' : d.id + ' is low on battery.',
+      headB: off ? 'No report for ' + agoTxt.replace(' ago', '') + '. We do not know its state.' : '14% left and falling. It is on its way to charge.',
+      ago: agoTxt,
+      agoColor: off ? 'var(--ink)' : 'var(--ink2)',
+      agoWeight: off ? 600 : 400,
+      battLabel: off ? 'Battery · last known' : 'Battery',
+      battery: d.battery, battW: d.battery + '%',
+      battFill: off ? 'var(--off)' : 'var(--amb)',
+      battColor: off ? 'var(--off-text)' : 'var(--amb-text)',
+      battSub: d.battSub, trendNote: d.trendNote,
+      metrics: d.metrics.map((m) => ({ label: m[0], value: m[1], color: m[2], sub: m[3] })),
+      rules: d.rules.map((v) => ({ v, top: pc(d.yMax - v, d.yMax) })),
+      thrTop: pc(d.yMax - 20, d.yMax),
+      ptsA: a.join(' '), ptsB: b.join(' '), areaA: area(a), areaB: area(b),
+      lineA: off ? 'var(--off)' : 'var(--ink)',
+      hasGap: off, gapLeft: ((d.tEnd + 15) / 15 * 100).toFixed(2),
+      endL: ((d.tEnd + 15) / 15 * 100).toFixed(2), endT: pc(d.yMax - endV, d.yMax),
+      endCss: off ? 'background: var(--tile); border: 2px dashed var(--off)' : 'background: var(--amb); box-shadow: 0 0 0 2.5px var(--tile), 0 0 0 8px var(--amb-tint)',
+      chartLabel: off ? 'Battery steady at about 64 to 66 percent, then no data after 14:00:08' : 'Battery falls from 26 to 14 percent, crossing 20 percent at 13:55:40',
+      xLabels,
+      racks: site.racks.map((k) => ({ l: pc(k[0], W), t: pc(k[1], H), w: pc(k[2], W), h: pc(k[3], H) })),
+      zones: site.zones.map((z) => ({ l: pc(z[0], W), t: pc(z[1], H), w: pc(z[2], W), h: pc(z[3], H), label: z[4] })),
+      ctx: this.context(d.siteKey, d.id).map((c) => ({ l: pc(c.x, W), t: pc(c.y, H) })),
+      s1: seg(0), s2: seg(1), s3: seg(2), s4: seg(3), s5: seg(4), s6: seg(5),
+      trail: off ? 'var(--off)' : 'var(--amb)',
+      meL: pc(d.x, W), meT: pc(d.y, H),
+      meCls: off ? 'fd-me-off' : 'fd-me-low',
+      meTag: off ? ' · last known 14:00:08' : ' · 14%',
+      events: d.events.map((e) => ({
+        t: e[0], text: e[2], sub: e[3],
+        isInfo: e[1] === 'info', isLow: e[1] === 'low', isWarn: e[1] === 'warn', isOff: e[1] === 'off',
+        tint: e[1] === 'low' || e[1] === 'warn' ? 'var(--amb-tint)' : (e[1] === 'off' ? 'var(--off-tint)' : 'var(--fill)'),
+        color: e[1] === 'low' || e[1] === 'warn' ? 'var(--amb-text)' : (e[1] === 'off' ? 'var(--off-text)' : 'var(--ink2)'),
+        textColor: e[1] === 'low' || e[1] === 'warn' ? 'var(--amb-text)' : 'var(--ink)',
+        weight: e[1] === 'info' ? 500 : 600
+      })),
+      facts: d.facts.map((f) => ({ k: f[0], v: f[1] }))
+    };
+  }
+}
+</script>
+</body>
+</html>
