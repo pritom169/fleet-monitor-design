@@ -9,8 +9,9 @@
     "frontend"
   ],
   "scripts": {
-    "test": "npm test -w shared",
-    "typecheck": "tsc -p shared --noEmit"
+    "outage": "curl -s -X POST 'http://localhost:8787/control/outage?seconds=20'",
+    "test": "npm test -w shared && npm test -w backend",
+    "typecheck": "npm run typecheck -w backend && tsc -p shared --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
