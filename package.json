@@ -9,8 +9,8 @@
     "frontend"
   ],
   "scripts": {
-    "test": "npm test -w shared",
-    "typecheck": "tsc -p shared --noEmit"
+    "test": "npm test -w shared && npm test -w backend",
+    "typecheck": "npm run typecheck -w backend && tsc -p shared --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
