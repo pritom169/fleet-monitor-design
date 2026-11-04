@@ -1,6 +1,7 @@
 /** jsdom lacks a few browser APIs the app uses; stub them, and reset the store and the DOM after each test. */
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import { fleet, initialState } from '../data/store';
 
 if (typeof window !== 'undefined') {
   const media = new Map<string, { matches: boolean; listeners: Set<() => void> }>();
@@ -29,6 +30,7 @@ if (typeof window !== 'undefined') {
 
   afterEach(() => {
     cleanup();
+    fleet.set(initialState());
     delete document.documentElement.dataset.theme;
     localStorage.clear();
     for (const [q] of media) (window as unknown as { setMedia: (q: string, v: boolean) => void }).setMedia(q, false);
