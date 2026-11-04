@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "demo": "tsx watch src/demo/simulator.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

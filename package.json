@@ -9,6 +9,7 @@
     "frontend"
   ],
   "scripts": {
+    "outage": "curl -s -X POST 'http://localhost:8787/control/outage?seconds=20'",
     "test": "npm test -w shared && npm test -w backend",
     "typecheck": "npm run typecheck -w backend && tsc -p shared --noEmit"
   },
