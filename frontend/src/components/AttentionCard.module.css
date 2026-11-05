@@ -1,0 +1,19 @@
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 16px; padding-bottom: 48px; }
+.card {
+  display: flex; flex-direction: column; min-height: 176px; padding: 20px 20px 18px;
+  border-radius: var(--r-tile); background: var(--tile); cursor: pointer; text-align: left;
+  transition: transform 400ms var(--spring), box-shadow 400ms var(--spring), background-color 300ms var(--ease);
+}
+.card:hover, .hl { transform: scale(1.015); box-shadow: var(--lift); background: var(--raise); }
+.card:active { transform: scale(0.99); }
+/* A new problem rises in. Cards that were there on load do not move. */
+.rise { animation: fm-rise 900ms var(--spring) 1; }
+.id { margin: 14px 0 0; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em; }
+.reason { display: block; margin-top: 4px; font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.meta { display: block; margin-top: 4px; font-size: 13px; line-height: 18px; color: var(--ink2); }
+.card :global(.more) { margin-top: auto; padding-top: 14px; }
+.stale .reason { color: var(--ink2) !important; }
+
+.moreCard { justify-content: center; align-items: flex-start; gap: 6px; cursor: default; }
+.moreCard:hover { transform: none; box-shadow: none; background: var(--tile); }
+.moreN { font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em; }

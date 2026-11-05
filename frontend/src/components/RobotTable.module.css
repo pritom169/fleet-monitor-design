@@ -1,0 +1,70 @@
+.panel { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.title { padding: 22px 24px 12px; display: flex; align-items: baseline; gap: 12px; }
+.title h2 { font-size: 21px; line-height: 26px; font-weight: 600; letter-spacing: -0.025em; }
+.title span { font-size: 12px; color: var(--ink2); }
+.scroll { height: 572px; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
+
+.cols { display: grid; grid-template-columns: 90px 100px 118px 76px 106px minmax(0, 1fr) 80px; align-items: center; }
+.th {
+  position: sticky; top: 0; z-index: 3; height: 32px; padding: 0 20px;
+  background: var(--tile); border-bottom: 0.5px solid var(--line);
+  font-size: 12px; font-weight: 500; color: var(--ink2);
+}
+.right { text-align: right; }
+
+.row {
+  height: 40px; margin: 0 10px; padding: 0 10px; border-radius: var(--r-row);
+  position: relative; font-size: 13px; color: var(--ink); cursor: pointer;
+  transition: background-color 200ms var(--ease);
+}
+.row::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 1px; background: var(--sep); }
+.row:hover, .hl { background: var(--raise); }
+.row > * { position: relative; z-index: 1; }
+
+/* Problem rows: a subtle left accent in the status colour. Healthy rows stay plain. */
+.accent::before {
+  content: ''; position: absolute; left: 1px; top: 10px; bottom: 10px; width: 3px; border-radius: 2px;
+  background: var(--acc); z-index: 1;
+}
+.offline::before { background: repeating-linear-gradient(to bottom, var(--off) 0 3px, transparent 3px 5.5px); }
+
+/* Status-change highlight: the new status tint fills the row, then fades out over 1.8 s. */
+.flash {
+  position: absolute !important; inset: 0; z-index: 0 !important; border-radius: var(--r-row);
+  background: var(--fl); opacity: 0; pointer-events: none;
+  animation: fm-flash 1800ms var(--spring) forwards;
+}
+@media (prefers-reduced-motion: reduce) { .flash { opacity: 1; } }
+
+.robot { display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 16px; }
+.robot a { font-weight: 600; text-decoration: none; color: var(--ink); }
+.robot a:hover { text-decoration: underline; }
+.sub { font-size: 11px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.narrow { display: none; }
+.clip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px; min-width: 0; }
+.batt { display: flex; align-items: center; gap: 7px; }
+.pos { text-align: right; color: var(--ink2); font-size: 12px; }
+.chg { vertical-align: -1px; margin-right: 4px; color: var(--ink2); }
+
+/* Connection lost: values turn grey, "last seen" turns amber and keeps counting. */
+.stale { color: var(--ink2); }
+
+.skelRow { display: grid; grid-template-columns: 70px 1fr 64px; gap: 16px; align-items: center; height: 40px; margin: 0 20px; border-bottom: 1px solid var(--sep); }
+.note { display: flex; align-items: center; gap: 8px; padding: 16px 20px 8px; font-size: 14px; font-weight: 600; }
+.note svg { color: var(--ink2); }
+
+.empty { padding: 72px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.empty strong { font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em; }
+.empty p { font-size: 17px; line-height: 24px; color: var(--ink3); max-width: 400px; }
+.clear {
+  margin-top: 16px; height: 36px; padding: 0 20px; border: 0; border-radius: 18px;
+  background: var(--accent); color: #FFFFFF; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.clear:hover { filter: brightness(1.08); }
+.empty :global(.more) { margin-top: 10px; }
+
+@media (max-width: 1279px) {
+  .cols { grid-template-columns: 104px 120px 84px 100px minmax(0, 1fr); }
+  .site, .posCol, .wide { display: none !important; }
+  .narrow { display: block; }
+}

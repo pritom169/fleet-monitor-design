@@ -1,0 +1,24 @@
+.plan { position: relative; width: 100%; aspect-ratio: 64 / 28; border-radius: 12px; background: var(--plan); }
+.stage { border-radius: 0; background: transparent; }
+.mini { border-radius: 10px; background: var(--floor); box-shadow: inset 0 0 0 0.5px var(--line); }
+
+.zone { position: absolute; background: var(--zone); border-radius: 8px; }
+.stage .zone { border-radius: 10px; }
+.mini .zone { border-radius: 5px; }
+.zlabel { position: absolute; left: 8px; top: 6px; font-size: 10px; line-height: 12px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+.stage .zlabel { left: 10px; top: 8px; font-size: 11px; letter-spacing: 0.01em; }
+
+.rack { position: absolute; background: var(--rack); border-radius: 2px; }
+.stage .rack { box-shadow: inset 0 0 0 0.5px var(--rackline); }
+.mini .rack { border-radius: 1px; }
+
+.bay {
+  position: absolute; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--rackline);
+  display: flex; align-items: center; justify-content: center; color: var(--ink3);
+}
+.alabel { position: absolute; transform: translate(-50%, -50%); font-size: 10px; font-weight: 600; color: var(--ink3); }
+
+.empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; color: var(--ink2);
+}
