@@ -1,0 +1,13 @@
+.glyph {
+  position: relative; display: inline-block; flex: none;
+  width: 25px; height: 12px; padding: 2px; border-radius: 3.5px;
+  box-shadow: inset 0 0 0 1px var(--rim);
+}
+.fill {
+  display: block; height: 100%; min-width: 2px; border-radius: 1.5px; background: var(--bf);
+  transition: width 700ms var(--spring);
+}
+.nub {
+  position: absolute; right: -3px; top: 4px; width: 1.5px; height: 4px;
+  border-radius: 0 1px 1px 0; background: var(--rim);
+}
