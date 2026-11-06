@@ -4,6 +4,7 @@ import { actions, fleet } from '../data/store';
 import type { Robot } from '../data/types';
 import { fleetState, load, rep, reported, T } from '../test/fixtures';
 import { renderAt } from '../test/render';
+import { BatteryChart } from './BatteryChart';
 import { FleetMap, MapLegend } from './FleetMap';
 import { MapMarker } from './MapMarker';
 import { RobotTable, SkeletonRows, TableEmpty } from './RobotTable';
@@ -86,6 +87,37 @@ describe('FleetMap', () => {
   it('has a legend', () => {
     const { container } = render(<MapLegend className="x" />);
     expect(container.firstElementChild!.className).toBe('x');
+  });
+});
+
+describe('BatteryChart', () => {
+  const label = () => screen.getByRole('img').getAttribute('aria-label');
+
+  it('scales the axis to the data', () => {
+    const { rerender } = render(<BatteryChart points={[[T - 60_000, 30]]} now={T} status="low" lastReport={T} />);
+    expect(screen.getByText('40')).toBeTruthy();
+    rerender(<BatteryChart points={[[T - 60_000, 50]]} now={T} status="ok" lastReport={T} />);
+    expect(screen.getByText('60')).toBeTruthy();
+    rerender(<BatteryChart points={[[T - 60_000, 90]]} now={T} status="ok" lastReport={T} />);
+    expect(screen.getByText('75')).toBeTruthy();
+  });
+
+  it('breaks the line over gaps, drops points older than 15 minutes, and describes the data', () => {
+    const { container } = render(<BatteryChart points={[[T - 20 * 60_000, 99], [T - 600_000, 40], [T - 590_000, 39], [T - 60_000, 18]]} now={T} status="low" lastReport={T} />);
+    expect(container.querySelectorAll('g').length).toBe(2);
+    expect(label()).toBe('Battery over the last 15 minutes, from 40% to 18%.');
+    expect(screen.getByText('Now')).toBeTruthy();
+  });
+
+  it('hatches the unknown stretch for an offline robot, and says when there is no data', () => {
+    const { rerender } = render(<BatteryChart points={[[T - 300_000, 60]]} now={T} status="offline" lastReport={T - 300_000} />);
+    expect(screen.getByText('No data since 10:25:00')).toBeTruthy();
+    expect(label()).toMatch(/no data since 10:25:00\.$/);
+    rerender(<BatteryChart points={[[T - 300_000, 60]]} now={T} status="offline" lastReport={null} />);
+    expect(label()).toMatch(/no data since start\.$/);
+    rerender(<BatteryChart points={[]} now={T} status="never" lastReport={null} />);
+    expect(screen.getByText('No reports yet')).toBeTruthy();
+    expect(label()).toBe('No battery data in the last 15 minutes.');
   });
 });
 
