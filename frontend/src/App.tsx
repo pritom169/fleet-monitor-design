@@ -5,6 +5,7 @@ import { actions } from './data/store';
 import { TopBar } from './components/TopBar';
 import { Overview } from './pages/Overview';
 import { RobotDetail } from './pages/RobotDetail';
+import { FloorPlan } from './pages/FloorPlan';
 
 function Shell() {
   const { pathname } = useLocation();
@@ -36,6 +37,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/', element: <Overview /> },
       { path: '/robots/:id', element: <RobotDetail /> },
+      { path: '/floor-plan', element: <FloorPlan /> },
       { path: '*', element: <NotFound /> },
     ],
   },
