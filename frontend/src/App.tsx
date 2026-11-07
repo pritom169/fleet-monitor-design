@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, Outlet, createBrowserRouter, useLocation, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { actions } from './data/store';
+import { AppErrorBoundary, RouteError } from './components/ErrorScreen';
 import { TopBar } from './components/TopBar';
 import { Overview } from './pages/Overview';
 import { RobotDetail } from './pages/RobotDetail';
@@ -35,6 +36,8 @@ function NotFound() {
 export const routes: RouteObject[] = [
   {
     element: <Shell />,
+    // A page that throws shows the crash screen, not a blank page (components/ErrorScreen.tsx).
+    errorElement: <RouteError />,
     children: [
       { path: '/', element: <Overview /> },
       { path: '/robots/:id', element: <RobotDetail /> },
@@ -48,5 +51,9 @@ export const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AppErrorBoundary>
+      <RouterProvider router={router} />
+    </AppErrorBoundary>
+  );
 }
