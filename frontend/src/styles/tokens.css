@@ -1,0 +1,147 @@
+/*
+ * Fleet Monitor design tokens. Values from reference/Main.dc.html (.fm) and FloorPlan.dc.html (.fp).
+ * Theme: follows the system setting; [data-theme] on <html> is a manual override.
+ *
+ * Colour rule: grey for fine, colour for problems, blue (--accent) for links and selection only.
+ * --ink3 is for text at 24 px and larger only (3.6:1, AA large).
+ */
+:root {
+  --page: #FFFFFF;
+  --tile: #F5F5F7;
+  --raise: #FFFFFF;
+  --bar: rgba(255, 255, 255, 0.8);
+  --glass: rgba(255, 255, 255, 0.72);
+  --line: rgba(0, 0, 0, 0.1);
+  --sep: rgba(0, 0, 0, 0.07);
+  --fill: rgba(0, 0, 0, 0.05);
+  --fill2: rgba(0, 0, 0, 0.08);
+  --skel: rgba(0, 0, 0, 0.07);
+  --ink: #1D1D1F;
+  --ink2: #6E6E73;
+  --ink3: #86868B;
+  --dotok: #48484A;
+  --accent: #0066CC;
+  --sel: rgba(0, 102, 204, 0.07);
+  --err: #D70015;
+  --err-text: #D70015;
+  --err-tint: rgba(215, 0, 21, 0.08);
+  --err-solid: #D70015;
+  --err-solid-ink: #FFFFFF;
+  --amb: #C77700;
+  --amb-text: #A15C00;
+  --amb-tint: rgba(199, 119, 0, 0.1);
+  --off: #8E8E93;
+  --off-text: #636366;
+  --off-tint: rgba(120, 120, 128, 0.12);
+  --plan: #FFFFFF;
+  --floor: #FBFBFD;
+  --zone: #F0F0F2;
+  --rack: #DCDCE0;
+  --rackline: #C9C9CF;
+  --ctx: #C7C7CC;
+  --pop: 0 0 0 0.5px rgba(0, 0, 0, 0.08), 0 12px 36px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --lift: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --pin: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.12);
+  color-scheme: light;
+
+  --ease: cubic-bezier(0.28, 0.11, 0.32, 1);
+  --spring: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --r-tile: 18px;
+  --r-stage: 22px;
+  --r-pop: 14px;
+  --r-row: 10px;
+
+  --font: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --wrap: 1440px;
+  --gutter: 40px;
+  --bar-h: 52px;
+}
+
+:root[data-theme='dark'] {
+  --page: #000000;
+  --tile: #161618;
+  --raise: #232325;
+  --bar: rgba(0, 0, 0, 0.72);
+  --glass: rgba(30, 30, 32, 0.72);
+  --line: rgba(255, 255, 255, 0.14);
+  --sep: rgba(255, 255, 255, 0.08);
+  --fill: rgba(255, 255, 255, 0.08);
+  --fill2: rgba(255, 255, 255, 0.12);
+  --skel: rgba(255, 255, 255, 0.08);
+  --ink: #F5F5F7;
+  --ink2: #A1A1A6;
+  --ink3: #86868B;
+  --dotok: #D1D1D6;
+  --accent: #2997FF;
+  --sel: rgba(41, 151, 255, 0.16);
+  --err: #FF453A;
+  --err-text: #FF5A4F;
+  --err-tint: rgba(255, 69, 58, 0.15);
+  /* On black a filled red capsule glares, so the "solid" error capsule is tinted in dark. */
+  --err-solid: rgba(255, 69, 58, 0.15);
+  --err-solid-ink: #FF5A4F;
+  --amb: #FFB340;
+  --amb-text: #FFB340;
+  --amb-tint: rgba(255, 179, 64, 0.14);
+  --off: #8E8E93;
+  --off-text: #AEAEB2;
+  --off-tint: rgba(142, 142, 147, 0.18);
+  --plan: #0B0B0C;
+  --floor: #0E0E10;
+  --zone: #1E1E20;
+  --rack: #3A3A3C;
+  --rackline: #48484D;
+  --ctx: #48484A;
+  --pop: 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 16px 40px rgba(0, 0, 0, 0.6);
+  --lift: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --pin: 0 1px 2px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --page: #000000;
+    --tile: #161618;
+    --raise: #232325;
+    --bar: rgba(0, 0, 0, 0.72);
+    --glass: rgba(30, 30, 32, 0.72);
+    --line: rgba(255, 255, 255, 0.14);
+    --sep: rgba(255, 255, 255, 0.08);
+    --fill: rgba(255, 255, 255, 0.08);
+    --fill2: rgba(255, 255, 255, 0.12);
+    --skel: rgba(255, 255, 255, 0.08);
+    --ink: #F5F5F7;
+    --ink2: #A1A1A6;
+    --ink3: #86868B;
+    --dotok: #D1D1D6;
+    --accent: #2997FF;
+    --sel: rgba(41, 151, 255, 0.16);
+    --err: #FF453A;
+    --err-text: #FF5A4F;
+    --err-tint: rgba(255, 69, 58, 0.15);
+    /* On black a filled red capsule glares, so the "solid" error capsule is tinted in dark. */
+    --err-solid: rgba(255, 69, 58, 0.15);
+    --err-solid-ink: #FF5A4F;
+    --amb: #FFB340;
+    --amb-text: #FFB340;
+    --amb-tint: rgba(255, 179, 64, 0.14);
+    --off: #8E8E93;
+    --off-text: #AEAEB2;
+    --off-tint: rgba(142, 142, 147, 0.18);
+    --plan: #0B0B0C;
+    --floor: #0E0E10;
+    --zone: #1E1E20;
+    --rack: #3A3A3C;
+    --rackline: #48484D;
+    --ctx: #48484A;
+    --pop: 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 16px 40px rgba(0, 0, 0, 0.6);
+    --lift: 0 4px 24px rgba(0, 0, 0, 0.5);
+    --pin: 0 1px 2px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+@media (max-width: 1279px) {
+  :root { --gutter: 28px; }
+}

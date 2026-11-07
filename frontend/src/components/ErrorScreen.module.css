@@ -1,0 +1,11 @@
+.main { padding-top: 96px; padding-bottom: 96px; }
+.h1 { font-size: 48px; line-height: 52px; letter-spacing: -0.035em; max-width: 900px; }
+.actions { display: flex; align-items: center; gap: 24px; margin-top: 32px; }
+.reload {
+  height: 36px; padding: 0 20px; border: 0; border-radius: 18px;
+  background: var(--accent); color: #FFFFFF; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.reload:hover { filter: brightness(1.08); }
+.details { margin-top: 40px; font-size: 13px; color: var(--ink2); }
+.details summary { cursor: pointer; }
+.details pre { margin-top: 8px; white-space: pre-wrap; font-size: 12px; color: var(--ink2); }

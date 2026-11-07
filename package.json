@@ -9,9 +9,12 @@
     "frontend"
   ],
   "scripts": {
+    "dev": "concurrently -k -n sim,web -c gray,blue \"npm:demo -w backend\" \"npm:dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "start:demo": "npm run build && STATIC_DIR=frontend/dist tsx backend/src/demo/simulator.ts",
     "outage": "curl -s -X POST 'http://localhost:8787/control/outage?seconds=20'",
-    "test": "npm test -w shared && npm test -w backend",
-    "typecheck": "npm run typecheck -w backend && tsc -p shared --noEmit"
+    "test": "npm test -w shared && npm test -w frontend && npm test -w backend",
+    "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend && tsc -p shared --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

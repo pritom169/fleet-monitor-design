@@ -1,0 +1,89 @@
+/* A zero-size anchor at the robot's exact spot. Moves smoothly between 1 Hz reports. */
+.mark {
+  position: absolute; width: 0; height: 0; padding: 0; border: 0; background: none;
+  transition: left 1000ms linear, top 1000ms linear, opacity 300ms var(--ease);
+  --inv: 1;
+}
+button.mark { cursor: pointer; }
+.mark:focus-visible { outline: none; }
+.mark:focus-visible .dot, .mark:focus-visible .head { outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 2px; }
+
+/* Healthy: a flat dot. */
+.dot {
+  position: absolute; left: 0; top: 0; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--dotok); box-shadow: 0 0 0 1.5px var(--plan);
+  transform: translate(-50%, -50%) scale(var(--inv)); transition: transform 400ms var(--spring);
+}
+.big .dot { width: 9px; height: 9px; box-shadow: 0 0 0 2px var(--floor); }
+.hl .dot { transform: translate(-50%, -50%) scale(calc(var(--inv) * 1.5)); }
+
+/* Problem: a pin that stands up, with a glyph and a short tail to its exact spot. */
+.foot { position: absolute; left: 0; top: 0; width: 6px; height: 3px; border-radius: 50%; background: rgba(0, 0, 0, 0.25); transform: translate(-50%, -50%) scale(var(--inv)); }
+.pin {
+  position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center;
+  transform: translate(-50%, -100%) scale(var(--inv)); transform-origin: 50% 100%;
+  transition: transform 400ms var(--spring);
+}
+.hl .pin { transform: translate(-50%, -100%) scale(calc(var(--inv) * 1.25)); }
+.big.hl .pin { transform: translate(-50%, -100%) scale(calc(var(--inv) * 1.12)); }
+.head {
+  width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--pin), 0 0 0 1.5px var(--raise);
+}
+.big .head { width: 28px; height: 28px; box-shadow: var(--pin), 0 0 0 2px var(--raise); }
+.tail { width: 2px; height: 5px; margin-top: -1px; border-radius: 1px; }
+.big .tail { height: 7px; }
+
+.low .head { background: var(--amb); color: #FFFFFF; }
+.low .tail { background: var(--amb); }
+.error .head { background: var(--err); color: #FFFFFF; animation: halo 2200ms var(--spring) infinite; }
+.error .tail { background: var(--err); }
+/* Offline: outlined, not filled. We do not know its state. */
+.offline .head { background: var(--raise); color: var(--off-text); box-shadow: var(--pin), 0 0 0 1.5px var(--raise), inset 0 0 0 1.5px var(--off); }
+.offline .tail { background: var(--off); }
+.offline .foot { background: transparent; box-shadow: 0 0 0 1px var(--off); }
+
+@keyframes halo {
+  0% { box-shadow: var(--pin), 0 0 0 1.5px var(--raise), 0 0 0 1.5px color-mix(in srgb, var(--err) 45%, transparent); }
+  60% { box-shadow: var(--pin), 0 0 0 1.5px var(--raise), 0 0 0 12px transparent; }
+  100% { box-shadow: var(--pin), 0 0 0 1.5px var(--raise), 0 0 0 1.5px transparent; }
+}
+
+.tag {
+  position: absolute; left: 13px; top: -17px; transform: translateY(-50%) scale(var(--inv)); transform-origin: 0 50%;
+  font-size: 11px; line-height: 14px; font-weight: 600; white-space: nowrap; pointer-events: none;
+  background: var(--raise); padding: 2px 6px; border-radius: 6px; box-shadow: var(--pop);
+}
+.big .tag { left: 18px; top: -30px; transform: scale(var(--inv)); font-weight: 700; letter-spacing: -0.01em; padding: 2px 7px; border-radius: 7px; box-shadow: var(--pin); }
+.olabel {
+  position: absolute; left: 8px; top: -6px; font-size: 10px; font-weight: 500; color: var(--ink2);
+  white-space: nowrap; transform: scale(var(--inv)); transform-origin: 0 50%; pointer-events: none;
+}
+
+/* Selected: a blue ring that breathes. Blue is selection, never a status. */
+.ring {
+  position: absolute; left: 0; top: 0; width: 12px; height: 12px; border-radius: 50%;
+  transform: translate(-50%, -50%) scale(var(--inv)); box-shadow: 0 0 0 2px var(--accent);
+  animation: ring 1800ms var(--spring) infinite;
+}
+@keyframes ring {
+  0% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 2px var(--sel); }
+  70% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 16px transparent; }
+  100% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 2px transparent; }
+}
+
+.pop {
+  position: absolute; top: 0; width: 210px; padding: 14px; border-radius: var(--r-pop);
+  background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: var(--pop); font-size: 12px; line-height: 16px; z-index: 10; pointer-events: none; text-align: left;
+}
+.popRight { left: 16px; transform: translateY(-50%); }
+.popLeft { left: -16px; transform: translate(-100%, -50%); }
+.popHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.popId { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+.popStatus { font-size: 11px; font-weight: 600; }
+.popMeta { display: block; margin-top: 2px; color: var(--ink2); }
+.popRow { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; color: var(--ink); }
+.popSep { margin-top: 10px; padding-top: 8px; border-top: 0.5px solid var(--line); }
+.popRow > span:first-child { color: var(--ink2); }
+.popRow > span:last-child { font-weight: 500; text-align: right; }

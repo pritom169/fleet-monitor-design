@@ -1,0 +1,14 @@
+.bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 20px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px 0 14px;
+  border: 0; border-radius: 18px; background: var(--tile); font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: background-color 250ms var(--ease), color 250ms var(--ease), transform 150ms var(--ease);
+}
+.pill:hover { background: var(--fill); }
+.pill:active { transform: scale(0.97); }
+.pill:disabled { cursor: default; color: var(--ink2); }
+/* Selection is neutral: a solid ink capsule, never a status colour. */
+.pill[aria-pressed='true'] { background: var(--ink); color: var(--page); }
+.pill[aria-pressed='true'] .n { color: inherit !important; }
+.n { font-weight: 600; }
+.showing { margin-left: auto; font-size: 13px; color: var(--ink2); }

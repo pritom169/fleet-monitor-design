@@ -1,0 +1,68 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  min-height: 100vh;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font);
+  font-optical-sizing: auto;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+button, input, select { font: inherit; color: inherit; letter-spacing: inherit; }
+a { color: inherit; }
+h1, h2, h3, p, figure, dl, dd, ol, ul { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+
+::selection { background: var(--sel); }
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+.tile { background: var(--tile); border-radius: var(--r-tile); }
+
+/* The one link style: blue, with a chevron. */
+.more {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: 14px; color: var(--accent); text-decoration: none;
+  border: 0; background: none; padding: 0; cursor: pointer;
+}
+.more:hover { text-decoration: underline; }
+
+/* Section label inside a tile. */
+.k { display: block; font-size: 14px; font-weight: 600; color: var(--ink2); }
+
+/* Headline: ink sentence is the fact, grey sentence is the context. */
+.headline { margin: 0; font-weight: 600; text-wrap: balance; }
+.headline .ctx { color: var(--ink3); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); animation: fm-live 2400ms ease-in-out infinite; }
+.spin { animation: fm-spin 1100ms linear infinite; }
+
+.skel { display: block; height: 10px; border-radius: 5px; background: var(--skel); }
+.shimmer { animation: fm-shimmer 1600ms ease-in-out infinite; }
+
+@keyframes fm-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes fm-spin { to { transform: rotate(360deg); } }
+@keyframes fm-shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes fm-rise { 0% { opacity: 0; transform: translateY(14px) scale(0.97); } 100% { opacity: 1; transform: none; } }
+@keyframes fm-flash { 0%, 30% { opacity: 1; } 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

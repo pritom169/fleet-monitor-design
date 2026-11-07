@@ -1,0 +1,45 @@
+.bar {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--line);
+}
+.row { display: flex; align-items: center; gap: 24px; height: var(--bar-h); }
+.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; flex: none; }
+.brand span { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+.sections { display: flex; gap: 24px; margin-left: 8px; }
+.tab { font-size: 12px; color: var(--ink2); text-decoration: none; padding: 6px 0; transition: color 200ms var(--ease); white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-current='page'] { color: var(--ink); font-weight: 600; }
+.slot { margin-left: auto; display: flex; align-items: center; gap: 20px; min-width: 0; }
+
+.conn { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; white-space: nowrap; flex: none; }
+.conn .time { color: var(--ink2); font-weight: 400; }
+.connecting { color: var(--ink2); }
+.lost { color: var(--amb-text); font-weight: 600; }
+
+.theme {
+  flex: none; width: 29px; height: 29px; border: 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--ink2); cursor: pointer;
+  transition: background-color 200ms var(--ease), color 200ms var(--ease);
+}
+.theme:hover { background: var(--fill); color: var(--ink); }
+
+.banner { border-top: 0.5px solid var(--line); background: var(--amb-tint); }
+.bannerRow {
+  display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  min-height: 40px; padding-top: 6px; padding-bottom: 6px; font-size: 13px;
+}
+.bannerMain { font-weight: 600; color: var(--ink); }
+.bannerMeta { color: var(--ink2); }
+.bannerRow :global(.more) { font-size: 13px; }
+
+@media (max-width: 1279px) {
+  .row { gap: 18px; }
+  .sections { gap: 18px; margin-left: 0; }
+  .conn .time { display: none; }
+}
+
+.inline { border-top: 0; border-radius: 14px; padding: 0 16px; }

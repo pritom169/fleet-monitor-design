@@ -1,0 +1,28 @@
+.chart { position: relative; height: 250px; margin: 28px 4px 0 30px; }
+.rule { position: absolute; left: 0; right: 0; height: 1px; background: var(--sep); }
+.yl { position: absolute; left: -30px; transform: translateY(-50%); font-size: 11px; line-height: 14px; color: var(--ink2); }
+.thr { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--ink2); opacity: 0.6; }
+.thrV { font-weight: 700; color: var(--ink); }
+.thrLabel {
+  position: absolute; left: 10px; transform: translateY(-50%); padding: 3px 8px; border-radius: 7px;
+  background: var(--raise); font-size: 11px; line-height: 14px; font-weight: 500; color: var(--ink2);
+}
+.svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.line { fill: none; stroke-width: 2.25; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lowLine { stroke-width: 3; }
+.gap {
+  position: absolute; top: 0; bottom: 0; right: 0; border-radius: 10px;
+  background-image: repeating-linear-gradient(135deg, var(--fill) 0 1.5px, transparent 1.5px 8px);
+}
+.gapNote {
+  position: absolute; top: 12px; margin-left: 12px; padding: 4px 9px; border-radius: 8px; white-space: nowrap;
+  background: var(--raise); box-shadow: var(--pop); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--off-text);
+}
+.end {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%; transform: translate(-50%, -50%);
+  background: var(--ink); box-shadow: 0 0 0 2.5px var(--tile);
+  transition: left 900ms var(--ease), top 900ms var(--ease);
+}
+.endLow { background: var(--amb); box-shadow: 0 0 0 2.5px var(--tile), 0 0 0 8px var(--amb-tint); }
+.endOff { background: var(--tile); border: 2px dashed var(--off); box-shadow: none; }
+.xl { position: absolute; top: 100%; padding-top: 12px; font-size: 11px; line-height: 14px; color: var(--ink2); white-space: nowrap; }

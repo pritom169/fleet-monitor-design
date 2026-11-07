@@ -1,0 +1,15 @@
+.main { padding-top: 48px; padding-bottom: 48px; }
+.answer { padding-bottom: 28px; }
+.h1 { max-width: 1100px; font-size: 48px; line-height: 52px; letter-spacing: -0.035em; }
+.split { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.tableCol { grid-column: span 7; display: flex; min-width: 0; }
+.mapCol { grid-column: span 5; display: flex; min-width: 0; }
+.tableCol > *, .mapCol > * { flex: 1; }
+.foot { margin-top: 20px; font-size: 12px; color: var(--ink2); display: flex; gap: 12px; align-items: center; }
+.foot :global(.more) { font-size: 12px; }
+
+@media (max-width: 1279px) {
+  .tableCol { grid-column: span 8; }
+  .mapCol { grid-column: span 4; }
+  .h1 { font-size: 40px; line-height: 44px; }
+}
