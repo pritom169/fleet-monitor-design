@@ -335,3 +335,398 @@ In the demo, incidents happened before start, so the dashboard opens with them. 
 
 ---
 
+# Part B — Production design
+
+## 9. Architecture (production)
+
+```mermaid
+flowchart TB
+  ROB[Robots<br/>MQTT clients, LWT]
+  BRK[Mosquitto broker]
+  subgraph SERVER[Ingest + API server — Node, TypeScript]
+    MQ[MQTT adapter<br/>zod validation]
+    ING[Ingest<br/>dedupe, ordering, bounded queue]
+    DOM[Status rules<br/>shared lib/status.ts, 1 s ticker]
+    CUR[Current state<br/>in-memory map]
+    API[HTTP + WebSocket<br/>same protocol as the demo]
+    REPO[Repo · pg]
+  end
+  DB[(PostgreSQL 16)]
+  WEB[Browser]
+
+  ROB --> BRK --> MQ --> ING --> DOM --> CUR --> API <--> WEB
+  ING --> REPO
+  DOM --> REPO
+  CUR --> REPO
+  REPO --> DB
+```
+
+### Code layout (`backend/src/server/`)
+
+| Module | Role |
+|---|---|
+| `transport/mqtt.ts` | Connects, subscribes `fleet/+/+/#` (or `fleet/{site}/#` per `SITES`), parses topics, validates with zod |
+| `domain/seqWindow.ts` | `(boot, seq)` dedupe window |
+| `domain/fleet.ts` | Current state, status derivation, transition events, the ingest clock. Pure. |
+| `persist/batchWriter.ts` | Bounded queue + batch writer, timers injected |
+| `repo/pg.ts` | Migrations, partitions, writes, history queries |
+| `http/server.ts`, `http/fanout.ts` | Routes, problem+json, HTTPS, WebSocket coalescing, the slow-client policy |
+| `metrics.ts`, `log.ts` | prom-client, pino with sampling |
+| `app.ts` | `createApp(config)`: wiring, the 1 s ticker, registry refresh, shutdown. Tests and the load test start it in process. |
+| `main.ts` | Reads the environment (`config.ts`, fails fast on half-set TLS), handles signals |
+
+### Layer rule
+
+- Only `transport/mqtt` imports `mqtt`. Only `repo/` imports `pg`. Only `http/` knows about HTTP (plain `node:http` + `ws`; no framework was needed).
+- `domain/` is pure. It gets the clock by injection, so tests use a fake clock and never sleep.
+- The status rules are the **same module** the client uses. Server events and client pills can therefore never disagree.
+
+---
+
+## 10. MQTT design
+
+### Topics
+
+| Topic | Direction | QoS | Retained | Purpose |
+|---|---|---|---|---|
+| `fleet/{siteId}/{robotId}/telemetry` | robot → server | 0 | no | Reports at 1 Hz |
+| `fleet/{siteId}/{robotId}/event` | robot → server | 1 | no | Task started or completed, fault raised, Wi-Fi warning |
+| `fleet/{siteId}/{robotId}/status` | robot / broker → server | 1 | yes | `online` on connect. LWT `offline` on unclean disconnect. |
+| `fleet/{siteId}/{robotId}/cmd`, `…/cmd/ack` | both | 1 | no | Reserved for commands. Not built. |
+
+- **Telemetry uses QoS 0.** The newest sample wins, so resending an old one has no value.
+- **Events use QoS 1.** They are rare, and the timeline must not miss "Task started".
+- **The LWT is a hint, not proof.** It makes offline detection fast after a crash. A robot can stay connected and send nothing, so the 10 s rule stays the source of truth.
+- **Sessions:** `clean: true` for robots and the server. Keepalive 10 s.
+
+### Subscriptions and scaling
+
+One server instance subscribes to `fleet/+/+/#`.
+
+MQTT shared subscriptions (`$share/…`) are **not** the scaling path. They hand each message to any member of the group, not to the same member per robot. That would break per-robot state and dedupe. The scaling path is to partition by site: each instance subscribes to `fleet/{siteId}/#` for its own sites, with no shared group. See [section 18](#18-decisions), D5.
+
+---
+
+## 11. Telemetry contract
+
+The MQTT payload is the demo `Report` plus the fields a real network needs. Zod schemas live in one shared package.
+
+```ts
+const Telemetry = z.object({
+  id: z.string().min(1).max(64),
+  siteId: z.string().min(1).max(64),
+  boot: z.number().int().nonnegative(),   // boot counter, +1 on each restart, stored on the robot
+  seq: z.number().int().nonnegative(),    // +1 per message, reset to 0 on boot
+  robotTs: z.number().int(),              // robot clock, epoch ms; stored, never used for ordering
+  battery: z.number().min(0).max(100),
+  x: z.number(), y: z.number(),
+  state: z.enum(['ok', 'error']),
+  fault: z.string().max(128).optional(),
+  task: z.string().max(128),
+  since: z.number().int(),
+});
+```
+
+The server turns each accepted sample into a `Report` for the browser, with `t = receivedAt` (server clock). The browser protocol does not change.
+
+Two fields fix gaps in the earlier draft:
+
+- **`boot` is an ordered counter, not a UUID.** "Newer" means a greater `(boot, seq)`, and a UUID has no order.
+- **`robotTs` is separate from `t`.** Freshness and ordering never use the robot clock. The skew `receivedAt − robotTs` is stored per sample, smoothed per robot (EWMA, α = 0.1, about 10 s of memory), sent as `Report.skew` (ms), and shown in the detail page's Details as "Robot clock · 1.4 s behind the server". Under 0.5 s reads "In sync", because the value includes network transit. It is plain text, not a status colour: it explains odd timestamps, it is not a problem for the manager.
+
+---
+
+## 12. Ingest pipeline
+
+### Steps per message
+
+```
+MQTT message
+  → parse + zod validate      fail     → count invalid, drop (log sampled)
+  → registry check            unknown  → count unknown, drop
+  → dedupe (boot, seq)        seen     → count duplicate, drop
+  → order check               older    → history only, never current state
+  → update current state + derive status + emit events   (synchronous, in memory)
+  → push Report to WebSocket clients
+  → enqueue for persistence   full     → drop oldest, count dropped
+```
+
+Current state is updated **before** the persistence queue. A slow database can create gaps in history. It can never make the live view wrong.
+
+### Dedupe and ordering
+
+- Per robot, the server keeps the newest `(boot, seq)` and a 256-entry bitmap of recent `seq` values for that boot.
+- A greater `boot` resets the window.
+- `robot_state` stores the newest `(boot, seq)`, so ordering survives a server restart.
+- After a restart, the bitmap is empty, so a rare duplicate can reach history. This is accepted: history is aggregated per bucket, and a repeated sample does not change a line chart. QoS 0 means the broker never redelivers. Duplicates come only from robot-side retries.
+
+### Status derivation and the ingest clock
+
+A 1 s ticker re-derives status for all robots, because `offline` is a function of time.
+
+The ticker uses the same rule as the client's `statusClock()`:
+
+- While the MQTT connection is up, freshness is judged against the current time.
+- While it is down, freshness is frozen at the last message received from the broker.
+
+So, a broker outage shows as "ingest paused" on the dashboard. It does not mark 1,000 robots offline and fill the event log with false "Went offline" events.
+
+Two additions came out of running the build:
+
+- **Settle window (3 s).** When the broker link returns, freshness stays frozen for 3 s while robots report again. Without it, the first tick after a reconnect sees every last report as minutes old and marks the whole fleet offline for a second. Browsers see `paused` until the window ends.
+- **Stall watchdog (5 s).** If the link is "up" but no robot at all has sent anything for 5 s, the silence is treated as evidence about our own path, not about every robot. The ingest state goes to `paused` with freshness frozen, and the settle window runs when data resumes. This was found in testing: over two days of a laptop sleeping and waking, the ticker woke before MQTT noticed the dead TCP link and logged about 4,900 false "Went offline" / "Back online" pairs. A `SIGSTOP`/`SIGCONT` test now produces none. Trade-off: if every robot in the fleet really goes silent at once (one broker, one power cut), the dashboard says "Robot data paused", not "all offline". Both mean "we do not know".
+
+### Bounded queue and batch writer
+
+- Capacity: 50,000 samples (about 50 s at 1,000 msg/s).
+- Flush at 1,000 rows or every 500 ms, one flush at a time.
+- Insert with one multi-row `INSERT … SELECT FROM unnest(…)`.
+- On a database error: retry with backoff (100 ms to 5 s). When the queue fills, drop the oldest samples. A full batch pulls a pending timed flush forward.
+- A batch that fails with a SQL error a retry cannot fix (SQLSTATE class 21, 22, 23 or 42) is dropped and counted, not retried forever. One poison batch must not block a queue. Found by the integration test: a state batch built up during a database outage held several rows for one robot, and `INSERT … ON CONFLICT` refused it on every retry, so state writes and readiness stayed red after the database came back. `upsertStates` now also keeps one row per robot.
+- Every query has a 10 s client-side timeout. A database that *hangs* (rather than refusing connections) must fail the write, so the writer retries and readiness turns red.
+- A row for a day with no partition fails with `23514`. The writer then creates partitions and retries once. Partition maintenance also runs when the database becomes reachable again. Without this, a database that was down over midnight would block the telemetry queue until the next hourly run.
+- `robot_state` is upserted at most once per second per robot. Events are inserted immediately.
+- The registry is re-read every 15 s (`REGISTRY_REFRESH_MS`). New robots appear as `never`, retired ones disappear, and browsers get a fresh `hello`. State rows for a robot removed in the meantime are skipped (join with `robots`), not failed.
+
+---
+
+## 13. Storage
+
+### Schema
+
+```sql
+CREATE TABLE robots (                      -- the registry; needed for "never reported"
+  id            text PRIMARY KEY,
+  site_id       text        NOT NULL,
+  model         text        NOT NULL,
+  model_full    text        NOT NULL,      -- added in the build: the detail page shows it
+  firmware      text        NOT NULL,
+  network       text,
+  registered_at timestamptz NOT NULL
+);
+
+CREATE TABLE telemetry (
+  robot_id     text        NOT NULL,
+  boot         integer     NOT NULL,
+  seq          bigint      NOT NULL,
+  received_at  timestamptz NOT NULL,
+  robot_ts     timestamptz NOT NULL,
+  battery      real        NOT NULL,
+  x            real        NOT NULL,
+  y            real        NOT NULL,
+  state        text        NOT NULL,
+  fault        text,
+  task         text        NOT NULL
+) PARTITION BY RANGE (received_at);
+
+CREATE INDEX telemetry_robot_time ON telemetry (robot_id, received_at DESC);
+
+CREATE TABLE robot_state (
+  robot_id     text PRIMARY KEY REFERENCES robots(id),
+  report       jsonb       NOT NULL,       -- last Report
+  boot         integer     NOT NULL,
+  seq          bigint      NOT NULL,
+  status       text        NOT NULL,
+  last_seen_at timestamptz NOT NULL
+);
+
+CREATE TABLE robot_events (
+  id        bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  robot_id  text        NOT NULL,
+  t         timestamptz NOT NULL,
+  kind      text        NOT NULL,          -- info | low | warn | error | off | ok
+  text      text        NOT NULL,
+  sub       text
+);
+
+CREATE INDEX robot_events_robot_time ON robot_events (robot_id, t DESC, id DESC);   -- keyset pagination
+```
+
+There is no unique constraint on `(robot_id, boot, seq)`. Postgres requires every unique key on a partitioned table to include the partition key `received_at`. A resent sample has a new `received_at`, so such a constraint would never catch it. Dedupe happens in memory ([section 12](#dedupe-and-ordering)).
+
+### Partitions and retention
+
+- Partitions are daily, by `received_at`, which is the server clock. A robot with a bad clock cannot write into the wrong partition.
+- A job runs on startup and every hour. It creates partitions for the next 2 days and drops partitions older than 7 days. Dropping a partition is instant. A `DELETE` of millions of rows is not.
+
+### Capacity at 1,000 robots
+
+| Metric | Estimate |
+|---|---|
+| Messages per second | 1,000 |
+| Rows per day | 86.4 M |
+| Bytes per row, with tuple header and index | ~~200–250 B~~ **157–161 B measured** |
+| Storage per day | ~~17–22 GB~~ **about 14 GB** |
+| 7-day retention | ~~120–150 GB~~ **about 97 GB** |
+
+The struck values were the first estimates; the bold ones come from the load test (`docs/LOAD_TEST.md`, 4 M rows).
+
+### History query
+
+The detail page asks for a time range. The server picks a bucket so the response has at most 500 points:
+
+```sql
+SELECT date_bin($bucket, received_at, $from) AS t,
+       min(battery)                                        AS battery_min,
+       avg(battery)                                        AS battery_avg,
+       (array_agg(x ORDER BY received_at DESC))[1]         AS x,
+       (array_agg(y ORDER BY received_at DESC))[1]         AS y
+FROM telemetry
+WHERE robot_id = $1 AND received_at >= $from AND received_at < $to
+GROUP BY 1 ORDER BY 1;
+```
+
+Position uses the **last** value in each bucket, not the average. The average of two positions can be a point inside a rack.
+
+Gaps stay gaps. A bucket with no rows returns no point, so the chart shows "No data since 14:00:08" and does not invent a line.
+
+---
+
+## 14. API
+
+The browser contract from Part A stays. Production adds range queries.
+
+| Method | Path | Purpose |
+|---|---|---|
+| WS | `/ws` | `hello` snapshot, then `report` and `event`. Same as the demo. |
+| GET | `/api/robots/:id/history` | Default ranges, same as the demo (15 min battery, 4 min trail, today's events) |
+| GET | `/api/robots/:id/telemetry?from&to` | Downsampled history, at most 500 points, range at most 7 days |
+| GET | `/api/robots/:id/events?from&to&cursor` | Event timeline, paginated |
+| GET | `/healthz` | The process is up |
+| GET | `/readyz` | The database and broker are connected, and state is loaded |
+| GET | `/metrics` | Prometheus; needs `Authorization: Bearer $METRICS_TOKEN` when that is set |
+
+Errors use `application/problem+json` (RFC 9457).
+
+### WebSocket fan-out
+
+- Reports are coalesced per client to at most one per robot per second.
+- If a client's send buffer passes 1 MB, the server keeps only the newest report per robot for it. If the buffer does not drain, the server closes the socket. The client reconnects and gets a fresh `hello`.
+
+### `hello` in production
+
+`hello` gains `ingest: { state: 'live' | 'paused', frozenAt }`, and an `ingest` message carries later changes. When the server has lost the broker (or the link stalled), the client shows "Robot data paused" in the top-bar indicator and the banner. Statuses stay frozen at `frozenAt`, values are marked stale, and "last seen" keeps counting.
+
+`/api/robots/:id/events` uses an opaque keyset cursor over `(t, id)`. `from` and `to` accept epoch ms or ISO 8601.
+
+---
+
+## 15. Failure modes
+
+| Failure | Behaviour | Data impact |
+|---|---|---|
+| Browser ↔ server link lost | Banner, values turn grey, "last seen" keeps counting, statuses frozen. Reconnect with backoff, then a fresh `hello`. | None |
+| Server ↔ broker link lost | `ingest: paused` sent to clients. Status clock frozen. No false offline events. | No data during the outage |
+| One robot goes silent, still connected | `offline` after 10 s, from the ticker | None |
+| One robot crashes | LWT arrives after about 15 s; the 10 s rule usually fires first | None |
+| Robot reboots | Greater `boot` resets the dedupe window | None |
+| Duplicate sample | Dropped by the window. After a server restart, a rare duplicate can reach history. | None visible |
+| Reordered sample | History only | None |
+| Robot clock skew | Ordering uses `(boot, seq)`; freshness uses server time; skew is shown | None |
+| Invalid payload | Dropped, counted, logged with sampling | That sample |
+| Database slow or down | Queue grows, then drops the oldest. `/readyz` fails. Live view continues from memory. History endpoints return 503. | Gaps in history |
+| Server crash | Queue content lost: under 1 s at normal load, up to 50 s if the database was slow. On restart, state loads from `robot_state`. | Gap in history |
+| Slow browser | Coalesced, then disconnected | None for other clients |
+| Server process suspended (laptop sleep), or a stalled link the keepalive has not caught | Stall watchdog: 5 s with no robot data → `paused`, frozen clock, settle window on resume | None |
+| Database down over midnight | Insert hits a missing partition → partitions created, batch retried | None |
+| Database hangs (not refusing) | Queries time out after 10 s → writes retried, `/readyz` red, live view continues | None if it returns within the queue's capacity |
+| A batch the database can never accept | Dropped and counted after the first failure; the queue continues | That batch |
+
+---
+
+## 16. Observability and security
+
+### Metrics
+
+| Metric | Meaning |
+|---|---|
+| `ingest_messages_total{result}` | `accepted`, `invalid`, `unknown`, `duplicate`, `out_of_order` |
+| `ingest_dropped_total` | Dropped because the queue was full |
+| `ingest_queue_depth` | Current queue size |
+| `ingest_lag_seconds` | `received_at − robot_ts` |
+| `db_batch_write_seconds` | Duration of each batch |
+| `robots_by_status{status}` | Current counts |
+| `ws_clients`, `ws_disconnects_total{reason}` | Browser connections |
+| `mqtt_connected` | 1 or 0 |
+
+Logs: `pino`, JSON, one line per event, request IDs. High-volume warnings are sampled.
+
+### Security
+
+| Area | Demo / plain stack | Production (built: `docker-compose.secure.yml`) |
+|---|---|---|
+| Robot auth | None | mTLS, one certificate per robot (CN = robot ID). Mosquitto maps the CN to the ACL user (`use_identity_as_username`). The ACL is generated from the registry, so each robot can publish only to `fleet/{its site}/{its id}/…`, and only the ingest server's certificate can read `fleet/#`. |
+| Transport | Plain HTTP and WS, MQTT on 1883 | MQTT over TLS only (8883, TLS ≥ 1.2, no plaintext listener), HTTPS/WSS with HSTS |
+| User auth | None | None: user accounts are a non-goal (§2). Every viewer sees every site, so the dashboard belongs on a trusted network or behind an authenticating proxy. |
+| WebSocket | Open | Open, over WSS |
+| Metrics | Open | Bearer token (`METRICS_TOKEN`), compared in constant time |
+| Control endpoints | `/control/outage` (demo only) | Not present in the ingest server |
+| Input validation | zod at the MQTT boundary | Same |
+
+How the pieces are issued:
+
+- `backend/src/ops/pki.ts init` creates a development CA and the broker, ingest-client and web certificates (EC P-256, OpenSSL 3 or LibreSSL). `pki.ts robots` issues a certificate per registered robot and writes the ACL; re-run it after provisioning and send the broker `SIGHUP`. In production, certificates come from the company PKI; the ACL generator stays.
+
+Not built: certificate revocation (CRL/OCSP) for a stolen robot. Today the answer is to remove the robot from the registry, which removes it from the ACL at the next `pki.ts robots` + `SIGHUP`.
+
+---
+
+## 17. Testing
+
+### Built
+
+| Test | What it proves |
+|---|---|
+| `frontend/src/lib/sort.test.ts` | Battery and position updates never change row order. Only a status change does. |
+| `frontend/src/lib/status.test.ts` | The status model rules. A lost connection never marks robots offline, and "last seen" keeps counting. Hysteresis 19 ↔ 22 %. Ingest paused freezes freshness. Relative time format. |
+| `frontend/src/data/store.test.ts` | Every reducer and action. A failed first connection stays "connecting". A reconnect `hello` keeps the previous status, latch and trail, so a change during an outage is highlighted. The heartbeat clock only moves forward; the live event log keeps the newest 300. Hover changes only when its target changes. `useFleet` re-renders only when the selected slice changes. |
+| `frontend/src/data/socket.test.ts` | With a fake WebSocket and fake timers: `ws` or `wss` on the same host. `hello`, batched reports, events, ingest and heartbeats reach the store; reports buffered before a fresh `hello` are dropped. Frames that are not JSON or fail the schema are dropped with one warning per type; unknown types are ignored. Backoff 1, 2, 5, then 10 s, keeping the data. A socket silent for 5 s is dropped, not sooner. "Retry now". |
+| `frontend/src/data/history.test.ts` | Loads once the link is live, then every 10 s. A response that fails the schema is an error, not data. A failed refresh keeps loaded data. The live trail every 2 s, kept for 4 minutes. Live events merged newest first, deduplicated by `eventId` (not time and text). Battery rate and the 20 % crossing. |
+| `frontend/src/lib/fleet.test.ts`, `time.test.ts`, `theme.test.tsx` | Headline sentences for every state, search, site visibility; time formats; theme follows the system until picked |
+| `frontend/src/components/RobotTable.render.test.tsx` | Render counts: a hover re-renders two rows, a clock tick none, a report only that robot's row ([render cost](#render-cost)) |
+| `frontend/src/components/*.test.tsx` | Each component in every status: pill, battery glyph, attention cards, filter pills, site plan, search (the `/` shortcut), map markers and popovers, battery chart, table rows and the status-change highlight, top bar, both banners. The crash screen, from a route and from the top-level boundary. |
+| `frontend/src/pages/*.test.tsx`, `App.test.tsx` | Overview, robot detail, floor plan and component sheet rendered from fixture states built with the real reducers: loading, empty site, no results, connection lost, ingest paused, never reported; the low-battery plan from `taskKind`, the bay from `bay_assigned`; routing and not found |
+| `backend/src/server/domain/fleet.test.ts` | Dedupe window, boot reset, order check, server-time stamping, unknown robot and wrong site, hysteresis events, offline once, frozen clock while the broker is down, settle window, stall watchdog, state restored after restart |
+| `backend/src/server/persist/batchWriter.test.ts` | Flush by size or time, drop oldest when full, retry with backoff in order, one flush at a time |
+| `backend/src/server/http/fanout.test.ts` | One report per robot per second, newest wins, slow client held then cut, fast clients unaffected |
+| `backend/src/server/pipeline.int.test.ts` | Real Postgres 16 + Mosquitto 2 (Testcontainers). A published sample reaches a WebSocket client in < 1 s (G1) and is stored with server time and skew. Duplicates dropped, late samples in history only. LWT logged, then offline by the 10 s rule. Partitions created ahead and dropped after retention. History ≤ 500 points with last-position buckets and gaps kept. Event pagination. Registry change → fresh `hello`. A *paused* (hung) database: live view continues, `/readyz` red, history 503, then recovery with nothing queued lost. |
+| `backend/src/server/security.int.test.ts` | TLS broker with the generated ACL: no certificate refused, a foreign CA refused, a robot cannot publish for another robot. HTTPS with HSTS, no sign-in routes, every robot streamed over WSS, metrics token. |
+
+Run with `npm test` (unit and component, 238 tests, 134 of them in the client) and `npm run test:int -w backend` (integration, 20 tests, needs Docker). `npm run test:coverage` runs both with the thresholds; the client is at 99.9 % lines and 97.6 % branches.
+
+---
+
+## 18. Decisions
+
+Each decision names the condition that would change it.
+
+| # | Decision | Rejected | Change when |
+|---|---|---|---|
+| D1 | **One status enum**, `ok · low · error · offline · never`, in one module shared by server and client | Separate connectivity and battery dimensions (more precise, but the manager needs one answer per robot, and the UI already shows the last known battery of an offline robot) | A new independent signal matters, for example localisation quality |
+| D2 | **WebSocket** with a full `hello` snapshot on each connect, no replay | SSE (would also work; WebSocket is built and leaves room for commands from the UI). `Last-Event-ID` replay (extra state and edge cases). | The snapshot passes about 10k robots per view → filtered streams per site |
+| D3 | **MQTT with Mosquitto** for robots in production | HTTP POST (no LWT, no server-to-robot path). EMQX or HiveMQ (built for very large clusters). | About 100k robots, or broker clustering is required |
+| D4 | **Current state before persistence; drop oldest when full** | Blocking the MQTT client (the broker then drops without control). Unbounded queue (memory grows until a crash). | Complete history is required, for example for compliance → a durable log (Kafka) between broker and writer |
+| D5 | **One server instance; scale by site** | MQTT shared subscriptions (no per-robot affinity). Redis for current state (an extra service with no need at one instance). | The measured limit is near → one instance per site group, or Kafka keyed by robot ID |
+| D6 | **Plain PostgreSQL** with daily partitions and `date_bin` | TimescaleDB (good, but its features are not needed at 7 days). InfluxDB (a second database). | Retention over 30 days or over 10k msg/s → TimescaleDB with continuous aggregates |
+| D7 | **Order by `(boot, seq)`; freshness by server time** | Robot time (clocks drift) | Robots without sequence numbers → order by receive time and accept small errors |
+| D8 | **Freeze freshness when our own link is down**, on the client and the server, including a stalled link (fleet-wide silence for 5 s) and a 3 s settle window on recovery | Treating silence as offline whatever the cause | One broker per site → judge fleet-wide silence per site |
+| D9 | **Keep the mock backend for `npm run dev`**, next to the built Part B | Only Part B (the interface would then need Docker to run) | — |
+| D10 | **One `shared/` workspace package** for protocol, status rules and payload schemas, consumed as TypeScript source | Copying the files; publishing a built package | A second client in another language → generate from a schema |
+| D11 | **Broker ACL generated from the registry**, CN = robot ID | Username/password per robot (secrets to rotate on every robot); a dynamic auth plugin (more moving parts) | Thousands of provisioning changes a day → Mosquitto's dynamic-security plugin or an auth webhook |
+
+---
+
+## 19. What I disagree with
+
+- **Raw 1 Hz history is mostly noise for a fleet manager.** They need status transitions and exceptions. So, the event log is the main history, and charts are a detail view.
+- **Battery percentage alone is a weak signal.** The real question is "can this robot finish its task?" That needs an energy model and the task plan. The design keeps one simple threshold and leaves this as a product question.
+
+---
+
+## 20. Open questions
+
+1. What fleet size and retention period does Olivaw see in real deployments?
+2. Do robots provide a boot counter and a sequence number? If not, ordering falls back to server receive time (D7).
+3. Do task events come from the robot or from a separate task system? That decides who publishes to `…/event`.
+4. Is 10 s the right offline threshold for every site? Sites with weak Wi-Fi may need a per-site value.
+5. Do robots at one site share one uplink? That affects edge buffering and broker placement.
