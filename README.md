@@ -6,9 +6,24 @@ Calm when everything is fine. Loud only when something is wrong.
 ```bash
 npm install
 npm run dev          # demo: mock backend on :8787 + app on http://localhost:5173
-npm test             # unit tests (shared + client + demo backend), no Docker
+npm test             # unit tests (shared + client + ingest server), no Docker
+npm run test:int -w backend   # integration tests against real Postgres + Mosquitto (Testcontainers, needs Docker)
 npm run outage       # demo only: drop every browser connection for 20 s
 ```
+
+**Production stack** (SYSTEM_DESIGN.md Part B): robots → Mosquitto → ingest server → PostgreSQL.
+
+```bash
+docker compose up --build    # everything, app on http://localhost:8787
+docker compose stop mosquitto   # see "Robot data paused"; `start` it again to recover
+
+# or from source, with only the infrastructure in Docker:
+npm run infra        # Postgres :5432 + Mosquitto :1883
+npm run seed         # migrations + robot registry
+npm run dev:prod     # ingest server :8787 + 50 MQTT robots + app on :5173
+```
+
+Server endpoints: `/healthz`, `/readyz`, `/metrics` (Prometheus), `/api/robots/:id/history`, `/api/robots/:id/telemetry?from&to`, `/api/robots/:id/events?from&to&cursor`. `ROBOTS=1000` scales the simulated fleet.
 
 Restarting the demo backend replays the scripted incidents. After about 10 minutes the low-battery robots charge and recover, the same way a real fleet would.
 
