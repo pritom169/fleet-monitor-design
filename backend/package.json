@@ -6,7 +6,8 @@
   "scripts": {
     "demo": "tsx watch src/demo/simulator.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:int": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
     "@fleet/shared": "0.1.0",
