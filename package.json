@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "concurrently -k -n sim,web -c gray,blue \"npm:demo -w backend\" \"npm:dev -w frontend\"",
     "build": "npm run build -w frontend",
+    "start": "npm run build && STATIC_DIR=../frontend/dist npm run server -w backend",
     "start:demo": "npm run build && STATIC_DIR=frontend/dist tsx backend/src/demo/simulator.ts",
     "outage": "curl -s -X POST 'http://localhost:8787/control/outage?seconds=20'",
     "test": "npm test -w shared && npm test -w frontend && npm test -w backend",
