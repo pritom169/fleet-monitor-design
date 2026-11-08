@@ -7,6 +7,8 @@
     "demo": "tsx watch src/demo/simulator.ts",
     "server": "tsx src/server/main.ts",
     "server:watch": "tsx watch src/server/main.ts",
+    "robots": "tsx src/sim/mqtt-robots.ts",
+    "seed": "tsx src/sim/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "test:int": "vitest run --config vitest.int.config.ts"

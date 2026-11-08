@@ -10,6 +10,8 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n sim,web -c gray,blue \"npm:demo -w backend\" \"npm:dev -w frontend\"",
+    "dev:prod": "concurrently -k -n server,robots,web -c green,gray,blue \"npm:server:watch -w backend\" \"npm:robots -w backend\" \"npm:dev -w frontend\"",
+    "seed": "npm run seed -w backend",
     "build": "npm run build -w frontend",
     "start": "npm run build && STATIC_DIR=../frontend/dist npm run server -w backend",
     "start:demo": "npm run build && STATIC_DIR=frontend/dist tsx backend/src/demo/simulator.ts",
