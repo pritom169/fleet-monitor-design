@@ -694,6 +694,21 @@ Not built: certificate revocation (CRL/OCSP) for a stolen robot. Today the answe
 
 Run with `npm test` (unit and component, 238 tests, 134 of them in the client) and `npm run test:int -w backend` (integration, 20 tests, needs Docker). `npm run test:coverage` runs both with the thresholds; the client is at 99.9 % lines and 97.6 % branches.
 
+### Load test (built)
+
+`backend/src/load/loadtest.ts`, run inside the Docker network; full results in [`docs/LOAD_TEST.md`](LOAD_TEST.md). Apple M1, Docker VM with 8 CPUs shared by generator, broker, server and Postgres:
+
+| Robots × Hz | Accepted/s | Ingest lag p99 | Queue max | Dropped | Server CPU |
+|---|---|---|---|---|---|
+| 1,000 × 1 | 1,000 | 18.8 ms | 481 | 0 | 15 % |
+| 5,000 × 1 | 5,004 | 22.2 ms | 494 | 0 | 31 % |
+| 5,000 × 4 | 19,918 | 156.3 ms | 17,798 | 0 | 56 % |
+| 5,000 × 1, database paused 30 s | 4,987 | 191.9 ms | 50,000 (full after 10 s) | 101,247 | 34 % |
+
+The first drop point is the database, not load: drops start when the database is away for longer than capacity ÷ rate (50 s at 1,000 msg/s), and the live view does not move. The main flows were checked by hand in Chrome at 1440 px and 1024 px, in both themes.
+
+Checked by hand against the running stack (Postgres 16, Mosquitto 2): migrations and partitions; restart with state reload; graceful shutdown; broker stop and start (banner, zero false offline events); `SIGSTOP` for 30 s; two days with the database and broker gone, then recovery; history, range and paginated event endpoints; problem+json errors.
+
 ---
 
 ## 18. Decisions

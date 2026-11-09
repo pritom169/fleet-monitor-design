@@ -1,0 +1,1015 @@
+{
+  "at": "2026-11-08T11:35:30.784Z",
+  "host": {
+    "cpus": 8,
+    "cpu": "unknown",
+    "memGb": 8
+  },
+  "steps": [
+    {
+      "robots": 1000,
+      "hz": 1,
+      "target": 1000,
+      "published": 1000,
+      "accepted": 1000,
+      "ingestLagP50Ms": 1.1,
+      "ingestLagP99Ms": 18.8,
+      "fanoutP50Ms": 0,
+      "fanoutP99Ms": 1,
+      "wsReportsPerS": 1000,
+      "queueMax": 481,
+      "dropped": 0,
+      "dbBatchP99Ms": 48.6,
+      "serverCpuPct": 15,
+      "serverRssMb": 153,
+      "eventLoopP99Ms": 19.5,
+      "series": [
+        {
+          "t": 2,
+          "accepted": 1000,
+          "queue": 22,
+          "dropped": 0
+        },
+        {
+          "t": 4,
+          "accepted": 1000,
+          "queue": 436,
+          "dropped": 0
+        },
+        {
+          "t": 6,
+          "accepted": 1000,
+          "queue": 363,
+          "dropped": 0
+        },
+        {
+          "t": 8,
+          "accepted": 1000,
+          "queue": 259,
+          "dropped": 0
+        },
+        {
+          "t": 10,
+          "accepted": 1000,
+          "queue": 160,
+          "dropped": 0
+        },
+        {
+          "t": 12,
+          "accepted": 1000,
+          "queue": 55,
+          "dropped": 0
+        },
+        {
+          "t": 14,
+          "accepted": 1000,
+          "queue": 481,
+          "dropped": 0
+        },
+        {
+          "t": 16,
+          "accepted": 1000,
+          "queue": 414,
+          "dropped": 0
+        },
+        {
+          "t": 18,
+          "accepted": 1000,
+          "queue": 291,
+          "dropped": 0
+        },
+        {
+          "t": 20,
+          "accepted": 1000,
+          "queue": 190,
+          "dropped": 0
+        },
+        {
+          "t": 22,
+          "accepted": 1000,
+          "queue": 0,
+          "dropped": 0
+        },
+        {
+          "t": 24,
+          "accepted": 1000,
+          "queue": 403,
+          "dropped": 0
+        },
+        {
+          "t": 26,
+          "accepted": 1000,
+          "queue": 354,
+          "dropped": 0
+        },
+        {
+          "t": 28,
+          "accepted": 1000,
+          "queue": 190,
+          "dropped": 0
+        },
+        {
+          "t": 30,
+          "accepted": 1007,
+          "queue": 463,
+          "dropped": 0
+        },
+        {
+          "t": 32,
+          "accepted": 1000,
+          "queue": 377,
+          "dropped": 0
+        },
+        {
+          "t": 34,
+          "accepted": 1000,
+          "queue": 204,
+          "dropped": 0
+        },
+        {
+          "t": 36,
+          "accepted": 979,
+          "queue": 462,
+          "dropped": 0
+        },
+        {
+          "t": 38,
+          "accepted": 1019,
+          "queue": 323,
+          "dropped": 0
+        },
+        {
+          "t": 40,
+          "accepted": 1003,
+          "queue": 110,
+          "dropped": 0
+        },
+        {
+          "t": 42,
+          "accepted": 1000,
+          "queue": 378,
+          "dropped": 0
+        },
+        {
+          "t": 44,
+          "accepted": 1000,
+          "queue": 204,
+          "dropped": 0
+        },
+        {
+          "t": 46,
+          "accepted": 1000,
+          "queue": 462,
+          "dropped": 0
+        },
+        {
+          "t": 48,
+          "accepted": 967,
+          "queue": 323,
+          "dropped": 0
+        },
+        {
+          "t": 50,
+          "accepted": 1018,
+          "queue": 110,
+          "dropped": 0
+        },
+        {
+          "t": 52,
+          "accepted": 981,
+          "queue": 378,
+          "dropped": 0
+        },
+        {
+          "t": 54,
+          "accepted": 1015,
+          "queue": 94,
+          "dropped": 0
+        },
+        {
+          "t": 56,
+          "accepted": 1010,
+          "queue": 268,
+          "dropped": 0
+        },
+        {
+          "t": 58,
+          "accepted": 1010,
+          "queue": 213,
+          "dropped": 0
+        },
+        {
+          "t": 60,
+          "accepted": 1002,
+          "queue": 352,
+          "dropped": 0
+        }
+      ]
+    },
+    {
+      "robots": 2000,
+      "hz": 1,
+      "target": 2000,
+      "published": 2000,
+      "accepted": 1996,
+      "ingestLagP50Ms": 1.3,
+      "ingestLagP99Ms": 324.5,
+      "fanoutP50Ms": 0,
+      "fanoutP99Ms": 755,
+      "wsReportsPerS": 1972,
+      "queueMax": 813,
+      "dropped": 0,
+      "dbBatchP99Ms": 89.5,
+      "serverCpuPct": 22,
+      "serverRssMb": 158,
+      "eventLoopP99Ms": 460.8,
+      "series": [
+        {
+          "t": 2,
+          "accepted": 2000,
+          "queue": 449,
+          "dropped": 0
+        },
+        {
+          "t": 4,
+          "accepted": 2000,
+          "queue": 449,
+          "dropped": 0
+        },
+        {
+          "t": 6,
+          "accepted": 2000,
+          "queue": 385,
+          "dropped": 0
+        },
+        {
+          "t": 8,
+          "accepted": 2002,
+          "queue": 353,
+          "dropped": 0
+        },
+        {
+          "t": 10,
+          "accepted": 2000,
+          "queue": 354,
+          "dropped": 0
+        },
+        {
+          "t": 12,
+          "accepted": 1999,
+          "queue": 353,
+          "dropped": 0
+        },
+        {
+          "t": 14,
+          "accepted": 2000,
+          "queue": 280,
+          "dropped": 0
+        },
+        {
+          "t": 16,
+          "accepted": 2000,
+          "queue": 279,
+          "dropped": 0
+        },
+        {
+          "t": 18,
+          "accepted": 2000,
+          "queue": 279,
+          "dropped": 0
+        },
+        {
+          "t": 20,
+          "accepted": 2000,
+          "queue": 279,
+          "dropped": 0
+        },
+        {
+          "t": 22,
+          "accepted": 2000,
+          "queue": 279,
+          "dropped": 0
+        },
+        {
+          "t": 24,
+          "accepted": 2000,
+          "queue": 279,
+          "dropped": 0
+        },
+        {
+          "t": 26,
+          "accepted": 2000,
+          "queue": 344,
+          "dropped": 0
+        },
+        {
+          "t": 28,
+          "accepted": 2000,
+          "queue": 365,
+          "dropped": 0
+        },
+        {
+          "t": 30,
+          "accepted": 2007,
+          "queue": 365,
+          "dropped": 0
+        },
+        {
+          "t": 32,
+          "accepted": 2004,
+          "queue": 365,
+          "dropped": 0
+        },
+        {
+          "t": 34,
+          "accepted": 2019,
+          "queue": 365,
+          "dropped": 0
+        },
+        {
+          "t": 36,
+          "accepted": 1865,
+          "queue": 813,
+          "dropped": 0
+        },
+        {
+          "t": 38,
+          "accepted": 2000,
+          "queue": 302,
+          "dropped": 0
+        },
+        {
+          "t": 40,
+          "accepted": 2000,
+          "queue": 295,
+          "dropped": 0
+        },
+        {
+          "t": 42,
+          "accepted": 2000,
+          "queue": 316,
+          "dropped": 0
+        },
+        {
+          "t": 44,
+          "accepted": 2000,
+          "queue": 236,
+          "dropped": 0
+        },
+        {
+          "t": 46,
+          "accepted": 2000,
+          "queue": 280,
+          "dropped": 0
+        },
+        {
+          "t": 48,
+          "accepted": 2000,
+          "queue": 245,
+          "dropped": 0
+        },
+        {
+          "t": 50,
+          "accepted": 2000,
+          "queue": 296,
+          "dropped": 0
+        },
+        {
+          "t": 52,
+          "accepted": 2000,
+          "queue": 403,
+          "dropped": 0
+        },
+        {
+          "t": 54,
+          "accepted": 2000,
+          "queue": 403,
+          "dropped": 0
+        },
+        {
+          "t": 56,
+          "accepted": 2000,
+          "queue": 407,
+          "dropped": 0
+        },
+        {
+          "t": 58,
+          "accepted": 2000,
+          "queue": 401,
+          "dropped": 0
+        },
+        {
+          "t": 60,
+          "accepted": 2000,
+          "queue": 546,
+          "dropped": 0
+        }
+      ]
+    },
+    {
+      "robots": 5000,
+      "hz": 1,
+      "target": 5000,
+      "published": 5000,
+      "accepted": 5004,
+      "ingestLagP50Ms": 0.7,
+      "ingestLagP99Ms": 22.2,
+      "fanoutP50Ms": 0,
+      "fanoutP99Ms": 313,
+      "wsReportsPerS": 5004,
+      "queueMax": 494,
+      "dropped": 0,
+      "dbBatchP99Ms": 47.9,
+      "serverCpuPct": 31,
+      "serverRssMb": 184,
+      "eventLoopP99Ms": 23.6,
+      "series": [
+        {
+          "t": 2,
+          "accepted": 5003,
+          "queue": 494,
+          "dropped": 0
+        },
+        {
+          "t": 4,
+          "accepted": 5014,
+          "queue": 480,
+          "dropped": 0
+        },
+        {
+          "t": 6,
+          "accepted": 5010,
+          "queue": 486,
+          "dropped": 0
+        },
+        {
+          "t": 8,
+          "accepted": 5001,
+          "queue": 491,
+          "dropped": 0
+        },
+        {
+          "t": 10,
+          "accepted": 5001,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 12,
+          "accepted": 4999,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 14,
+          "accepted": 5001,
+          "queue": 483,
+          "dropped": 0
+        },
+        {
+          "t": 16,
+          "accepted": 4998,
+          "queue": 481,
+          "dropped": 0
+        },
+        {
+          "t": 18,
+          "accepted": 5010,
+          "queue": 479,
+          "dropped": 0
+        },
+        {
+          "t": 20,
+          "accepted": 5008,
+          "queue": 485,
+          "dropped": 0
+        },
+        {
+          "t": 22,
+          "accepted": 5003,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 24,
+          "accepted": 5003,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 26,
+          "accepted": 5001,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 28,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 30,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 32,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 34,
+          "accepted": 5037,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 36,
+          "accepted": 5018,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 38,
+          "accepted": 5008,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 40,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 42,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 44,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 46,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 48,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 50,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 52,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 54,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 56,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 58,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        },
+        {
+          "t": 60,
+          "accepted": 5000,
+          "queue": 484,
+          "dropped": 0
+        }
+      ]
+    },
+    {
+      "robots": 5000,
+      "hz": 2,
+      "target": 10000,
+      "published": 9990,
+      "accepted": 10000,
+      "ingestLagP50Ms": 8.8,
+      "ingestLagP99Ms": 87.7,
+      "fanoutP50Ms": 0,
+      "fanoutP99Ms": 501,
+      "wsReportsPerS": 5000,
+      "queueMax": 1169,
+      "dropped": 0,
+      "dbBatchP99Ms": 77,
+      "serverCpuPct": 34,
+      "serverRssMb": 237,
+      "eventLoopP99Ms": 101.8,
+      "series": [
+        {
+          "t": 2,
+          "accepted": 10000,
+          "queue": 771,
+          "dropped": 0
+        },
+        {
+          "t": 4,
+          "accepted": 10000,
+          "queue": 737,
+          "dropped": 0
+        },
+        {
+          "t": 6,
+          "accepted": 10000,
+          "queue": 733,
+          "dropped": 0
+        },
+        {
+          "t": 8,
+          "accepted": 10000,
+          "queue": 460,
+          "dropped": 0
+        },
+        {
+          "t": 10,
+          "accepted": 10000,
+          "queue": 449,
+          "dropped": 0
+        },
+        {
+          "t": 12,
+          "accepted": 10000,
+          "queue": 1157,
+          "dropped": 0
+        },
+        {
+          "t": 14,
+          "accepted": 9998,
+          "queue": 166,
+          "dropped": 0
+        },
+        {
+          "t": 16,
+          "accepted": 9999,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 18,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 20,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 22,
+          "accepted": 10000,
+          "queue": 169,
+          "dropped": 0
+        },
+        {
+          "t": 24,
+          "accepted": 10000,
+          "queue": 169,
+          "dropped": 0
+        },
+        {
+          "t": 26,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 28,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 30,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 32,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 34,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 36,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 38,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 40,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 42,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 44,
+          "accepted": 10000,
+          "queue": 169,
+          "dropped": 0
+        },
+        {
+          "t": 46,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 48,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 50,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 52,
+          "accepted": 10000,
+          "queue": 1166,
+          "dropped": 0
+        },
+        {
+          "t": 54,
+          "accepted": 10000,
+          "queue": 1164,
+          "dropped": 0
+        },
+        {
+          "t": 56,
+          "accepted": 10000,
+          "queue": 1165,
+          "dropped": 0
+        },
+        {
+          "t": 58,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        },
+        {
+          "t": 60,
+          "accepted": 10000,
+          "queue": 1169,
+          "dropped": 0
+        }
+      ]
+    },
+    {
+      "robots": 5000,
+      "hz": 4,
+      "target": 20000,
+      "published": 19760,
+      "accepted": 19918,
+      "ingestLagP50Ms": 3.2,
+      "ingestLagP99Ms": 156.3,
+      "fanoutP50Ms": 0,
+      "fanoutP99Ms": 248,
+      "wsReportsPerS": 5091,
+      "queueMax": 17798,
+      "dropped": 0,
+      "dbBatchP99Ms": 115.7,
+      "serverCpuPct": 56,
+      "serverRssMb": 258,
+      "eventLoopP99Ms": 559.4,
+      "series": [
+        {
+          "t": 2,
+          "accepted": 19871,
+          "queue": 893,
+          "dropped": 0
+        },
+        {
+          "t": 4,
+          "accepted": 20031,
+          "queue": 846,
+          "dropped": 0
+        },
+        {
+          "t": 6,
+          "accepted": 19952,
+          "queue": 799,
+          "dropped": 0
+        },
+        {
+          "t": 8,
+          "accepted": 20023,
+          "queue": 553,
+          "dropped": 0
+        },
+        {
+          "t": 10,
+          "accepted": 19977,
+          "queue": 553,
+          "dropped": 0
+        },
+        {
+          "t": 12,
+          "accepted": 20000,
+          "queue": 553,
+          "dropped": 0
+        },
+        {
+          "t": 14,
+          "accepted": 20000,
+          "queue": 553,
+          "dropped": 0
+        },
+        {
+          "t": 16,
+          "accepted": 17902,
+          "queue": 1158,
+          "dropped": 0
+        },
+        {
+          "t": 18,
+          "accepted": 15538,
+          "queue": 17798,
+          "dropped": 0
+        },
+        {
+          "t": 20,
+          "accepted": 20034,
+          "queue": 221,
+          "dropped": 0
+        },
+        {
+          "t": 22,
+          "accepted": 19981,
+          "queue": 210,
+          "dropped": 0
+        },
+        {
+          "t": 24,
+          "accepted": 19993,
+          "queue": 213,
+          "dropped": 0
+        },
+        {
+          "t": 26,
+          "accepted": 19952,
+          "queue": 4213,
+          "dropped": 0
+        },
+        {
+          "t": 28,
+          "accepted": 19990,
+          "queue": 1213,
+          "dropped": 0
+        },
+        {
+          "t": 30,
+          "accepted": 19986,
+          "queue": 213,
+          "dropped": 0
+        },
+        {
+          "t": 32,
+          "accepted": 19990,
+          "queue": 213,
+          "dropped": 0
+        },
+        {
+          "t": 34,
+          "accepted": 19987,
+          "queue": 4213,
+          "dropped": 0
+        },
+        {
+          "t": 36,
+          "accepted": 19982,
+          "queue": 1213,
+          "dropped": 0
+        },
+        {
+          "t": 38,
+          "accepted": 19998,
+          "queue": 4213,
+          "dropped": 0
+        },
+        {
+          "t": 40,
+          "accepted": 20000,
+          "queue": 1213,
+          "dropped": 0
+        },
+        {
+          "t": 43,
+          "accepted": 23811,
+          "queue": 4213,
+          "dropped": 0
+        },
+        {
+          "t": 45,
+          "accepted": 20474,
+          "queue": 795,
+          "dropped": 0
+        },
+        {
+          "t": 47,
+          "accepted": 20056,
+          "queue": 666,
+          "dropped": 0
+        },
+        {
+          "t": 49,
+          "accepted": 19978,
+          "queue": 538,
+          "dropped": 0
+        },
+        {
+          "t": 51,
+          "accepted": 20026,
+          "queue": 401,
+          "dropped": 0
+        },
+        {
+          "t": 53,
+          "accepted": 19972,
+          "queue": 379,
+          "dropped": 0
+        },
+        {
+          "t": 55,
+          "accepted": 19981,
+          "queue": 360,
+          "dropped": 0
+        },
+        {
+          "t": 57,
+          "accepted": 19982,
+          "queue": 371,
+          "dropped": 0
+        },
+        {
+          "t": 59,
+          "accepted": 20006,
+          "queue": 388,
+          "dropped": 0
+        },
+        {
+          "t": 61,
+          "accepted": 20023,
+          "queue": 750,
+          "dropped": 0
+        }
+      ]
+    }
+  ],
+  "storage": {
+    "rows": 3140110,
+    "bytes": 494387200,
+    "bytesPerRow": 157
+  }
+}

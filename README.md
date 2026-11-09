@@ -36,6 +36,13 @@ docker compose -f docker-compose.yml -f docker-compose.secure.yml cp server:/cer
 
 In production set `TLS_CERT_FILE`/`TLS_KEY_FILE` and `METRICS_TOKEN`; for the broker `MQTT_URL=mqtts://…` with `MQTT_CA_FILE`, `MQTT_CERT_FILE`, `MQTT_KEY_FILE`.
 
+**Load test** (results in `docs/LOAD_TEST.md`):
+
+```bash
+docker compose up -d && docker compose stop robots
+docker compose --profile load run --rm loadtest --steps 1000x1,5000x1 --duration 60
+```
+
 Restarting the demo backend replays the scripted incidents. After about 10 minutes the low-battery robots charge and recover, the same way a real fleet would.
 
 ## Where to look

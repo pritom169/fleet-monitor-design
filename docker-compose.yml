@@ -72,5 +72,21 @@ services:
       server: { condition: service_healthy }
     restart: unless-stopped
 
+  # Load test (SYSTEM_DESIGN.md §17), inside the Docker network so Docker Desktop's port forwarding is not measured:
+  #   docker compose stop robots && docker compose --profile load run --rm loadtest --steps 1000x1,5000x1
+  loadtest:
+    <<: *app
+    profiles: ["load"]
+    entrypoint: ["node_modules/.bin/tsx", "backend/src/load/loadtest.ts"]
+    command: []
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      SERVER: http://server:8787
+      DATABASE_URL: postgres://fleet:fleet@postgres:5432/fleet
+      OUT_DIR: /out
+    volumes: ["./docs/load:/out"]
+    depends_on:
+      server: { condition: service_healthy }
+
 volumes:
   pgdata:
