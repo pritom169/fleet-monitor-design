@@ -11,7 +11,8 @@
     "seed": "tsx src/sim/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "test:int": "vitest run --config vitest.int.config.ts"
+    "test:int": "vitest run --config vitest.int.config.ts",
+    "pki": "tsx src/ops/pki.ts"
   },
   "dependencies": {
     "@fleet/shared": "0.1.0",

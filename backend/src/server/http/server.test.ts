@@ -91,6 +91,7 @@ describe('HTTP API', () => {
     const health = await get('/api/health');
     expect(health.headers.get('x-content-type-options')).toBe('nosniff');
     expect(health.headers.get('cache-control')).toBe('no-store');
+    expect(health.headers.get('strict-transport-security')).toBeNull();
     expect(await json(health)).toEqual({ ok: true, robots: 2, clients: 0, ingest: { state: 'live', frozenAt: null } });
   });
 
@@ -170,6 +171,13 @@ describe('HTTP API with options', () => {
     const ready = await get('/readyz');
     expect(ready.status).toBe(503);
     expect((await json(ready)).status).toBe('not ready');
+  });
+
+  it('protects /metrics with a bearer token', async () => {
+    await start({ metricsToken: 'tok' });
+    expect((await get('/metrics')).status).toBe(401);
+    expect((await get('/metrics', { headers: { authorization: 'Bearer nope' } })).status).toBe(401);
+    expect((await get('/metrics', { headers: { authorization: 'Bearer tok' } })).status).toBe(200);
   });
 
   it('serves the built client for GET, with its CSP, and 404 for other methods', async () => {

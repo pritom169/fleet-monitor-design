@@ -146,7 +146,7 @@ export async function createApp(config: AppConfig): Promise<App> {
   // ---------- ingest ----------
   const invalidSample = sampled();
   const mqtt = connectMqtt(
-    { url: config.mqttUrl, sites: config.sites },
+    { url: config.mqttUrl, sites: config.sites, tls: config.mqttTls },
     {
       telemetry(t, receivedAt) {
         const a = domain.accept(t, receivedAt);
@@ -256,6 +256,8 @@ export async function createApp(config: AppConfig): Promise<App> {
     fanout,
     log,
     staticDir: config.staticDir,
+    https: config.https,
+    metricsToken: config.metricsToken,
     dbOk: isDbOk,
     ready: () => {
       const checks = { database: isDbOk(), broker: mqtt.connected, state: true };
@@ -265,8 +267,8 @@ export async function createApp(config: AppConfig): Promise<App> {
   await new Promise<void>((resolve) => http.server.listen(config.port, config.host, resolve));
   const addr = http.server.address();
   const port = typeof addr === 'object' && addr ? addr.port : config.port;
-  const url = `http://localhost:${port}`;
-  log.info({ url, mqtt: config.mqttUrl, sites: config.sites.length ? config.sites : 'all' }, 'fleet ingest server listening');
+  const url = `${config.https ? 'https' : 'http'}://localhost:${port}`;
+  log.info({ url, mqtt: config.mqttUrl, tls: { http: !!config.https, mqtt: !!config.mqttTls }, sites: config.sites.length ? config.sites : 'all' }, 'fleet ingest server listening');
 
   // ---------- shutdown ----------
   let stopping: Promise<void> | null = null;

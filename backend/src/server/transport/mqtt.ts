@@ -4,6 +4,7 @@
  */
 import mqtt from 'mqtt';
 import { ConnStatus, RobotEventMsg, Telemetry, parseTopic } from '@fleet/shared/telemetry';
+import type { TlsFiles } from '../config';
 
 export interface MqttHandlers {
   telemetry: (t: Telemetry, receivedAt: number) => void;
@@ -18,6 +19,8 @@ export interface MqttOptions {
   clientId?: string;
   /** Subscribe to these sites only (scale by site, §10). Empty: all sites. */
   sites?: string[];
+  /** mTLS client certificate (mqtts://). The broker maps its CN to the ACL user. */
+  tls?: TlsFiles;
 }
 
 export function connectMqtt(o: MqttOptions, h: MqttHandlers) {
@@ -27,6 +30,7 @@ export function connectMqtt(o: MqttOptions, h: MqttHandlers) {
     keepalive: 10,
     reconnectPeriod: 1000,
     connectTimeout: 5000,
+    ...(o.tls ? { ca: o.tls.ca, cert: o.tls.cert, key: o.tls.key, rejectUnauthorized: true } : {}),
   });
   const filters = o.sites?.length ? o.sites.map((s) => `fleet/${s}/#`) : ['fleet/+/+/#'];
 

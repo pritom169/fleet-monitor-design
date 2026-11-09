@@ -125,7 +125,7 @@ describe('boot', () => {
     expect(h.log.info).toHaveBeenCalledWith({ applied: ['001_init.sql'] }, 'migrations applied');
     expect(app.domain.robots.get('R-001')!.report!.battery).toBe(50);
     expect(app).toMatchObject({ port: 4321, url: 'http://localhost:4321' });
-    expect(h.mqttOpts).toEqual({ url: 'mqtt://x', sites: [] });
+    expect(h.mqttOpts).toEqual({ url: 'mqtt://x', sites: [], tls: undefined });
   });
 
   it('skips migrations when told to, warns about an empty registry, and passes the site list to MQTT', async () => {

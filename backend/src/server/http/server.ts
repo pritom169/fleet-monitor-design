@@ -4,9 +4,12 @@
  * Errors use application/problem+json (RFC 9457).
  */
 import http from 'node:http';
+import https from 'node:https';
+import { timingSafeEqual } from 'node:crypto';
 import type { Duplex } from 'node:stream';
 import { WebSocketServer } from 'ws';
 import type { ServerMessage } from '@fleet/shared/protocol';
+import type { TlsFiles } from '../config';
 import type { FleetDomain } from '../domain/fleet';
 import { MAX_RANGE_MS, decodeCursor, type Repo } from '../repo/pg';
 import { registry, wsClients, wsDisconnects } from '../metrics';
@@ -27,6 +30,8 @@ export interface HttpDeps {
   /** False while the database is failing: history endpoints return 503. */
   dbOk: () => boolean;
   staticDir?: string;
+  https?: TlsFiles;
+  metricsToken?: string;
   log: Log;
 }
 
@@ -68,6 +73,12 @@ function parseTime(v: string | null, name: string, fallback: number): number {
 
 const startOfDay = (t: number) => new Date(t).setHours(0, 0, 0, 0);
 
+function tokenOk(header: string | undefined, token: string): boolean {
+  const got = Buffer.from(header?.replace(/^Bearer /, '') ?? '');
+  const want = Buffer.from(token);
+  return got.length === want.length && timingSafeEqual(got, want);
+}
+
 export function createHttpServer(d: HttpDeps) {
   const csp = d.staticDir ? shellCsp(d.staticDir) : undefined;
 
@@ -84,6 +95,7 @@ export function createHttpServer(d: HttpDeps) {
       return sendJson(res, r.ok ? 200 : 503, { status: r.ok ? 'ready' : 'not ready', checks: r.checks });
     }
     if (p === '/metrics') {
+      if (d.metricsToken && !tokenOk(req.headers.authorization, d.metricsToken)) throw new Problem(401, 'Unauthorized');
       res.writeHead(200, { 'content-type': registry.contentType });
       return res.end(await registry.metrics());
     }
@@ -136,6 +148,7 @@ export function createHttpServer(d: HttpDeps) {
 
   const handler = (req: http.IncomingMessage, res: http.ServerResponse) => {
     const url = new URL(req.url ?? '/', 'http://x');
+    if (d.https) res.setHeader('strict-transport-security', 'max-age=31536000');
     route(req, res, url).catch((err) => {
       if (err instanceof Problem) return sendProblem(res, err, url.pathname);
       d.log.error({ err, path: url.pathname }, 'request failed');
@@ -143,7 +156,7 @@ export function createHttpServer(d: HttpDeps) {
     });
   };
 
-  const server = http.createServer(handler);
+  const server = d.https ? https.createServer({ cert: d.https.cert, key: d.https.key }, handler) : http.createServer(handler);
 
   const refuse = (socket: Duplex, status: number, reason: string) => {
     socket.end(`HTTP/1.1 ${status} ${reason}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);

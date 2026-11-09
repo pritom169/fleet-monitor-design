@@ -70,9 +70,10 @@ describe('connectMqtt', () => {
     expect(handlers.link.mock.calls).toEqual([[true], [false]]);
   });
 
-  it('subscribes to its own sites only', () => {
-    const { client } = setup({ sites: ['hh', 'le'], clientId: 'ingest-1' });
-    expect(h.opts).toMatchObject({ clientId: 'ingest-1' });
+  it('subscribes to its own sites only, with a client certificate', () => {
+    const tls = { ca: Buffer.from('ca'), cert: Buffer.from('c'), key: Buffer.from('k') };
+    const { client } = setup({ sites: ['hh', 'le'], clientId: 'ingest-1', tls });
+    expect(h.opts).toMatchObject({ clientId: 'ingest-1', ca: tls.ca, cert: tls.cert, key: tls.key, rejectUnauthorized: true });
     client.emit('connect');
     expect(client.subscribed).toEqual({ 'fleet/hh/#': { qos: 1 }, 'fleet/le/#': { qos: 1 } });
   });
