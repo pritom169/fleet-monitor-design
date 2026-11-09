@@ -709,6 +709,20 @@ The first drop point is the database, not load: drops start when the database is
 
 Checked by hand against the running stack (Postgres 16, Mosquitto 2): migrations and partitions; restart with state reload; graceful shutdown; broker stop and start (banner, zero false offline events); `SIGSTOP` for 30 s; two days with the database and broker gone, then recovery; history, range and paginated event endpoints; problem+json errors.
 
+### End to end (built)
+
+`e2e/*.spec.ts`, Playwright 1.63, Chromium. `npm run test:e2e` builds the client and serves it from the demo backend (`npm run start:demo`, port 8797), so the tests run the production bundle against the seeded fleet.
+
+| Spec | What it proves |
+|---|---|
+| `overview.spec.ts` | Skeleton rows while the socket is held back, then the fleet in severity order (R-009, R-041 offline; R-024 error; low battery). Status filter and search live in the URL; no results and "Clear filters". A row opens the robot and "All robots" comes back. At 1024 px the Site and Position columns are hidden and the site moves under the ID. Not-found page. |
+| `detail.spec.ts` | R-017: low-battery headline, battery tile, trend chart, activity log, and "Charging bay 3" while it returns to the dock. R-041: offline headline ("We do not know its state"), battery labelled last known, "Went offline" in the log. An unknown ID. |
+| `outage.spec.ts` | G3 in a real browser: a 14 s outage (longer than the 10 s offline threshold) shows the banner and "Reconnecting…", the Offline count does not move, then the backoff reconnects and the banner goes. |
+
+The tests run one at a time, because the outage spec changes the shared demo server's state.
+
+Not tested on purpose: framework internals, and UI pixel snapshots outside the component sheet. Not built yet: end-to-end runs against the Part B stack (MQTT and Postgres), and a browser profile at 1,000 robots ([render cost](#render-cost)).
+
 ---
 
 ## 18. Decisions

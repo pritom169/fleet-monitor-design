@@ -1,0 +1,15 @@
+{
+  "name": "@fleet/lint",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ESLint for the repo. Its own workspace because typescript-eslint parses with the TypeScript 6 API; type checking stays on TypeScript 7 (tsc) in each package.",
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0"
+  }
+}
