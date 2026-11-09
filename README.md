@@ -124,3 +124,64 @@ Every status has an icon, a label and a colour. Severity order: offline, error, 
 - **A fourth site, Berlin South, with no robots**, so the empty state is real data, not a mock.
 - **Robot detail works for any robot.** Copy, rates, threshold crossings and events are computed from history the server keeps (`GET /api/robots/:id/history`).
 
+## Known gaps
+
+What is not done or not safe yet, in plain words.
+
+**Running the server**
+- **One server only.** If it stops, every dashboard stops. There is no backup server.
+- **Splitting by site is not finished.** A user who sees "All sites" cannot see sites that run on different servers.
+- **Two servers may clash.** The server's broker name comes from its process ID. Two containers can get the same name and keep kicking each other off the broker.
+- **TypeScript runs through `tsx`.** The server is not compiled before it runs.
+
+**Data that can be lost**
+- **Events can be lost.** If the server restarts, events sent during that time are gone. The broker does not keep them for us.
+- **History can be lost.** If the database is down for too long, the oldest data is dropped. The live view is fine.
+- **One bad character can drop a whole batch.** A text with a null character makes the database refuse the batch. Up to one second of history for every robot is lost.
+
+**Wrong status**
+- **A robot can get stuck as offline.** If its boot counter goes back (for example after a re-flash), the server ignores it. It shows offline even though it still reports.
+- **A new tab can disagree with the server.** A robot at 20–21 % can show OK in a new tab while the server has it as Low battery.
+- **Fleet-wide silence shows as "paused".** If every robot goes quiet at once, the dashboard says "Robot data paused", not "offline".
+
+**Database**
+- **Events are kept forever.** Telemetry is deleted after 7 days. Events are never deleted.
+- **Too many state writes.** The last state of each robot is saved every second. Every 10 s would be enough.
+- **Reads and writes share one database.** Long history requests can slow down saving new data. There is no rate limit.
+- **"Today" uses the server's time zone,** not the site's.
+
+**Security**
+- **No user sign-in.** User accounts are a non-goal. Anyone who can reach the HTTPS port sees every site, so keep it on a trusted network or behind an authenticating proxy.
+- **A stolen robot certificate cannot be blocked.** The only fix is to remove the robot and rebuild the broker access list.
+
+**Tests**
+- **End-to-end tests cover the demo backend only.** Playwright runs the production build against the seeded demo fleet. The Part B stack (MQTT, Postgres) is covered by integration tests, not by a browser.
+- **No browser profile at 1,000 robots.** The render path is built for it (SYSTEM_DESIGN.md §7, render cost) and a test counts row renders, but the overview has not been profiled at that size, and the table is not virtualized.
+
+**Client**
+- **One error boundary for the whole view.** A crash in one panel (the map, say) replaces the whole page with the crash screen. There is no per-panel boundary and no automatic reload.
+
+## Structure
+
+```
+shared/      @fleet/shared: protocol.ts (wire types), status.ts (the status model, used by client and server),
+             telemetry.ts (MQTT topics + zod schemas), sites.ts (floor plans)
+frontend/    React + Vite client
+  src/data/        store.ts (pure reducers + tiny store), socket.ts (connection, batching, backoff, the one clock), history.ts
+  src/lib/         status.ts (client clock + colours over the shared rules), sort.ts, time.ts, fleet.ts, theme.ts
+  src/components/  StatusPill, Icons, BatteryGlyph, TopBar (indicator, banners), SiteSelector, AttentionCard,
+                   FilterPills, RobotTable, FleetMap, MapMarker, SitePlan, BatteryChart,
+                   Clock (leaves that read the clock), ErrorScreen (crash screen + error boundaries)
+  src/test/        fixtures built through the real reducers, render helpers
+backend/
+  src/demo/simulator.ts   demo backend (Part A)
+  src/sim/                robot model + incidents (fleet.ts), MQTT robots, registry seed
+  src/server/             ingest + API server (Part B): transport/mqtt, domain, persist, repo/pg, http (API, fan-out)
+  src/ops/pki.ts          certificates + broker ACL from the registry
+  src/load/loadtest.ts    load generator
+  migrations/             SQL schema
+e2e/                    Playwright specs (overview, robot detail, outage); playwright.config.ts at the root
+lint/                   ESLint config and its own install (see lint/eslint.config.js for why)
+.github/workflows/ci.yml  typecheck, lint, unit tests, build; coverage gate with integration tests; end to end
+docker-compose.yml, docker-compose.secure.yml, Dockerfile, deploy/mosquitto*.conf
+```
