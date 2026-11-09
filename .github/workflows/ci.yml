@@ -1,0 +1,75 @@
+# Every push and pull request: types, lint, tests, build, coverage gate, and the browser flows.
+# Each job is the same command a developer runs locally (see README "Checks").
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, lint, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            lint/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      # ESLint has its own install: typescript-eslint parses with TypeScript 6, the packages compile with 7.
+      - run: npm run lint:install
+      # tsc is the gate Vitest does not run: tests transpile without type checking.
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  coverage:
+    name: Unit + integration tests, coverage gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # Integration tests start Postgres 16 and Mosquitto 2 with Testcontainers (Docker is on the runner).
+      # Thresholds live in vitest.config.ts; the run fails below them.
+      - run: npm run test:coverage
+
+  e2e:
+    name: End-to-end (Playwright, Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

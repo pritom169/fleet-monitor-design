@@ -8,8 +8,18 @@ npm install
 npm run dev          # demo: mock backend on :8787 + app on http://localhost:5173
 npm test             # unit tests (shared + client + ingest server), no Docker
 npm run test:int -w backend   # integration tests against real Postgres + Mosquitto (Testcontainers, needs Docker)
+npm run test:coverage         # all of the above in one run, with a coverage report in coverage/; fails below 95 % (needs Docker)
 npm run test:e2e     # Playwright: the production build against the demo backend, in Chromium
 npm run outage       # demo only: drop every browser connection for 20 s
+```
+
+**Checks** (CI runs the same on every push and pull request, `.github/workflows/ci.yml`):
+
+```bash
+npm run typecheck    # tsc, strict. Vitest does not type-check, so this is the only type gate
+npm run lint:install # once: ESLint has its own install in lint/ (it parses with TypeScript 6; the code compiles with 7)
+npm run lint         # ESLint with react-hooks (incl. React Compiler rules), zero warnings allowed
+npx playwright install chromium   # once, before the first test:e2e
 ```
 
 **Production stack** (SYSTEM_DESIGN.md Part B): robots → Mosquitto → ingest server → PostgreSQL.
