@@ -1,8 +1,3 @@
-/**
- * Production security (SYSTEM_DESIGN.md §16) against real containers:
- *   - Mosquitto with TLS only, a client certificate per robot, and the ACL generated from the registry
- *   - HTTPS/WSS for the browser, and a bearer token on /metrics
- */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -57,7 +52,6 @@ beforeAll(async () => {
   }));
   await until(async () => (await request(`${appUrl}/readyz`, { ca })).status === 200, 20_000);
 
-  // R-003 keeps reporting so the fleet is never silent (stall watchdog).
   const r3 = await connect(mq.url, { clientId: 'robot-R-003', ...robotTls('R-003') });
   clients.push(r3);
   let seq = 0;
@@ -94,7 +88,6 @@ describe('MQTT: TLS, client certificates, ACL from the registry', () => {
     clients.push(c);
     await publishTel(c, tel('R-001', 'hh', 0, { battery: 66 }));
     await until(() => app.domain.robots.get('R-001')?.report?.battery === 66);
-    // R-001 tries to speak for R-002: the broker drops it, so the server never hears it.
     await publishTel(c, tel('R-002', 'le', 0, { battery: 5 }));
     await sleep(1500);
     expect(app.domain.robots.get('R-002')!.report).toBeNull();
@@ -115,7 +108,6 @@ describe('HTTPS', () => {
     const sock = await openSocket(`${appUrl.replace('https', 'wss')}/ws`, { ca });
     const hello = await sock.next((m) => m.type === 'hello');
     expect(hello.type === 'hello' && hello.robots.map((r) => r.id).sort()).toEqual(['R-001', 'R-002', 'R-003']);
-    // R-003 keeps reporting, and its reports reach the browser.
     await sock.next((m) => m.type === 'report' && m.r.id === 'R-003');
     sock.close();
   });

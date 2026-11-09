@@ -1,9 +1,3 @@
-/**
- * Write the simulated fleet's registry to Postgres (and run migrations first).
- * In a real deployment the registry comes from provisioning; this stands in for it.
- *
- * Env: DATABASE_URL, ROBOTS (50).
- */
 import { Repo } from '../server/repo/pg';
 import { createFleet } from './fleet';
 

@@ -1,7 +1,3 @@
-/**
- * Site floor plans. One source for the client (drawing) and the simulator (movement).
- * All values are metres on a 64 × 28 m floor, origin top-left.
- */
 export type Rect = [x: number, y: number, w: number, h: number];
 export type Line = [x1: number, y1: number, x2: number, y2: number];
 export type Zone = [x: number, y: number, w: number, h: number, label: string];
@@ -9,7 +5,6 @@ export type Zone = [x: number, y: number, w: number, h: number, label: string];
 export interface Site {
   key: string;
   name: string;
-  /** Aisle label prefix: A1, A2 … */
   prefix: string;
   racks: Rect[];
   aisles: Line[];
@@ -49,7 +44,6 @@ export const SITES: Site[] = [
     charge: [3, 21, 18, 5],
   },
   {
-    // Newly commissioned: no robots assigned yet. Exists so the empty state is real, not mocked.
     key: 'be',
     name: 'Berlin South',
     prefix: 'D',
@@ -62,7 +56,6 @@ export const SITES: Site[] = [
 
 export const SITE_BY_KEY: Record<string, Site> = Object.fromEntries(SITES.map((s) => [s.key, s]));
 
-/** Name of the aisle a point is on, e.g. "aisle B3", or the zone, or null. */
 export function placeName(site: Site, x: number, y: number): string | null {
   for (const z of site.zones) {
     if (x >= z[0] && x <= z[0] + z[2] && y >= z[1] && y <= z[1] + z[3]) return `${z[4]} zone`;

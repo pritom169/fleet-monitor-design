@@ -19,7 +19,7 @@ describe('Components sheet', () => {
     expect(screen.getByRole('button', { name: 'Error 1' }).getAttribute('aria-pressed')).toBe('true');
     act(() => vi.advanceTimersByTime(4000));
     expect(screen.getByText('Just changed — replays every 4 s')).toBeTruthy();
-    for (const b of screen.getAllByRole('button', { name: /Retry now/ })) fireEvent.click(b); // samples only: no-ops
+    for (const b of screen.getAllByRole('button', { name: /Retry now/ })) fireEvent.click(b);
     unmount();
   });
 });

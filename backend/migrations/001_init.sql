@@ -1,6 +1,4 @@
--- Fleet Monitor schema (SYSTEM_DESIGN.md §13).
-
-CREATE TABLE robots (                      -- the registry; needed for "never reported"
+CREATE TABLE robots (
   id            text PRIMARY KEY,
   site_id       text        NOT NULL,
   model         text        NOT NULL,
@@ -23,14 +21,12 @@ CREATE TABLE telemetry (
   fault        text,
   task         text        NOT NULL
 ) PARTITION BY RANGE (received_at);
--- No unique key on (robot_id, boot, seq): a unique key on a partitioned table must include
--- received_at, and a resent sample has a new received_at. Dedupe happens in memory.
 
 CREATE INDEX telemetry_robot_time ON telemetry (robot_id, received_at DESC);
 
 CREATE TABLE robot_state (
   robot_id     text PRIMARY KEY REFERENCES robots(id),
-  report       jsonb       NOT NULL,       -- last Report
+  report       jsonb       NOT NULL,
   boot         integer     NOT NULL,
   seq          bigint      NOT NULL,
   status       text        NOT NULL,
@@ -41,7 +37,7 @@ CREATE TABLE robot_events (
   id        bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   robot_id  text        NOT NULL,
   t         timestamptz NOT NULL,
-  kind      text        NOT NULL,          -- info | low | warn | error | off | ok
+  kind      text        NOT NULL,
   text      text        NOT NULL,
   sub       text
 );

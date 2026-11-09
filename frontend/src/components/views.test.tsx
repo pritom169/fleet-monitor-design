@@ -26,7 +26,7 @@ describe('MapMarker', () => {
   it('stands problems up as tagged pins, and keeps healthy robots flat', () => {
     const { container } = render(<><MapMarker robot={r('R-003')} now={T} /><MapMarker robot={r('R-001')} now={T} label /><MapMarker robot={r('R-010')} now={T} /></>);
     expect(screen.getByText('R-003')).toBeTruthy();
-    expect(screen.getByText('R-001')).toBeTruthy(); // label layer
+    expect(screen.getByText('R-001')).toBeTruthy();
     expect(screen.queryByText('R-010')).toBeNull();
     const [pin, dot] = [...container.children] as HTMLElement[];
     expect(pin.style.zIndex).toBe('8');
@@ -170,15 +170,15 @@ describe('RobotTable', () => {
     const scroll = box.scrollTo as unknown as ReturnType<typeof vi.fn>;
     scroll.mockClear();
     const wrap = (hover: { id: string; from: string } | null) => <RobotTable robots={robots} now={T} stale={false} hover={hover} />;
-    rerender(wrap({ id: 'R-001', from: 'map' })); // above the view: scroll up
+    rerender(wrap({ id: 'R-001', from: 'map' }));
     expect(scroll).toHaveBeenLastCalledWith({ top: 170, behavior: 'smooth' });
-    rerender(wrap({ id: 'R-002', from: 'map' })); // below: scroll down
+    rerender(wrap({ id: 'R-002', from: 'map' }));
     expect(scroll).toHaveBeenLastCalledWith({ top: 548, behavior: 'smooth' });
     scroll.mockClear();
     box.scrollTop = 560;
-    rows[1].getBoundingClientRect = () => ({ top: 50 }) as DOMRect; // 610 px into the list: inside 560–660
-    rerender(wrap({ id: 'R-001', from: 'table' })); // hovered in the table itself: no scroll
-    rerender(wrap({ id: 'R-002', from: 'map' })); // already in view
+    rows[1].getBoundingClientRect = () => ({ top: 50 }) as DOMRect;
+    rerender(wrap({ id: 'R-001', from: 'table' }));
+    rerender(wrap({ id: 'R-002', from: 'map' }));
     expect(scroll).not.toHaveBeenCalled();
   });
 
@@ -187,7 +187,6 @@ describe('RobotTable', () => {
     const { rerender } = renderAt(<RobotTable robots={a} now={T} stale={false} hover={null} />);
     const animate = Element.prototype.animate as unknown as ReturnType<typeof vi.fn>;
     animate.mockClear();
-    /** Lay the rows out in the given order, 40 px apart, as the browser would. */
     const layout = (order: string[]) => screen.getAllByRole('link').forEach((l) => {
       const row = l.closest('[role=row]') as HTMLElement;
       Object.defineProperty(row, 'offsetTop', { value: order.indexOf(l.textContent!) * 40, configurable: true });
@@ -196,17 +195,17 @@ describe('RobotTable', () => {
       layout(rs.map((x) => x.id));
       rerender(<RobotTable robots={rs} now={T} stale={false} hover={null} />);
     };
-    show([a[1], a[0]]); // first reorder: positions before it were all 0 in jsdom, so one row moves
+    show([a[1], a[0]]);
     expect(animate).toHaveBeenCalledTimes(1);
-    show(a); // both rows swap places
+    show(a);
     expect(animate).toHaveBeenCalledTimes(3);
     expect(animate.mock.calls[1][0]).toEqual([{ transform: 'translateY(40px)' }, { transform: 'none' }]);
-    show(a); // same order again: nothing moves
+    show(a);
     expect(animate).toHaveBeenCalledTimes(3);
     setMedia('(prefers-reduced-motion: reduce)', true);
     show([a[1], a[0]]);
     expect(animate).toHaveBeenCalledTimes(3);
-    rerender(<RobotTable robots={[r('R-003')]} now={T} stale={false} hover={null} />); // a different set: no slide
+    rerender(<RobotTable robots={[r('R-003')]} now={T} stale={false} hover={null} />);
     expect(animate).toHaveBeenCalledTimes(3);
   });
 });
@@ -235,7 +234,7 @@ describe('TopBar', () => {
     act(() => {
       actions.ingest({ state: 'live', frozenAt: null });
       actions.lost();
-      actions.retrying(3, T + 5000); // client time; the fixture's server offset is 0
+      actions.retrying(3, T + 5000);
     });
     expect(screen.getByText(/Live updates paused/)).toBeTruthy();
     expect(screen.getByText('Attempt 3 · next try in 5 s')).toBeTruthy();

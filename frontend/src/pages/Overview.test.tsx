@@ -21,7 +21,6 @@ describe('Overview', () => {
     expect(screen.getAllByRole('article').length).toBe(4);
     expect(tableRows()).toEqual(['R-004', 'R-020', 'R-003', 'R-002', 'R-005', 'R-001', 'R-010']);
     expect(screen.getByText('7 of 7 robots · most urgent first')).toBeTruthy();
-    // The map shows only the sites that have robots.
     expect(screen.getAllByRole('figure').length).toBe(3);
   });
 
@@ -42,7 +41,7 @@ describe('Overview', () => {
     expect(headline()).toBe('1 robot needs your attention. 0 of 1 are running normally at Munich North.');
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'R-020' } });
     expect(loc()).toBe('/?status=offline&site=mu&q=R-020');
-    fireEvent.click(screen.getByRole('button', { name: 'Offline 1' })); // toggles back to all
+    fireEvent.click(screen.getByRole('button', { name: 'Offline 1' }));
     expect(loc()).toBe('/?site=mu&q=R-020');
   });
 

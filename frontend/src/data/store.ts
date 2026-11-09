@@ -3,8 +3,6 @@ import type { Ingest, Report, RobotEvent, RobotInfo } from '@fleet/shared/protoc
 import type { FleetState, HoverSource, Judged, Robot, Status } from './types';
 import { LOW_BATTERY, deriveStatus, nextLow, reportedStatus, statusClock } from '../lib/status';
 
-// ---------- pure reducers (unit-tested) ----------
-
 export function initialState(clientNow = Date.now()): FleetState {
   return {
     ready: false,
@@ -25,12 +23,10 @@ export function initialState(clientNow = Date.now()): FleetState {
 const GHOSTS = 6;
 const LIVE: Ingest = { state: 'live', frozenAt: null };
 
-/** Status and report, built together so a robot can never hold one without the other. */
 function judge(report: Report | null, at: number, low: boolean): Judged {
   return report ? { status: reportedStatus(report, at, low), report } : { status: 'never', report: null };
 }
 
-/** Re-derive status for the given robots. A changed status gets a new object and a changedAt stamp. */
 function recompute(s: FleetState, robots: Record<string, Robot>, ids: Iterable<string>): Record<string, Robot> {
   const at = statusClock(s);
   let out = robots;
@@ -68,7 +64,6 @@ export function applyHello(s: FleetState, msg: { serverTime: number; robots: Rob
     const report = byId.get(info.id) ?? null;
     const low = report ? (prev ? nextLow(report.battery, prev.low) : report.battery < LOW_BATTERY) : false;
     const j = judge(report, at, low);
-    // Compare with the previous status so a change during an outage is highlighted after reconnect.
     const before: Status = prev ? prev.status : deriveStatus(report, msg.serverTime, low);
     robots[info.id] = {
       id: info.id,
@@ -100,7 +95,6 @@ export function applyReports(s: FleetState, reports: Report[]): FleetState {
       ...r,
       ...j,
       low,
-      // Against the status before this batch, so a change that reverses within one batch is not marked.
       changedAt: j.status !== s.robots[rep.id].status ? s.now : s.robots[rep.id].changedAt,
       ghosts: moved ? [...r.ghosts, [rep.x, rep.y] as [number, number]].slice(-GHOSTS) : r.ghosts,
     };
@@ -111,7 +105,6 @@ export function applyReports(s: FleetState, reports: Report[]): FleetState {
 
 export function applyTick(s: FleetState, clientNow: number): FleetState {
   const next = { ...s, now: clientNow + s.offset };
-  // Offline is a function of time, so every robot is checked on each tick.
   next.robots = recompute(next, s.robots, s.ids);
   return next;
 }
@@ -121,14 +114,12 @@ export function applyLost(s: FleetState): FleetState {
   return { ...s, connection: 'lost' };
 }
 
-/** The server lost or regained its link to the robots. Freshness freezes at `frozenAt` while paused. */
 export function applyIngest(s: FleetState, ingest: Ingest): FleetState {
   const next = { ...s, ingest };
   next.robots = recompute(next, s.robots, s.ids);
   return next;
 }
 
-/** Proof that our link is alive while no reports flow. */
 export function applyHeartbeat(s: FleetState, serverTime: number): FleetState {
   return serverTime > (s.lastMessageAt ?? 0) ? { ...s, lastMessageAt: serverTime } : s;
 }
@@ -136,8 +127,6 @@ export function applyHeartbeat(s: FleetState, serverTime: number): FleetState {
 export function applyEvent(s: FleetState, e: RobotEvent): FleetState {
   return { ...s, liveEvents: [e, ...s.liveEvents].slice(0, 300) };
 }
-
-// ---------- tiny store ----------
 
 type Listener = () => void;
 let state = initialState();
@@ -174,10 +163,6 @@ export const actions = {
   },
 };
 
-/**
- * Subscribe to a slice of the store. Re-renders only when the selected value changes
- * (by `eq`, default Object.is).
- */
 export function useFleet<T>(select: (s: FleetState) => T, eq: (a: T, b: T) => boolean = Object.is): T {
   const cache = useRef<{ s?: FleetState; sel?: unknown; v?: T }>({});
   const get = () => {

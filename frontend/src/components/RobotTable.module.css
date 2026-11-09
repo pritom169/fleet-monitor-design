@@ -21,14 +21,12 @@
 .row:hover, .hl { background: var(--raise); }
 .row > * { position: relative; z-index: 1; }
 
-/* Problem rows: a subtle left accent in the status colour. Healthy rows stay plain. */
 .accent::before {
   content: ''; position: absolute; left: 1px; top: 10px; bottom: 10px; width: 3px; border-radius: 2px;
   background: var(--acc); z-index: 1;
 }
 .offline::before { background: repeating-linear-gradient(to bottom, var(--off) 0 3px, transparent 3px 5.5px); }
 
-/* Status-change highlight: the new status tint fills the row, then fades out over 1.8 s. */
 .flash {
   position: absolute !important; inset: 0; z-index: 0 !important; border-radius: var(--r-row);
   background: var(--fl); opacity: 0; pointer-events: none;
@@ -46,7 +44,6 @@
 .pos { text-align: right; color: var(--ink2); font-size: 12px; }
 .chg { vertical-align: -1px; margin-right: 4px; color: var(--ink2); }
 
-/* Connection lost: values turn grey, "last seen" turns amber and keeps counting. */
 .stale { color: var(--ink2); }
 
 .skelRow { display: grid; grid-template-columns: 70px 1fr 64px; gap: 16px; align-items: center; height: 40px; margin: 0 20px; border-bottom: 1px solid var(--sep); }

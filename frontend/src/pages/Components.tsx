@@ -17,7 +17,6 @@ import { BannerView, ConnectionIndicatorView, IngestBannerView, TopBar } from '.
 import type { Filter } from '../lib/fleet';
 import css from './Components.module.css';
 
-/** Sample robots, so every variant is shown with the real components. */
 function sample(now: number, flashAt: number) {
   const info = (id: string, model: string, site: string) => ({ id, model, modelFull: model, siteKey: site, firmware: '4.12.1', network: 'AP', registeredAt: now - 43 * 60_000, lastCharge: null });
   const mk = (id: string, status: ReportedStatus, rep: Partial<Report>, model = 'Tote picker', site = 'hh', changedAt: number | null = null): ReportedRobot => ({
@@ -67,7 +66,6 @@ export function Components() {
   const now = useFleet((s) => s.now);
   const [flashAt, setFlashAt] = useState(now);
   const [filter, setFilter] = useState<Filter>('all');
-  // Replay the status-change highlight every 4 s so it can be inspected.
   useEffect(() => {
     const t = setInterval(() => setFlashAt(Date.now() + fleet.get().offset), 4000);
     return () => clearInterval(t);

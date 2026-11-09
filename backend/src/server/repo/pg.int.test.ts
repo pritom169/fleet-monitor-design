@@ -1,4 +1,3 @@
-/** Repo edge cases against a real Postgres 16: migrations, empty batches, state round trip. */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -54,8 +53,8 @@ describe('Repo', () => {
     const report = (battery: number) => ({ id: 'R-001', t: now, battery, x: 1, y: 2, state: 'ok' as const, task: 'Idle', taskKind: 'idle' as const, since: 0 });
     await repo.upsertStates([
       { robotId: 'R-001', report: report(50), boot: 1, seq: 10, status: 'ok' },
-      { robotId: 'R-001', report: report(19), boot: 1, seq: 11, status: 'low' }, // same robot twice in one batch
-      { robotId: 'R-999', report: { ...report(5), id: 'R-999' }, boot: 1, seq: 1, status: 'low' }, // not in the registry
+      { robotId: 'R-001', report: report(19), boot: 1, seq: 11, status: 'low' },
+      { robotId: 'R-999', report: { ...report(5), id: 'R-999' }, boot: 1, seq: 1, status: 'low' },
     ]);
     expect(await repo.loadState()).toEqual([{ robotId: 'R-001', report: report(19), boot: 1, seq: 11, status: 'low' }]);
   });

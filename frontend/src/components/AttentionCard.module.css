@@ -6,7 +6,6 @@
 }
 .card:hover, .hl { transform: scale(1.015); box-shadow: var(--lift); background: var(--raise); }
 .card:active { transform: scale(0.99); }
-/* A new problem rises in. Cards that were there on load do not move. */
 .rise { animation: fm-rise 900ms var(--spring) 1; }
 .id { margin: 14px 0 0; font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em; }
 .reason { display: block; margin-top: 4px; font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.02em; }

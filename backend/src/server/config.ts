@@ -11,18 +11,12 @@ export interface AppConfig {
   host?: string;
   databaseUrl: string;
   mqttUrl: string;
-  /** TLS client certificate for the broker (mTLS). */
   mqttTls?: TlsFiles;
-  /** Site keys this instance owns (scale by site, D5). Empty: all sites. */
   sites: string[];
-  /** Built client to serve, e.g. ../frontend/dist. Unset: API only. */
   staticDir?: string;
-  /** Serve HTTPS/WSS with this certificate. Unset: plain HTTP (development, or TLS ends at a proxy). */
   https?: TlsFiles;
-  /** If set, /metrics requires `Authorization: Bearer <token>`. */
   metricsToken?: string;
   migrate: boolean;
-  /** How often the robot registry is re-read, so newly provisioned robots appear without a restart. */
   registryRefreshMs: number;
   queue: {
     telemetryCapacity: number;

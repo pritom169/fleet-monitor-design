@@ -1,6 +1,4 @@
-# One image for the ingest server, the registry seed and the MQTT robot simulator.
 FROM node:24-alpine
-# openssl: the PKI job (backend/src/ops/pki.ts) issues certificates with it.
 RUN apk add --no-cache openssl
 WORKDIR /app
 COPY package.json package-lock.json ./

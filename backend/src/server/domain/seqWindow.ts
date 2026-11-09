@@ -1,8 +1,3 @@
-/**
- * Per-robot dedupe and ordering (SYSTEM_DESIGN.md §12).
- * Keeps the newest (boot, seq) and a 256-entry bitmap of recent seq values for that boot.
- * "Newer" means a greater (boot, seq). A greater boot resets the window.
- */
 export const WINDOW = 256;
 
 export type SeqResult = 'newest' | 'duplicate' | 'older';
@@ -12,7 +7,6 @@ export class SeqWindow {
   top = -1;
   private bits = new Uint32Array(WINDOW / 32);
 
-  /** Start from a stored (boot, seq), e.g. after a restart. The bitmap starts empty. */
   static from(boot: number, seq: number): SeqWindow {
     const w = new SeqWindow();
     w.boot = boot;
@@ -38,7 +32,6 @@ export class SeqWindow {
       this.set(seq);
       return 'newest';
     }
-    // Too far behind to remember: we cannot tell, so it is only "older" (history, never current state).
     if (this.top - seq >= WINDOW) return 'older';
     if (this.has(seq)) return 'duplicate';
     this.set(seq);

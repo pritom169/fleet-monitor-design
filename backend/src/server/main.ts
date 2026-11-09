@@ -1,4 +1,3 @@
-/** Entry point: read the environment, start the app, stop cleanly on SIGTERM/SIGINT. */
 import { createApp } from './app';
 import { loadConfig } from './config';
 import { log } from './log';

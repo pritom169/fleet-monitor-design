@@ -3,7 +3,6 @@ import { SITES } from '@fleet/shared/sites';
 import { ChevronLeft, SearchIcon } from './Icons';
 import css from './SiteSelector.module.css';
 
-/** Text tabs on a wide screen; a compact menu below 1280 px, where five tabs no longer fit the bar. */
 export function SiteSelector({ value, onChange }: { value: string; onChange: (k: string) => void }) {
   const OPTIONS: [string, string][] = [['all', 'All Sites'], ...SITES.map((s): [string, string] => [s.key, s.name])];
   return (
@@ -23,7 +22,6 @@ export function SiteSelector({ value, onChange }: { value: string; onChange: (k:
   );
 }
 
-/** Press "/" anywhere to jump to search. */
 export function SearchBox({ value, onChange, placeholder = 'Search robots' }: { value: string; onChange: (q: string) => void; placeholder?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {

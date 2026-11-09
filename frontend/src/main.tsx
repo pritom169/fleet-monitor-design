@@ -1,4 +1,3 @@
-// Global styles first, so component CSS modules (loaded by App) can override them.
 import './styles/tokens.css';
 import './styles/global.css';
 import { StrictMode } from 'react';

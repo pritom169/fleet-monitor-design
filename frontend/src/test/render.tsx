@@ -7,10 +7,6 @@ function Where() {
   return <div data-testid="location">{l.pathname + l.search}</div>;
 }
 
-/**
- * Render inside a router at `path`; `route` is the pattern the element is mounted on. The current URL is in
- * [data-testid=location]. `rerender` keeps the router (and its location).
- */
 export function renderAt(ui: ReactElement, path = '/', route = '*') {
   const wrap = (el: ReactElement) => (
     <MemoryRouter initialEntries={[path]}>

@@ -62,7 +62,6 @@
 .dl dt { font-size: 12px; color: var(--ink2); }
 .dl dd { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.02em; }
 
-/* Connection lost: keep every value, but grey it so nobody acts on stale numbers. */
 .stale .big, .stale .mValue { color: var(--ink2) !important; }
 
 @media (max-width: 1100px) {

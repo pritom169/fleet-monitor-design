@@ -1,12 +1,3 @@
-/**
- * Ingest + API server (SYSTEM_DESIGN.md Part B), as a function so tests can start and stop it.
- *
- *   MQTT → validate → registry → dedupe → order → current state + status + events → browsers
- *                                                                               ↘ persistence queue → Postgres
- *
- * Current state is updated before the persistence queue: a slow database can create gaps in history,
- * never a wrong live view.
- */
 import { randomUUID } from 'node:crypto';
 import type { RobotEvent } from '@fleet/shared/protocol';
 import type { AppConfig } from './config';
@@ -22,7 +13,6 @@ import { connectMqtt } from './transport/mqtt';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export interface App {
-  /** The port actually listened on (useful with port 0). */
   port: number;
   url: string;
   domain: FleetDomain;
@@ -33,7 +23,6 @@ export interface App {
 async function boot(config: AppConfig) {
   const repo = new Repo(config.databaseUrl);
 
-  // The registry and the last state must be loaded before we accept telemetry. Wait for the database.
   for (let attempt = 1; ; attempt++) {
     try {
       await repo.ping();
@@ -65,10 +54,7 @@ export async function createApp(config: AppConfig): Promise<App> {
   let dbOk = true;
   let lastDbCheck = true;
 
-  // ---------- persistence ----------
-  // A failing database retries every few seconds; log about once a minute per queue, with a count.
   const warnSample = sampled(60_000, 1);
-  /** SQLSTATE classes that a retry cannot fix: cardinality, data, integrity, syntax/undefined object. */
   const isFatal = (err: unknown) => /^(21|22|23|42)/.test(String((err as { code?: string }).code ?? ''));
   const onFatal = (queue: string) => (err: unknown, n: number) => log.error({ queue, dropped: n, err: errText(err) }, 'batch rejected by the database; dropped');
   function warnDb(queue: string, err: unknown, attempt: number) {
@@ -91,7 +77,7 @@ export async function createApp(config: AppConfig): Promise<App> {
     name: 'events',
     capacity: 10_000,
     maxBatch: 500,
-    maxWaitMs: 0, // events are inserted immediately
+    maxWaitMs: 0,
     write: (b) => repo.insertEvents(b),
     onDrop: (n) => m.ingestDropped.inc({ queue: 'events' }, n),
     onWritten: (_n, s) => m.dbBatchWrite.observe({ queue: 'events' }, s),
@@ -110,11 +96,6 @@ export async function createApp(config: AppConfig): Promise<App> {
     isFatal,
     onFatal: onFatal('state'),
   });
-  /**
-   * A row for a day with no partition fails with 23514. That happens when the hourly job could not run
-   * (database down at midnight). Create the partitions and try once more, so one missing day cannot
-   * block the queue until the next hourly run.
-   */
   async function withPartitions(write: () => Promise<void>) {
     try {
       await write();
@@ -131,10 +112,8 @@ export async function createApp(config: AppConfig): Promise<App> {
       (err) => log.error({ err: errText(err) }, 'partition maintenance failed'),
     );
 
-  /** robot_state is upserted at most once per second per robot (§12). */
   const dirty = new Set<string>();
 
-  /** Stamp the ID here, once, so the copy browsers get live and the copy they later fetch from history match. */
   const emit = (events: NewEvent[]) => {
     for (const n of events) {
       const e: RobotEvent = { ...n, eventId: randomUUID() };
@@ -143,7 +122,6 @@ export async function createApp(config: AppConfig): Promise<App> {
     }
   };
 
-  // ---------- ingest ----------
   const invalidSample = sampled();
   const mqtt = connectMqtt(
     { url: config.mqttUrl, sites: config.sites, tls: config.mqttTls },
@@ -168,8 +146,6 @@ export async function createApp(config: AppConfig): Promise<App> {
         domain.heard(receivedAt);
         if (!domain.isKnown(robotId, siteId)) return void m.ingestMessages.inc({ result: 'unknown' });
         m.ingestMessages.inc({ result: 'accepted' });
-        // The LWT is a hint, not proof: the 10 s rule stays the source of truth. A live (not retained)
-        // LWT goes into the event log, because it explains *why* a robot went quiet.
         if (s === 'offline' && !retained) {
           m.mqttLwt.inc();
           emit([{ id: robotId, t: receivedAt, kind: 'warn', code: 'broker_disconnect', text: 'Connection to broker lost', sub: 'Unclean disconnect (last will)' }]);
@@ -187,7 +163,6 @@ export async function createApp(config: AppConfig): Promise<App> {
     },
   );
 
-  // ---------- the 1 s ticker ----------
   const tick = () => {
     const now = Date.now();
     if (domain.poll(now)) {
@@ -216,13 +191,12 @@ export async function createApp(config: AppConfig): Promise<App> {
   }, 1000 - (Date.now() % 1000));
   const flushTimer = setInterval(() => fanout.flush(), 250);
 
-  // ---------- database health and partitions ----------
   const dbTimer = setInterval(() => {
     repo.ping().then(
       () => {
         if (!lastDbCheck) {
           log.info('database reachable again');
-          void maintain(); // the hourly job may have failed while it was down
+          void maintain();
         }
         lastDbCheck = true;
       },
@@ -234,8 +208,6 @@ export async function createApp(config: AppConfig): Promise<App> {
   }, 5000);
   const partTimer = setInterval(() => void maintain(), 3600_000);
 
-  // ---------- registry refresh ----------
-  // Robots provisioned (or retired) while the server runs appear without a restart. Browsers get a fresh snapshot.
   const regTimer = setInterval(() => {
     repo.loadRegistry().then(
       (list) => {
@@ -244,12 +216,11 @@ export async function createApp(config: AppConfig): Promise<App> {
         log.info({ added: r.added.length, removed: r.removed.length, changed: r.changed.length }, 'registry changed');
         fanout.resync(http.hello());
       },
-      () => {}, // the database check reports this
+      () => {},
     );
   }, config.registryRefreshMs);
   const isDbOk = () => (dbOk = lastDbCheck && telemetryQ.ok && eventsQ.ok && stateQ.ok);
 
-  // ---------- HTTP ----------
   const http = createHttpServer({
     domain,
     repo,
@@ -270,7 +241,6 @@ export async function createApp(config: AppConfig): Promise<App> {
   const url = `${config.https ? 'https' : 'http'}://localhost:${port}`;
   log.info({ url, mqtt: config.mqttUrl, tls: { http: !!config.https, mqtt: !!config.mqttTls }, sites: config.sites.length ? config.sites : 'all' }, 'fleet ingest server listening');
 
-  // ---------- shutdown ----------
   let stopping: Promise<void> | null = null;
   const stop = () => (stopping ??= (async () => {
     log.info('shutting down');

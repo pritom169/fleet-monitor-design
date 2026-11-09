@@ -21,13 +21,10 @@ export function MapLegend({ className }: { className?: string }) {
 const enter = (id: string) => actions.hover(id, 'map');
 const leave = () => actions.hover(null);
 
-/** Overview map: one small plan per site. Problems stand up as pins; healthy robots stay flat. */
 export function FleetMap({ siteKeys, robots, visible, now, hoveredId, loading }: {
   siteKeys: string[];
   robots: Robot[];
-  /** IDs that match the current filter; others are dimmed, not hidden, so the floor stays readable. */
   visible: Set<string>;
-  /** Pins the clock (tests). The app omits it, so a tick does not re-render 1,000 markers. */
   now?: number;
   hoveredId: string | null;
   loading?: boolean;

@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
 
-// Integration tests against real Postgres and Mosquitto containers (Testcontainers). Needs Docker.
 export default defineConfig({
   test: {
     name: 'backend-int',

@@ -1,6 +1,3 @@
-/**
- * The ingest pipeline against real Postgres 16 and Mosquitto 2 (SYSTEM_DESIGN.md §17, integration).
- */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { MqttClient } from 'mqtt';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
@@ -20,7 +17,6 @@ const clients: MqttClient[] = [];
 
 const count = async (sql: string, args: unknown[] = []) => Number((await repo.pool.query(sql, args)).rows[0].n);
 
-/** One robot keeps reporting in the background, so the fleet is never silent (stall watchdog, §12). */
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 
 beforeAll(async () => {
@@ -60,8 +56,8 @@ describe('ingest pipeline', () => {
     expect(m.at - sent).toBeLessThan(1000);
     const r = (m as { r: Report }).r;
     expect(r.battery).toBe(77);
-    expect(r.t).toBeGreaterThanOrEqual(sent); // server time, not the robot's
-    expect(r.skew).toBeGreaterThanOrEqual(1500); // robot clock 1.5 s behind (plus transit)
+    expect(r.t).toBeGreaterThanOrEqual(sent);
+    expect(r.skew).toBeGreaterThanOrEqual(1500);
     sock.close();
 
     await until(() => count(`SELECT count(*) n FROM telemetry WHERE robot_id = 'R-001' AND seq = 0`), 3000);
@@ -75,8 +71,8 @@ describe('ingest pipeline', () => {
     clients.push(c);
     await publishTel(c, tel('R-002', 'hh', 5, { battery: 60 }));
     await publishTel(c, tel('R-002', 'hh', 7, { battery: 58 }));
-    await publishTel(c, tel('R-002', 'hh', 7, { battery: 58 })); // duplicate
-    await publishTel(c, tel('R-002', 'hh', 6, { battery: 59 })); // late
+    await publishTel(c, tel('R-002', 'hh', 7, { battery: 58 }));
+    await publishTel(c, tel('R-002', 'hh', 6, { battery: 59 }));
     await until(() => app.domain.robots.get('R-002')?.report?.battery === 58);
     await sleep(300);
     expect(app.domain.robots.get('R-002')!.report!.battery).toBe(58);
@@ -88,14 +84,14 @@ describe('ingest pipeline', () => {
   it('logs the last will and marks the robot offline by the 10 s rule', async () => {
     const c = await connect(mq.url, {
       clientId: 'robot-R-003',
-      keepalive: 2, // the broker publishes the will after 1.5 × keepalive
+      keepalive: 2,
       will: { topic: 'fleet/le/R-003/status', payload: Buffer.from('offline'), qos: 1, retain: true },
     });
     await publishTel(c, tel('R-003', 'le', 0));
     await until(() => app.domain.robots.get('R-003')?.status === 'ok');
-    c.stream.destroy(); // pull the plug: no DISCONNECT
+    c.stream.destroy();
     await until(() => count(`SELECT count(*) n FROM robot_events WHERE robot_id = 'R-003' AND text = 'Connection to broker lost'`), 15_000, 250);
-    expect(app.domain.robots.get('R-003')!.status).toBe('ok'); // the will is a hint, not proof
+    expect(app.domain.robots.get('R-003')!.status).toBe('ok');
     await until(() => app.domain.robots.get('R-003')?.status === 'offline', 15_000, 250);
     await until(() => count(`SELECT count(*) n FROM robot_events WHERE robot_id = 'R-003' AND text = 'Went offline'`), 3000);
   });
@@ -131,12 +127,10 @@ describe('ingest pipeline', () => {
     const body = res.json<{ bucketMs: number; points: { t: number; x: number; batteryMin: number }[] }>();
     expect(body.points.length).toBeLessThanOrEqual(500);
     expect(body.points.length).toBeGreaterThan(400);
-    // Last value per bucket: x grows with time, so the bucket's x is the largest index inside it.
     const p = body.points[10];
     const inBucket = rows.filter((r) => r.receivedAt >= p.t && r.receivedAt < p.t + body.bucketMs);
     expect(p.x).toBe(inBucket[inBucket.length - 1].x);
     expect(p.batteryMin).toBe(Math.min(...inBucket.map((r) => r.battery)));
-    // Gaps stay gaps: no point is invented inside the two missing hours.
     expect(body.points.filter((q) => q.t >= gapFrom + body.bucketMs && q.t < gapTo - body.bucketMs)).toEqual([]);
 
     expect((await request(`${app.url}/api/robots/R-001/telemetry?from=${to - 8 * day}&to=${to}`)).status).toBe(400);
@@ -151,7 +145,6 @@ describe('ingest pipeline', () => {
     const seen: string[] = [];
     let cursor: string | null = null;
     do {
-      // Bounded window: R-009 also has the server's own events (its first report) from this test run.
       const q: string = `${app.url}/api/robots/R-009/events?from=${t0}&to=${t0 + 250_000}${cursor ? `&cursor=${cursor}` : ''}`;
       const page = (await request(q)).json<{ events: { text: string; t: number }[]; next: string | null }>();
       seen.push(...page.events.map((e) => e.text));
@@ -183,7 +176,6 @@ describe('ingest pipeline', () => {
         await publishTel(c, tel('R-001', 'hh', 1000 + i, { boot: 10, battery: i - 60 }));
         await sleep(100);
       }
-      // The live view does not wait for the database.
       await sock.next((m) => m.type === 'report' && m.r.id === 'R-001' && m.r.battery === 49, 3000);
       await until(async () => (await request(`${app.url}/readyz`)).status === 503, 30_000, 500);
       expect((await request(`${app.url}/api/robots/R-001/history`)).status).toBe(503);

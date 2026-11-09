@@ -7,13 +7,11 @@ export const px = (x: number) => `${((x / FLOOR_W) * 100).toFixed(3)}%`;
 export const py = (y: number) => `${((y / FLOOR_H) * 100).toFixed(3)}%`;
 const box = (r: [number, number, number, number]) => ({ left: px(r[0]), top: py(r[1]), width: px(r[2]), height: py(r[3]) });
 
-/** Grey top-down outline of a site. Markers go in `children`, positioned with px()/py(). */
 export function SitePlan({
   site, variant = 'normal', detail, emptyNote, children, className, style,
 }: {
   site: Site;
   variant?: 'normal' | 'stage' | 'mini';
-  /** Charging bays and aisle labels, for the big floor plan. */
   detail?: boolean;
   emptyNote?: string;
   children?: ReactNode;

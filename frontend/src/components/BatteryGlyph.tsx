@@ -2,7 +2,6 @@ import type { CSSProperties } from 'react';
 import type { Status } from '../data/types';
 import css from './BatteryGlyph.module.css';
 
-/** Small inline battery. Amber only when low; grey when we do not know the real value. */
 export function BatteryGlyph({ value, status }: { value: number; status: Status }) {
   const style = {
     '--rim': status === 'low' ? 'var(--amb)' : 'var(--ink2)',

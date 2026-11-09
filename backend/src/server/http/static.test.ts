@@ -15,7 +15,6 @@ const mk = () => {
 };
 afterAll(() => tmp.forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
 
-/** A ServerResponse stand-in: records the head and collects the piped body. */
 function fakeRes() {
   const body = new PassThrough();
   const out = { status: 0, headers: {} as Record<string, string>, text: '' };
@@ -41,7 +40,7 @@ describe('shellCsp', () => {
     const csp = shellCsp(dir)!;
     const hash = crypto.createHash('sha256').update(inline).digest('base64');
     expect(csp).toContain(`script-src 'self' 'sha256-${hash}'`);
-    expect(csp.match(/sha256-/g)!.length).toBe(1); // the module script is covered by 'self', not hashed
+    expect(csp.match(/sha256-/g)!.length).toBe(1);
     expect(csp).toContain("form-action 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
   });

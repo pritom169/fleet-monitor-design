@@ -3,7 +3,6 @@ import { STATUS_LABEL } from '../lib/status';
 import { StatusIcon } from './Icons';
 import css from './StatusPill.module.css';
 
-/** Every status: icon + label + colour. Never colour alone. */
 export function StatusPill({ status, size = 'sm', solid }: { status: Status; size?: 'sm' | 'lg'; solid?: boolean }) {
   const big = size === 'lg';
   const iconSize = status === 'low' ? (big ? 17 : 15) : status === 'ok' ? 14 : big ? 14 : 12;

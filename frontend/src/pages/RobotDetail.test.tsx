@@ -7,11 +7,9 @@ import { renderAt } from '../test/render';
 import { RobotDetail } from './RobotDetail';
 
 const headline = () => screen.getByRole('heading', { level: 1 }).textContent;
-/** The first region with this name. Two are called "Position": the metric tile, then the map. */
 const tile = (name: string) => within(screen.getAllByRole('region', { name })[0]);
 const MIN = 60_000;
 
-/** Battery samples every 30 s over the last `minutes`, moving linearly from `from` to `to`. */
 const battery = (from: number, to: number, minutes = 10): [number, number][] =>
   Array.from({ length: minutes * 2 + 1 }, (_, i) => [T - minutes * MIN + i * 30_000, Math.round((from + ((to - from) * i) / (minutes * 2)) * 10) / 10]);
 
@@ -46,7 +44,7 @@ describe('RobotDetail', () => {
 
   it('describes a healthy robot: steady battery, place, uptime, clock skew and last charge', async () => {
     const s = fleetState({ robots: [info('R-001', 'hh', { lastCharge: [T - 3 * 3600_000, T - 2 * 3600_000] }), info('R-002')], reports: [rep('R-001', { skew: 1430 }), rep('R-002')] });
-    await show('R-001', { battery: battery(80, 80), trail: [[T - 4000, 10, 6.1], [T - 2000, 10.02, 6.1]] }, s); // 2 cm: not moving
+    await show('R-001', { battery: battery(80, 80), trail: [[T - 4000, 10, 6.1], [T - 2000, 10.02, 6.1]] }, s);
     expect(headline()).toBe('R-001 is running normally. Pick order #4433. Battery 80%.');
     expect(tile('Battery').getByText('Steady over the last 5 minutes.')).toBeTruthy();
     expect(tile('Battery trend').getByText('Lowest 80% · highest 80%')).toBeTruthy();
@@ -86,7 +84,6 @@ describe('RobotDetail', () => {
   });
 
   it('knows whether a low robot is charging, waiting, or has not been sent', async () => {
-    // The display text is deliberately unhelpful: the plan must come from `taskKind`, never from the words.
     const low = (taskKind: TaskKind) => fleetState({ robots: [info('R-002')], reports: [rep('R-002', { battery: 15, task: 'Task text', taskKind })] });
     const cases: [TaskKind, Partial<RobotHistory>, string][] = [
       ['charging', { battery: battery(12, 15) }, 'R-002 is low on battery. 15% left and rising. It is charging.'],
@@ -112,7 +109,7 @@ describe('RobotDetail', () => {
     expect(tile('Current task').getByText('Motor overcurrent. Stopped in aisle A1')).toBeTruthy();
     const off = fleetState({ reports: [rep('R-003', { state: 'error', fault: 'Bump', x: 30, y: 2 })] });
     act(() => load(off));
-    expect(tile('Current task').getByText('Bump. Stopped')).toBeTruthy(); // no aisle there
+    expect(tile('Current task').getByText('Bump. Stopped')).toBeTruthy();
   });
 
   it('treats an offline robot as unknown: last known values, grey, no invented data', async () => {
@@ -120,7 +117,7 @@ describe('RobotDetail', () => {
     expect(headline()).toBe('R-004 is offline. No report for 3 min 4 s. We do not know its state.');
     expect(tile('Battery').getByText('Battery · last known')).toBeTruthy();
     expect(tile('Battery').getByText('Last known value, reported at 10:26:56. The real level is unknown.')).toBeTruthy();
-    expect(tile('Battery trend').getAllByText('No data since 10:26:56').length).toBe(2); // the note, and the chart's gap label
+    expect(tile('Battery trend').getAllByText('No data since 10:26:56').length).toBe(2);
     expect(tile('Current task').getByText('Last known. Current state unknown.')).toBeTruthy();
     expect(tile('Uptime').getByText('Until the last report at 10:26:56')).toBeTruthy();
     expect(tile('Position').getByText('Last known · Charging zone')).toBeTruthy();
@@ -169,7 +166,7 @@ describe('RobotDetail', () => {
     const { container } = await show('R-001', {});
     act(() => actions.lost());
     expect(screen.getByText('1 s ago').getAttribute('style')).toMatch(/amb-text/);
-    expect(container.querySelectorAll('[class*=ctx][style*=left]').length).toBe(3); // R-002, R-003, R-004
+    expect(container.querySelectorAll('[class*=ctx][style*=left]').length).toBe(3);
     expect(screen.getByRole('link', { name: /Open floor plan/ }).getAttribute('href')).toBe('/floor-plan?site=hh&robot=R-001');
   });
 });

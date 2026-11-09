@@ -7,7 +7,6 @@ import css from './BatteryChart.module.css';
 const W = 600;
 const H = 200;
 const WINDOW = 15 * 60_000;
-/** A gap longer than this between samples breaks the line instead of drawing across missing data. */
 const BREAK_MS = 20_000;
 
 function scale(max: number) {
@@ -16,11 +15,6 @@ function scale(max: number) {
   return { yMax: 100, rules: [0, 50, 75, 100] };
 }
 
-/**
- * A simple line: last 15 minutes, a dashed threshold at 20 %.
- * The part below the threshold is drawn in amber (clip paths split the same line exactly at 20 %).
- * When we have no data (offline), the missing stretch is hatched and labelled — never interpolated.
- */
 export function BatteryChart({ points, now, status, lastReport }: {
   points: [number, number][];
   now: number;

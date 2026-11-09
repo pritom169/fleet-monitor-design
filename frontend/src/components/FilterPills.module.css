@@ -7,7 +7,6 @@
 .pill:hover { background: var(--fill); }
 .pill:active { transform: scale(0.97); }
 .pill:disabled { cursor: default; color: var(--ink2); }
-/* Selection is neutral: a solid ink capsule, never a status colour. */
 .pill[aria-pressed='true'] { background: var(--ink); color: var(--page); }
 .pill[aria-pressed='true'] .n { color: inherit !important; }
 .n { font-weight: 600; }

@@ -58,7 +58,6 @@ const json = async (r: Response): Promise<any> => r.json();
 function ws(p: string, headers: Record<string, string> = {}) {
   return new Promise<{ sock: WebSocket; first: ServerMessage }>((resolve, reject) => {
     const sock = new WebSocket(base.replace('http', 'ws') + p, { headers });
-    // Validated, not cast: the snapshot must match the protocol the browser checks it against.
     sock.once('message', (d) => {
       try {
         resolve({ sock, first: ServerMessage.parse(JSON.parse(String(d))) });

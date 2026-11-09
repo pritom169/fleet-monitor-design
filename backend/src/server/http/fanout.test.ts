@@ -28,11 +28,11 @@ describe('Fanout', () => {
     now = 600;
     f.report(rep('R-001', 600, 48));
     f.flush();
-    expect(s.sent.length).toBe(2); // hello + first report
+    expect(s.sent.length).toBe(2);
     now = 950;
     f.flush();
     expect(s.sent.length).toBe(3);
-    expect((s.sent[2] as { r: Report }).r.battery).toBe(48); // newest wins
+    expect((s.sent[2] as { r: Report }).r.battery).toBe(48);
   });
 
   it('keeps only the newest report per robot for a slow client, then cuts it', () => {
@@ -48,8 +48,8 @@ describe('Fanout', () => {
       f.report(rep('R-001', now, 50 - i));
       f.flush();
     }
-    expect(slow.s.sent.length).toBe(1); // only hello
-    expect(fast.s.sent.length).toBe(11); // the fast client is not held back
+    expect(slow.s.sent.length).toBe(1);
+    expect(fast.s.sent.length).toBe(11);
     slow.s.bufferedAmount = 0;
     now += 1000;
     f.flush();

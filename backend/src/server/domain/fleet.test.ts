@@ -10,7 +10,6 @@ const tel = (seq: number, extra: Partial<Telemetry> = {}): Telemetry => ({
   id: 'R-001', siteId: 'hh', boot: 1, seq, robotTs: T, battery: 80, x: 1, y: 2, state: 'ok', task: 'Idle', taskKind: 'idle', since: 0, ...extra,
 });
 
-/** A domain whose broker link is up and past the settle window. */
 function liveDomain(ids = ['R-001']) {
   const d = new FleetDomain(ids.map((id) => info(id)));
   d.setLink(true, T - SETTLE_MS);
@@ -25,7 +24,7 @@ describe('SeqWindow', () => {
     expect(w.check(1, 1)).toBe('newest');
     expect(w.check(1, 3)).toBe('newest');
     expect(w.check(1, 3)).toBe('duplicate');
-    expect(w.check(1, 2)).toBe('older'); // late, not seen before: history only
+    expect(w.check(1, 2)).toBe('older');
     expect(w.check(1, 2)).toBe('duplicate');
     expect(w.check(1, 1)).toBe('duplicate');
   });
@@ -41,11 +40,11 @@ describe('SeqWindow', () => {
   it('forgets bits that slide out of the window', () => {
     const w = new SeqWindow();
     w.check(1, 10);
-    w.check(1, 10 + WINDOW); // same slot modulo WINDOW, so the slot must be cleared and reused
+    w.check(1, 10 + WINDOW);
     expect(w.check(1, 10 + WINDOW)).toBe('duplicate');
-    expect(w.check(1, 10)).toBe('older'); // too far behind to tell
+    expect(w.check(1, 10)).toBe('older');
     w.check(1, 10 + WINDOW + 2);
-    expect(w.check(1, 10 + WINDOW + 1)).toBe('older'); // the gap was cleared, not left from an old lap
+    expect(w.check(1, 10 + WINDOW + 1)).toBe('older');
   });
 
   it('restores from stored (boot, seq) after a restart', () => {
@@ -63,8 +62,8 @@ describe('FleetDomain.accept', () => {
     expect(d.accept(tel(3, { battery: 78 }), T + 1000).result).toBe('accepted');
     const late = d.accept(tel(2, { battery: 79 }), T + 1100);
     expect(late.result).toBe('out_of_order');
-    expect(late.row?.battery).toBe(79); // still goes to history
-    expect(late.report).toBeUndefined(); // never to the live view
+    expect(late.row?.battery).toBe(79);
+    expect(late.report).toBeUndefined();
     expect(d.robots.get('R-001')!.report!.battery).toBe(78);
     expect(d.accept(tel(3), T + 1200).result).toBe('duplicate');
   });
@@ -101,7 +100,6 @@ describe('status and events', () => {
       kinds.push(...a.events.map((e) => e.kind));
       expect(d.robots.get('R-001')!.status).toBe(want[i]);
     });
-    // First report, then exactly one low, one ok and one low: no flapping.
     expect(kinds).toEqual(['info', 'low', 'ok', 'low']);
   });
 
@@ -120,16 +118,14 @@ describe('status and events', () => {
     const d = liveDomain(['R-001', 'R-002']);
     d.accept(tel(1), T);
     d.accept(tel(1, { id: 'R-002' }), T + 500);
-    expect(d.setLink(false, T + 1000)).toBe(true); // browsers must be told
+    expect(d.setLink(false, T + 1000)).toBe(true);
     expect(d.ingest()).toEqual({ state: 'paused', frozenAt: T + 500 });
-    // Five minutes of broker outage.
     for (let t = T + 2000; t <= T + 300_000; t += 1000) expect(d.tick(t)).toEqual([]);
     expect(d.counts().offline).toBe(0);
 
-    // The link comes back. During the settle window statuses stay frozen while robots report again.
     d.setLink(true, T + 300_000);
     expect(d.ingest().state).toBe('paused');
-    d.accept(tel(2), T + 300_400); // R-001 reports; R-002 does not (it died during the outage)
+    d.accept(tel(2), T + 300_400);
     expect(d.tick(T + 301_000)).toEqual([]);
     expect(d.poll(T + 300_000 + SETTLE_MS)).toBe(true);
     expect(d.ingest().state).toBe('live');
@@ -140,9 +136,9 @@ describe('status and events', () => {
   it('starts frozen at the newest stored report after a restart', () => {
     const d = new FleetDomain([info('R-001')]);
     d.load([{ robotId: 'R-001', report: { id: 'R-001', t: T, battery: 21, x: 0, y: 0, state: 'ok', task: 'Idle', taskKind: 'idle', since: 0 }, boot: 1, seq: 9, status: 'low' }]);
-    expect(d.tick(T + 600_000)).toEqual([]); // broker not connected yet: nothing goes offline
-    expect(d.robots.get('R-001')!.status).toBe('low'); // latch restored: 21 % is still low
-    expect(d.accept(tel(9), T + 600_100).result).toBe('duplicate'); // ordering survives the restart
+    expect(d.tick(T + 600_000)).toEqual([]);
+    expect(d.robots.get('R-001')!.status).toBe('low');
+    expect(d.accept(tel(9), T + 600_100).result).toBe('duplicate');
   });
 });
 
@@ -151,13 +147,11 @@ describe('stall watchdog', () => {
     const d = liveDomain(['R-001', 'R-002']);
     d.accept(tel(1), T);
     d.accept(tel(1, { id: 'R-002' }), T);
-    // The process is suspended (laptop asleep) for an hour. On wake the ticker runs before MQTT notices.
     const wake = T + 3_600_000;
-    expect(d.poll(wake)).toBe(true); // → paused
+    expect(d.poll(wake)).toBe(true);
     expect(d.ingest()).toEqual({ state: 'paused', frozenAt: T });
     expect(d.tick(wake)).toEqual([]);
     expect(d.counts().offline).toBe(0);
-    // R-001 reports again; R-002 does not. After the settle window only R-002 goes offline.
     d.accept(tel(2), wake + 500);
     expect(d.tick(wake + 1000)).toEqual([]);
     expect(d.poll(wake + 500 + SETTLE_MS)).toBe(true);
@@ -185,14 +179,14 @@ describe('registry and skew', () => {
     const r = d.register([info('R-001'), { ...info('R-003'), firmware: '5.0' }]);
     expect(r).toEqual({ added: ['R-003'], removed: ['R-002'], changed: [] });
     expect(d.robots.get('R-003')!.status).toBe('never');
-    expect(d.robots.get('R-001')!.report).not.toBeNull(); // existing state is kept
+    expect(d.robots.get('R-001')!.report).not.toBeNull();
     expect(d.register([{ ...info('R-001'), firmware: '5.1' }, { ...info('R-003'), firmware: '5.0' }]).changed).toEqual(['R-001']);
   });
 
   it('smooths robot clock skew and puts it on the report', () => {
     const d = liveDomain();
-    expect(d.accept(tel(1, { robotTs: T - 2000 }), T).report!.skew).toBe(2000); // robot 2 s behind
-    const a = d.accept(tel(2, { robotTs: T + 1000 - 1000 }), T + 1000); // one 1 s sample barely moves it
+    expect(d.accept(tel(1, { robotTs: T - 2000 }), T).report!.skew).toBe(2000);
+    const a = d.accept(tel(2, { robotTs: T + 1000 - 1000 }), T + 1000);
     expect(a.report!.skew).toBe(1900);
   });
 });
@@ -203,7 +197,7 @@ describe('link state edges', () => {
     d.accept(tel(1), T);
     d.setLink(true, T + 10_000);
     expect(d.linkState).toBe('settling');
-    expect(d.poll(T + 10_000 + SETTLE_MS)).toBe(false); // connected, but nothing for > STALL_MS
+    expect(d.poll(T + 10_000 + SETTLE_MS)).toBe(false);
     expect(d.linkState).toBe('stalled');
     d.heard(T + 20_000);
     expect(d.linkState).toBe('settling');
@@ -215,10 +209,10 @@ describe('link state edges', () => {
 
   it('ignores repeated link changes, and freezes at "now" when no message was ever received', () => {
     const d = new FleetDomain([info('R-001')]);
-    expect(d.setLink(false, T)).toBe(false); // already down
+    expect(d.setLink(false, T)).toBe(false);
     d.setLink(true, T);
-    expect(d.setLink(true, T + 1)).toBe(false); // already settling
-    expect(d.setLink(false, T + 2)).toBe(false); // was not up yet: browsers already see "paused"
+    expect(d.setLink(true, T + 1)).toBe(false);
+    expect(d.setLink(false, T + 2)).toBe(false);
     d.setLink(true, T + 3);
     d.poll(T + 3 + SETTLE_MS);
     expect(d.linkState).toBe('up');
@@ -241,7 +235,7 @@ describe('restore, events and views', () => {
   it('restores the low latch from the stored status, skips unknown robots, and keeps the newest time', () => {
     const d = new FleetDomain([info('R-001'), info('R-002')]);
     d.load([
-      { robotId: 'R-001', report: report(21), boot: 1, seq: 1, status: 'ok' }, // ok at 21: not latched
+      { robotId: 'R-001', report: report(21), boot: 1, seq: 1, status: 'ok' },
       { robotId: 'R-002', report: { ...report(15), id: 'R-002', t: T - 5000, skew: 40 }, boot: 1, seq: 1, status: 'ok' },
       { robotId: 'R-404', report: report(50), boot: 1, seq: 1, status: 'ok' },
     ]);
@@ -277,7 +271,7 @@ describe('restore, events and views', () => {
     d.accept(tel(1), T);
     const a = d.accept(tel(2, { state: 'error', fault: 'Motor overcurrent' }), T + 1000);
     expect(a.report!.fault).toBe('Motor overcurrent');
-    expect(a.events).toEqual([]); // the robot sends its own fault event
+    expect(a.events).toEqual([]);
     const b = d.accept(tel(3, { task: 'Pick order' }), T + 2000);
     expect(b.events).toEqual([{ id: 'R-001', t: T + 2000, kind: 'ok', code: 'fault_cleared', text: 'Fault cleared', sub: 'Pick order' }]);
   });

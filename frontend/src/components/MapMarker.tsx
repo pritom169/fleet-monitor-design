@@ -11,30 +11,23 @@ import css from './MapMarker.module.css';
 
 interface Props {
   robot: Robot;
-  /** Pins the clock (component sheet, tests). Omitted, the time-dependent parts read the clock themselves. */
   now?: number;
   big?: boolean;
   highlighted?: boolean;
   selected?: boolean;
   dimmed?: number;
-  /** Problems carry their ID on the map unless highlighted (then the popover says it). */
   showTag?: boolean;
-  /** Show IDs next to healthy dots too (floor plan "labels" layer). */
   label?: boolean;
   popover?: boolean;
-  /** Called with the robot ID, so a parent can pass one stable handler and memo holds. */
   onEnter?: (id: string) => void;
   onLeave?: () => void;
   onClick?: () => void;
 }
 
-/** Memoised: the overview map holds up to 1,000 markers, and only the hovered pair changes on a hover. */
 export const MapMarker = memo(function MapMarker({ robot: r, now, big, highlighted, selected, dimmed, showTag = true, label, popover, onEnter, onLeave, onClick }: Props) {
   const rep = r.report;
-  // Only a clickable marker has an accessible name, and only it follows the clock ("last seen 12 s ago").
-  // The others select null, so a tick leaves them alone.
   const name = useFleet((s) => (onClick ? aria(r, now ?? s.now) : null));
-  if (!rep) return null; // never reported: no known position
+  if (!rep) return null;
   const problem = isProblem(r.status);
   const cls = [css.mark, css[r.status], big && css.big, highlighted && css.hl].filter(Boolean).join(' ');
   const style: CSSProperties = {

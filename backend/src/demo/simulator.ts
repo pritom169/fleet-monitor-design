@@ -1,13 +1,3 @@
-/**
- * Demo fleet backend (SYSTEM_DESIGN.md Part A). Runs the robot model in process and speaks the same
- * browser protocol as the production ingest server:
- *   ws  /ws                         hello (registry + last known reports), then one report per robot per second
- *   GET /api/robots/:id/history     battery (15 min), trail (4 min), events (today)
- *   POST /control/outage?seconds=N  drop all sockets and refuse new ones for N seconds (demo of connection loss)
- * With STATIC_DIR set, it also serves the built client.
- *
- * The client does not know this is a mock. Scripted incidents (sim/fleet.ts) make the demo repeatable.
- */
 import http from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { SITES } from '@fleet/shared/sites';
@@ -19,7 +9,6 @@ const PORT = Number(process.env.PORT ?? 8787);
 const STATIC_DIR = process.env.STATIC_DIR;
 const S = 1000;
 
-// ---------- clients ----------
 const clients = new Set<WebSocket>();
 let outageUntil = 0;
 
@@ -28,7 +17,6 @@ function broadcast(msg: ServerMessage) {
   for (const c of clients) if (c.readyState === WebSocket.OPEN) c.send(data);
 }
 
-/** ROBOTS=1000 adds load robots beyond the scripted 50, to measure the client at the production target. */
 const ROBOTS = Number(process.env.ROBOTS ?? 50);
 const fleet = createFleet({ incidents: 'demo', count: ROBOTS, onEvent: (e) => broadcast({ type: 'event', e }) });
 const { robots } = fleet;
@@ -42,7 +30,6 @@ function tick() {
   for (const r of robots) {
     if (r.mode === 'gone' || r.mode === 'never' || !r.last) continue;
     const rep = r.last;
-    // Stagger: each robot reports at its own point in the second, like real radios.
     setTimeout(() => broadcast({ type: 'report', r: { ...rep, t: Date.now() } }), r.phase);
   }
   if (t % (2 * S) === 0) broadcast({ type: 'heartbeat', serverTime: Date.now() });
@@ -52,7 +39,6 @@ setTimeout(() => {
   setInterval(tick, 1000);
 }, 1000 - (Date.now() % 1000));
 
-// ---------- HTTP ----------
 const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x');
   const json = (code: number, body: unknown) => {

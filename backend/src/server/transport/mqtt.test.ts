@@ -2,7 +2,6 @@ import { EventEmitter } from 'node:events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Telemetry } from '@fleet/shared/telemetry';
 
-/** A stand-in for mqtt.js: the test emits broker events and decides how subscribe answers. */
 class FakeClient extends EventEmitter {
   subscribeError: Error | null = null;
   subscribed: Record<string, unknown> | null = null;
@@ -63,7 +62,7 @@ describe('connectMqtt', () => {
     client.emit('connect');
     expect(client.subscribed).toEqual({ 'fleet/+/+/#': { qos: 1 } });
     expect(conn.connected).toBe(true);
-    client.emit('connect'); // a reconnect while already up: no second "link up"
+    client.emit('connect');
     client.emit('offline');
     client.emit('close');
     client.emit('error', new Error('x'));

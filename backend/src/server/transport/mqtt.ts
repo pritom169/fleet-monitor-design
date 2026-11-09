@@ -1,7 +1,3 @@
-/**
- * MQTT adapter (SYSTEM_DESIGN.md §10). The only module that imports `mqtt`.
- * Parses and validates every message at the boundary; the rest of the server sees typed values only.
- */
 import mqtt from 'mqtt';
 import { ConnStatus, RobotEventMsg, Telemetry, parseTopic } from '@fleet/shared/telemetry';
 import type { TlsFiles } from '../config';
@@ -17,9 +13,7 @@ export interface MqttHandlers {
 export interface MqttOptions {
   url: string;
   clientId?: string;
-  /** Subscribe to these sites only (scale by site, §10). Empty: all sites. */
   sites?: string[];
-  /** mTLS client certificate (mqtts://). The broker maps its CN to the ACL user. */
   tls?: TlsFiles;
 }
 
@@ -58,7 +52,7 @@ export function connectMqtt(o: MqttOptions, h: MqttHandlers) {
   client.on('message', (topic, payload, packet) => {
     const receivedAt = Date.now();
     const tp = parseTopic(topic);
-    if (!tp) return; // cmd topics and anything else: not ours.
+    if (!tp) return;
     if (tp.kind === 'status') {
       const s = ConnStatus.safeParse(payload.toString());
       if (!s.success) return h.invalid('status payload', topic);

@@ -1,13 +1,3 @@
-/**
- * Bounded queue + batch writer (SYSTEM_DESIGN.md §12).
- *
- * - Fixed capacity. When full, the oldest items are dropped and counted: a slow database can create
- *   gaps in history, but it can never block ingest or grow memory until a crash.
- * - Flushes at `maxBatch` items or every `maxWaitMs`, one flush at a time.
- * - On a write error, retries the same batch with backoff (100 ms doubling to 5 s).
- *
- * Timers are injected so tests can drive it without sleeping.
- */
 export interface BatchWriterOptions<T> {
   name: string;
   capacity: number;
@@ -17,10 +7,6 @@ export interface BatchWriterOptions<T> {
   onDrop?: (n: number) => void;
   onWritten?: (n: number, seconds: number) => void;
   onError?: (err: unknown, attempt: number) => void;
-  /**
-   * Errors that retrying cannot fix (bad data, constraint, SQL error). The batch is dropped and counted,
-   * so one poison batch cannot block the queue forever. Default: every error is retried.
-   */
   isFatal?: (err: unknown) => boolean;
   onFatal?: (err: unknown, dropped: number) => void;
   setTimer?: (fn: () => void, ms: number) => unknown;
@@ -51,12 +37,10 @@ export class BatchWriter<T> {
     this.now = o.now ?? (() => performance.now());
   }
 
-  /** Items waiting, not counting the batch being written. */
   get depth(): number {
     return this.buf.length - this.head;
   }
 
-  /** False after a failed write, until the next successful one. */
   get ok(): boolean {
     return this.healthy;
   }
@@ -74,7 +58,6 @@ export class BatchWriter<T> {
     else this.kick(this.o.maxWaitMs);
   }
 
-  /** Stop accepting items and write what is left (one try per batch). */
   async close(): Promise<void> {
     this.closed = true;
     if (!this.inFlight && this.depth === 0) return;
@@ -84,7 +67,6 @@ export class BatchWriter<T> {
     });
   }
 
-  /** Schedule a flush in `ms`, or sooner if one is already scheduled earlier. A full batch pulls a pending flush forward. */
   private kick(ms: number) {
     if (this.inFlight) return;
     const at = this.now() + ms;
@@ -129,14 +111,12 @@ export class BatchWriter<T> {
       this.attempt += 1;
       this.o.onError?.(err, this.attempt);
       if (this.closed) {
-        // Shutting down: give up on this batch rather than hang.
         this.inFlight = null;
         this.o.onDrop?.(batch.length);
         if (this.depth > 0) this.kick(0);
         else this.settle();
         return;
       }
-      // Put the batch back at the front and retry later. Capacity still holds: drop oldest if needed.
       this.buf = [...batch, ...this.buf.slice(this.head)];
       this.head = 0;
       this.inFlight = null;
@@ -157,7 +137,6 @@ export class BatchWriter<T> {
     waiting.forEach((r) => r());
   }
 
-  /** Keep the array from growing forever: reclaim the consumed prefix once it is large. */
   private compact() {
     if (this.head > 4096 && this.head > this.buf.length / 2) {
       this.buf = this.buf.slice(this.head);
