@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+reference
+docs
+.git
+coverage
+e2e
+lint
+playwright-report
+test-results

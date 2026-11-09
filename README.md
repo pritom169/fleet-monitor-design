@@ -6,8 +6,41 @@ Calm when everything is fine. Loud only when something is wrong.
 ```bash
 npm install
 npm run dev          # demo: mock backend on :8787 + app on http://localhost:5173
-npm test             # unit tests (shared + client + demo backend), no Docker
+npm test             # unit tests (shared + client + ingest server), no Docker
+npm run test:int -w backend   # integration tests against real Postgres + Mosquitto (Testcontainers, needs Docker)
 npm run outage       # demo only: drop every browser connection for 20 s
+```
+
+**Production stack** (SYSTEM_DESIGN.md Part B): robots → Mosquitto → ingest server → PostgreSQL.
+
+```bash
+docker compose up --build    # everything, app on http://localhost:8787
+docker compose stop mosquitto   # see "Robot data paused"; `start` it again to recover
+
+# or from source, with only the infrastructure in Docker:
+npm run infra        # Postgres :5432 + Mosquitto :1883
+npm run seed         # migrations + robot registry
+npm run dev:prod     # ingest server :8787 + 50 MQTT robots + app on :5173
+```
+
+Server endpoints: `/healthz`, `/readyz`, `/metrics` (Prometheus), `/api/robots/:id/history`, `/api/robots/:id/telemetry?from&to`, `/api/robots/:id/events?from&to&cursor`. `ROBOTS=1000` scales the simulated fleet.
+
+**Secure stack** (SYSTEM_DESIGN.md §16): MQTT over TLS with a certificate per robot and an ACL generated from the registry, HTTPS/WSS, and a bearer token on `/metrics`.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.secure.yml up --build
+# app:  https://localhost:8443
+# The certificates come from a development CA. Trust it in your browser, or accept the warning:
+docker compose -f docker-compose.yml -f docker-compose.secure.yml cp server:/certs/ca.crt ./fleet-dev-ca.crt
+```
+
+In production set `TLS_CERT_FILE`/`TLS_KEY_FILE` and `METRICS_TOKEN`; for the broker `MQTT_URL=mqtts://…` with `MQTT_CA_FILE`, `MQTT_CERT_FILE`, `MQTT_KEY_FILE`.
+
+**Load test** (results in `docs/LOAD_TEST.md`):
+
+```bash
+docker compose up -d && docker compose stop robots
+docker compose --profile load run --rm loadtest --steps 1000x1,5000x1 --duration 60
 ```
 
 Restarting the demo backend replays the scripted incidents. After about 10 minutes the low-battery robots charge and recover, the same way a real fleet would.

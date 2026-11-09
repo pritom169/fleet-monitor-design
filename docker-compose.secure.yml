@@ -1,0 +1,62 @@
+# Production-style security on top of docker-compose.yml (SYSTEM_DESIGN.md §16):
+#   - MQTT over TLS only (8883), one client certificate per robot, broker ACL generated from the registry
+#   - HTTPS/WSS for the browser (https://localhost:8443)
+#   - /metrics behind a bearer token
+#
+#   docker compose -f docker-compose.yml -f docker-compose.secure.yml up --build
+#
+# The certificates come from a development CA in the `certs` volume. Browsers do not trust it: import
+# ca.crt (`docker compose cp pki:/certs/ca.crt .` while it exists, or see README) or accept the warning.
+# In production, use certificates from your PKI.
+
+services:
+  # Certificates for the broker, the ingest server and HTTPS, one per robot, and the ACL.
+  pki:
+    build: .
+    image: fleet-monitor:dev
+    command: ["sh", "-c", "node_modules/.bin/tsx backend/src/ops/pki.ts init /certs && node_modules/.bin/tsx backend/src/ops/pki.ts robots /certs"]
+    environment:
+      DATABASE_URL: postgres://fleet:fleet@postgres:5432/fleet
+    volumes: [certs:/certs]
+    depends_on:
+      seed: { condition: service_completed_successfully }
+    restart: "no"
+
+  mosquitto:
+    ports: !override ["8883:8883"]
+    volumes: !override
+      - ./deploy/mosquitto.secure.conf:/mosquitto/config/mosquitto.conf:ro
+      - certs:/mosquitto/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -p 8883 --cafile /mosquitto/certs/ca.crt --cert /mosquitto/certs/ingest.crt --key /mosquitto/certs/ingest.key -t '$$SYS/broker/uptime' -C 1 -W 3"]
+    depends_on:
+      pki: { condition: service_completed_successfully }
+
+  server:
+    ports: !override ["8443:8443"]
+    environment:
+      PORT: 8443
+      MQTT_URL: mqtts://mosquitto:8883
+      MQTT_CA_FILE: /certs/ca.crt
+      MQTT_CERT_FILE: /certs/ingest.crt
+      MQTT_KEY_FILE: /certs/ingest.key
+      TLS_CERT_FILE: /certs/web.crt
+      TLS_KEY_FILE: /certs/web.key
+      METRICS_TOKEN: ${METRICS_TOKEN:-dev-metrics-token}
+      # Trust the development CA (the healthcheck calls https://localhost:8443).
+      NODE_EXTRA_CA_CERTS: /certs/ca.crt
+    volumes: [certs:/certs:ro]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('https://localhost:8443/healthz').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+    depends_on:
+      pki: { condition: service_completed_successfully }
+      mosquitto: { condition: service_healthy }
+
+  robots:
+    environment:
+      MQTT_URL: mqtts://mosquitto:8883
+      MQTT_CERT_DIR: /certs
+    volumes: [certs:/certs:ro]
+
+volumes:
+  certs:

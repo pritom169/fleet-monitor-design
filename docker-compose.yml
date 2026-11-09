@@ -1,0 +1,92 @@
+# Part B: robots → Mosquitto → ingest server → Postgres, and the browser on http://localhost:8787
+#   docker compose up --build
+# Infrastructure only, for running the server and robots from source:  npm run infra
+
+x-app: &app
+  build: .
+  image: fleet-monitor:dev
+  init: true
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fleet
+      POSTGRES_PASSWORD: fleet
+      POSTGRES_DB: fleet
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleet -d fleet"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    ports: ["1883:1883"]
+    volumes: [./deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro]
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/broker/uptime' -C 1 -W 3 -i healthcheck"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # Migrations + the robot registry. Stands in for provisioning.
+  seed:
+    <<: *app
+    command: ["node_modules/.bin/tsx", "backend/src/sim/seed.ts"]
+    environment:
+      DATABASE_URL: postgres://fleet:fleet@postgres:5432/fleet
+      ROBOTS: ${ROBOTS:-50}
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  server:
+    <<: *app
+    environment:
+      DATABASE_URL: postgres://fleet:fleet@postgres:5432/fleet
+      MQTT_URL: mqtt://mosquitto:1883
+      STATIC_DIR: /app/frontend/dist
+      LOG_LEVEL: info
+    ports: ["8787:8787"]
+    depends_on:
+      seed: { condition: service_completed_successfully }
+      mosquitto: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8787/healthz >/dev/null"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  robots:
+    <<: *app
+    command: ["node_modules/.bin/tsx", "backend/src/sim/mqtt-robots.ts"]
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      ROBOTS: ${ROBOTS:-50}
+      CLOCK_SKEW_MS: 1500
+    depends_on:
+      server: { condition: service_healthy }
+    restart: unless-stopped
+
+  # Load test (SYSTEM_DESIGN.md §17), inside the Docker network so Docker Desktop's port forwarding is not measured:
+  #   docker compose stop robots && docker compose --profile load run --rm loadtest --steps 1000x1,5000x1
+  loadtest:
+    <<: *app
+    profiles: ["load"]
+    entrypoint: ["node_modules/.bin/tsx", "backend/src/load/loadtest.ts"]
+    command: []
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      SERVER: http://server:8787
+      DATABASE_URL: postgres://fleet:fleet@postgres:5432/fleet
+      OUT_DIR: /out
+    volumes: ["./docs/load:/out"]
+    depends_on:
+      server: { condition: service_healthy }
+
+volumes:
+  pgdata:
