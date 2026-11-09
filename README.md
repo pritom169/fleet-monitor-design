@@ -8,6 +8,7 @@ npm install
 npm run dev          # demo: mock backend on :8787 + app on http://localhost:5173
 npm test             # unit tests (shared + client + ingest server), no Docker
 npm run test:int -w backend   # integration tests against real Postgres + Mosquitto (Testcontainers, needs Docker)
+npm run test:e2e     # Playwright: the production build against the demo backend, in Chromium
 npm run outage       # demo only: drop every browser connection for 20 s
 ```
 
