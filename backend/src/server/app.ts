@@ -136,6 +136,7 @@ export async function createApp(config: AppConfig): Promise<App> {
       telemetry(t, receivedAt) {
         const a = domain.accept(t, receivedAt);
         m.ingestMessages.inc({ result: a.result });
+        if (a.bootReset) log.warn({ robot: t.id, ...a.bootReset }, 'boot counter went back after the robot was offline; accepted as a reset');
         if (a.result === 'accepted' || a.result === 'out_of_order') m.ingestLag.observe(Math.max(0, receivedAt - t.robotTs) / 1000);
         if (a.report) {
           fanout.report(a.report);

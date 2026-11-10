@@ -3,6 +3,7 @@ import type { RobotInfo } from '@fleet/shared/protocol';
 import type { Telemetry } from '@fleet/shared/telemetry';
 import { FleetDomain, SETTLE_MS, STALL_MS, transitionEvent, type RobotState } from './fleet';
 import { SeqWindow, WINDOW } from './seqWindow';
+import { OFFLINE_AFTER_MS } from '@fleet/shared/status';
 
 const T = 1_800_000_000_000;
 const info = (id: string, siteKey = 'hh'): RobotInfo => ({ id, model: 'm', modelFull: 'm', siteKey, firmware: '', network: '', registeredAt: 0, lastCharge: null });
@@ -86,6 +87,35 @@ describe('FleetDomain.accept', () => {
     d.accept(tel(500, { boot: 1 }), T);
     expect(d.accept(tel(0, { boot: 2, battery: 99 }), T + 1000).result).toBe('accepted');
     expect(d.robots.get('R-001')!.report!.battery).toBe(99);
+  });
+});
+
+describe('boot counter going back (re-flash, NVRAM reset)', () => {
+  it('ignores an older boot while the robot is still reporting on its newer one', () => {
+    const d = liveDomain();
+    d.accept(tel(10, { boot: 7 }), T);
+    const late = d.accept(tel(3, { boot: 6, battery: 10 }), T + 2000);
+    expect(late.result).toBe('out_of_order');
+    expect(late.bootReset).toBeUndefined();
+    expect(d.robots.get('R-001')!.report!.battery).toBe(80);
+  });
+
+  it('accepts the lower boot as a reset once the robot has been offline, so it does not stay offline forever', () => {
+    const d = liveDomain();
+    d.accept(tel(10, { boot: 7 }), T);
+    d.tick(T + OFFLINE_AFTER_MS + 1);
+    expect(d.robots.get('R-001')!.status).toBe('offline');
+    const back = d.accept(tel(0, { boot: 1, battery: 64 }), T + OFFLINE_AFTER_MS + 2000);
+    expect(back.result).toBe('accepted');
+    expect(back.bootReset).toEqual({ from: 7, to: 1 });
+    expect(back.events.map((e) => e.code)).toEqual(['back_online']);
+    expect(d.accept(tel(1, { boot: 1 }), T + OFFLINE_AFTER_MS + 3000).result).toBe('accepted');
+  });
+
+  it('applies the same rule to state loaded after a server restart', () => {
+    const d = liveDomain();
+    d.load([{ robotId: 'R-001', report: { id: 'R-001', t: T - 60_000, battery: 50, x: 0, y: 0, state: 'ok', task: 'Idle', taskKind: 'idle', since: 0 }, boot: 9, seq: 400, status: 'offline' }]);
+    expect(d.accept(tel(0, { boot: 1 }), T).result).toBe('accepted');
   });
 });
 
