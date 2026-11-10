@@ -9,8 +9,6 @@ test('R-017: a low robot says what it is doing about it', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Battery trend' }).locator('svg').first()).toBeVisible();
   await expect(page.getByRole('region', { name: 'Activity' }).getByRole('listitem').first()).toBeVisible();
 
-  // The plan comes from `taskKind` and the bay from the `bay_assigned` event, never from display text.
-  // The scripted robot is on its way to bay 3 for the first minutes of a run.
   if (/on its way to charge/.test((await heading.textContent()) ?? '')) {
     await expect(page.getByRole('region', { name: 'Current task' })).toContainText('Charging bay 3');
   }

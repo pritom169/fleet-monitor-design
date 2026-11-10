@@ -8,7 +8,6 @@ import css from './AttentionCard.module.css';
 
 const RISE_MS = 4000;
 
-/** One card per robot that needs you. Anatomy: capsule, ID, the reason, context, one action. */
 export function AttentionCard({ robot: r, now, hovered, stale }: { robot: ReportedRobot; now: number; hovered: boolean; stale: boolean }) {
   const navigate = useNavigate();
   const rep = r.report;

@@ -1,7 +1,3 @@
-/**
- * The app's wiring, with the database, broker and HTTP server replaced at their module boundaries and a
- * fake clock. The real ones are covered end to end by pipeline.int.test.ts and security.int.test.ts.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RobotInfo, ServerMessage } from '@fleet/shared/protocol';
 import type { Telemetry } from '@fleet/shared/telemetry';
@@ -37,7 +33,6 @@ function robot(id: string, siteKey = 'hh'): RobotInfo {
   return { id, siteKey, model: 'm', modelFull: 'm', firmware: 'f', network: 'n', registeredAt: 0, lastCharge: null };
 }
 
-// `function`, not an arrow: app.ts calls `new Repo(...)`, and Vitest ≥ 4 only lets a function-backed mock construct.
 vi.mock('./repo/pg', () => ({ Repo: vi.fn(function () { return h.repo; }) }));
 vi.mock('./transport/mqtt', () => ({
   connectMqtt: (opts: unknown, handlers: MqttHandlers) => {
@@ -61,7 +56,7 @@ vi.mock('./log', async (orig) => ({ ...(await orig<typeof import('./log')>()), l
 const { createApp } = await import('./app');
 const m = await import('./metrics');
 
-const T0 = 1_800_000_000_000; // a whole second, and an even one
+const T0 = 1_800_000_000_000;
 const cfg = (o: Partial<AppConfig> = {}): AppConfig => ({
   port: 0, databaseUrl: 'postgres://x', mqttUrl: 'mqtt://x', sites: [], migrate: true, registryRefreshMs: 15_000,
   queue: { telemetryCapacity: 100, batchSize: 1000, batchWaitMs: 100 }, ...o,
@@ -72,7 +67,6 @@ const tel = (id: string, seq: number, extra: Partial<Telemetry> = {}): Telemetry
 const counter = async (c: { get(): Promise<{ values: { labels: Record<string, unknown>; value: number }[] }> }, labels: Record<string, string> = {}) =>
   (await c.get()).values.find((v) => Object.entries(labels).every(([k, x]) => v.labels[k] === x))?.value ?? 0;
 
-/** A browser socket on the app's fan-out. */
 function browser() {
   const got: ServerMessage[] = [];
   h.http.fanout.add({ send: (d) => void got.push(JSON.parse(d)), bufferedAmount: 0, terminate: () => {} }, { type: 'hello', serverTime: 0, robots: [], reports: [] });
@@ -86,7 +80,6 @@ async function start(o: Partial<AppConfig> = {}) {
   apps.push(app);
   return app;
 }
-/** Bring the broker link up and past the settle window, with robots reporting. */
 async function live(app: Awaited<ReturnType<typeof start>>) {
   h.mqttUp = true;
   h.mqtt.link(true);
@@ -107,7 +100,7 @@ beforeEach(() => {
 });
 afterEach(async () => {
   const stopped = Promise.all(apps.map((a) => a.stop()));
-  await vi.advanceTimersByTimeAsync(6000); // stop() waits at most 5 s for the queues
+  await vi.advanceTimersByTimeAsync(6000);
   await stopped;
   vi.useRealTimers();
 });
@@ -147,14 +140,13 @@ describe('ingest', () => {
     await live(app);
     const got = browser();
     h.mqtt.telemetry(tel('R-002', 1, { battery: 15, robotTs: Date.now() - 200 }), Date.now());
-    h.mqtt.telemetry(tel('R-002', 0), Date.now()); // late: history only
-    h.mqtt.telemetry(tel('R-002', 1), Date.now()); // duplicate
-    h.mqtt.telemetry(tel('R-404', 0), Date.now()); // unknown
+    h.mqtt.telemetry(tel('R-002', 0), Date.now());
+    h.mqtt.telemetry(tel('R-002', 1), Date.now());
+    h.mqtt.telemetry(tel('R-404', 0), Date.now());
     expect(got.map((g) => g.type)).toEqual(['report', 'event']);
     expect(got[1].type === 'event' && got[1].e.text).toBe('First report');
-    await vi.advanceTimersByTimeAsync(1100); // the next tick, plus its zero-delay state write
+    await vi.advanceTimersByTimeAsync(1100);
     expect(h.repo.insertTelemetry).toHaveBeenLastCalledWith(expect.arrayContaining([expect.objectContaining({ robotId: 'R-002', seq: 0 }), expect.objectContaining({ robotId: 'R-002', seq: 1 })]));
-    // The copy sent live and the copy stored for history carry the same ID, so the client can dedupe them.
     const sent = got[1].type === 'event' ? got[1].e : null;
     expect(sent?.eventId).toEqual(expect.any(String));
     expect(h.repo.insertEvents).toHaveBeenCalledWith([expect.objectContaining({ id: 'R-002', eventId: sent?.eventId, code: 'first_report' })]);
@@ -200,7 +192,7 @@ describe('ingest', () => {
     h.mqtt.link(false);
     expect(got).toEqual([{ type: 'ingest', ingest: { state: 'paused', frozenAt: expect.any(Number) } }]);
     expect(await counter(m.mqttConnected)).toBe(0);
-    h.mqtt.link(false); // no change: nothing sent
+    h.mqtt.link(false);
     expect(got.length).toBe(1);
     await live(app);
     expect(got.filter((g) => g.type === 'ingest').at(-1)).toEqual({ type: 'ingest', ingest: { state: 'live', frozenAt: null } });
@@ -229,7 +221,7 @@ describe('persistence', () => {
     h.mqtt.telemetry(tel('R-001', 200), Date.now());
     await vi.advanceTimersByTimeAsync(200);
     const tries = h.repo.insertTelemetry.mock.calls.filter(([rows]) => rows.some((r) => r.seq === 200));
-    expect(tries.length).toBe(2); // failed once, then succeeded after the partitions were made
+    expect(tries.length).toBe(2);
     expect(h.log.warn).toHaveBeenCalledWith({ created: ['telemetry_20270115'], dropped: [] }, 'insert hit a missing partition; partitions created');
   });
 
@@ -240,7 +232,7 @@ describe('persistence', () => {
     h.repo.upsertStates.mockRejectedValueOnce(new Error('down'));
     await live(app);
     h.mqtt.telemetry(tel('R-002', 0), Date.now());
-    h.mqtt.telemetry(tel('R-002', 1), Date.now()); // the queue holds one: the oldest is dropped
+    h.mqtt.telemetry(tel('R-002', 1), Date.now());
     await vi.advanceTimersByTimeAsync(500);
     expect(h.http.dbOk()).toBe(false);
     expect(h.http.ready()).toEqual({ ok: false, checks: { database: false, broker: true, state: true } });
@@ -285,7 +277,7 @@ describe('registry refresh', () => {
     expect(got.filter((g) => g.type === 'hello').length).toBe(1);
     expect([...app.domain.robots.keys()]).toEqual(['R-001', 'R-003']);
     h.repo.loadRegistry.mockRejectedValue(new Error('down'));
-    await vi.advanceTimersByTimeAsync(1000); // ignored: the database check reports it
+    await vi.advanceTimersByTimeAsync(1000);
   });
 });
 

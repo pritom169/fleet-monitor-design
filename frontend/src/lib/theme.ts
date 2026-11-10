@@ -10,7 +10,6 @@ function effective(): Theme {
   return mq().matches ? 'dark' : 'light';
 }
 
-/** Follows the system setting until the user picks a theme; the pick is remembered. */
 export function useTheme(): [Theme, () => void] {
   const [theme, setTheme] = useState<Theme>(effective);
   useEffect(() => {
@@ -24,9 +23,7 @@ export function useTheme(): [Theme, () => void] {
     document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem(KEY, next);
-    } catch {
-      /* private mode: the choice lasts for this page only */
-    }
+    } catch {}
     setTheme(next);
   };
   return [theme, toggle];

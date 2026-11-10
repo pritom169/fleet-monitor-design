@@ -1,4 +1,3 @@
-/** Prometheus metrics (SYSTEM_DESIGN.md §16). */
 import client from 'prom-client';
 
 export const registry = new client.Registry();

@@ -17,7 +17,6 @@ import css from './RobotDetail.module.css';
 
 const fmt1 = (v: number) => (Math.round(Math.abs(v) * 10) / 10).toFixed(1);
 
-/** What a low robot is doing about it. Branches on `taskKind`; `task` is display text and may change wording. */
 const LOW_PLAN: Partial<Record<TaskKind, string>> = {
   charging: 'It is charging.',
   returning_to_dock: 'It is on its way to charge.',

@@ -16,7 +16,6 @@ export const attention = (n: Counts) => n.low + n.error + n.offline;
 
 export const siteName = (key: string) => SITE_BY_KEY[key]?.name ?? key;
 
-/** Search by ID, model, task, fault or site. Case-insensitive, substring. */
 export function matches(r: Robot, q: string): boolean {
   if (!q) return true;
   const s = q.trim().toLowerCase();
@@ -26,7 +25,6 @@ export function matches(r: Robot, q: string): boolean {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** The headline answers "Which robots need my attention right now?" first. Ink = the fact, grey = context. */
 export function overviewHeadline(o: {
   ready: boolean; connection: string; ingest?: Ingest; attempt: number; lastMessageAt: number | null;
   site: string; n: Counts; sitesWithRobots: number;
@@ -49,7 +47,6 @@ export function overviewHeadline(o: {
   return [`${plural(att, 'robot needs', 'robots need')} your attention.`, `${n.ok} of ${n.all} are running normally ${where}.`];
 }
 
-/** The one-line reason a robot needs attention, as used on cards and in lists. */
 export function reason(r: Robot, now: number): string {
   switch (r.status) {
     case 'low': return `${r.report.battery}% battery`;
@@ -64,7 +61,6 @@ export function aria(r: Robot, now: number): string {
   return `${r.id}, ${STATUS_LABEL[r.status]}, ${r.status === 'offline' ? reason(r, now) : r.report?.fault ?? r.report?.task ?? ''}`;
 }
 
-/** Low, error or offline. Each of these has a report, so the result is typed as a reported robot. */
 export const needsAttention = (r: Robot): r is ReportedRobot => isProblem(r.status);
 
 export const sitesWithRobots = (rs: Robot[]) => new Set(rs.map((r) => r.info.siteKey)).size;

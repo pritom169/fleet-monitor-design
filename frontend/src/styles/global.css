@@ -31,7 +31,6 @@ ol, ul { padding: 0; list-style: none; }
 .wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
 .tile { background: var(--tile); border-radius: var(--r-tile); }
 
-/* The one link style: blue, with a chevron. */
 .more {
   display: inline-flex; align-items: center; gap: 2px;
   font-size: 14px; color: var(--accent); text-decoration: none;
@@ -39,10 +38,8 @@ ol, ul { padding: 0; list-style: none; }
 }
 .more:hover { text-decoration: underline; }
 
-/* Section label inside a tile. */
 .k { display: block; font-size: 14px; font-weight: 600; color: var(--ink2); }
 
-/* Headline: ink sentence is the fact, grey sentence is the context. */
 .headline { margin: 0; font-weight: 600; text-wrap: balance; }
 .headline .ctx { color: var(--ink3); }
 

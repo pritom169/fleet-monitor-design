@@ -30,7 +30,6 @@ describe('payload schemas', () => {
     const ev = { id: 'R-1', robotTs: 1, kind: 'info', text: 'Charging bay 3 assigned' };
     expect(RobotEventMsg.parse({ ...ev, code: 'bay_assigned', bay: 3 })).toMatchObject({ code: 'bay_assigned', bay: 3 });
     expect(RobotEventMsg.parse(ev).code).toBe('other');
-    // A robot cannot claim a server-derived event.
     expect(RobotEventMsg.parse({ ...ev, code: 'went_offline' }).code).toBe('other');
   });
 });

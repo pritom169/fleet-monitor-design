@@ -10,7 +10,6 @@ const DEFS: [Filter, string][] = [
   ['never', 'Never reported'],
 ];
 
-/** A count turns amber or red only when it is above zero. Offline stays ink: it is unknown, not broken. */
 const numColor = (key: Filter, count: number) => {
   if (!count) return 'var(--ink2)';
   if (key === 'low') return 'var(--amb-text)';

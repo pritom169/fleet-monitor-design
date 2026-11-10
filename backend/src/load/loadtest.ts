@@ -1,16 +1,3 @@
-/**
- * Load test for the ingest server (SYSTEM_DESIGN.md §17): msg/s, p99 ingest lag, browser fan-out delay,
- * queue depth, drops, CPU and memory, per step.
- *
- *   docker compose --profile load run --rm loadtest [--steps 1000x1,5000x1,5000x4] [--duration 60] [--warmup 15]
- *
- * Each step is <robots>x<Hz>. Robots are real MQTT connections (one per robot, like the fleet), spread over
- * worker processes so the generator is not the bottleneck. They are registered as L-00001… and removed again
- * at the end. Server-side numbers come from its /metrics; fan-out delay is measured by a WebSocket client
- * (receipt time − report.t, both on the same host clock).
- *
- * Env: MQTT_URL, SERVER (http://localhost:8787), DATABASE_URL, METRICS_TOKEN, OUT_DIR (write results JSON there).
- */
 import { fork, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -24,10 +11,6 @@ const SITES = ['hh', 'le', 'mu'];
 const env = process.env;
 const MQTT_URL = env.MQTT_URL ?? 'mqtt://localhost:1883';
 
-// =====================================================================================================
-// Worker: owns a slice of the robots, publishes telemetry, reports counts to the parent once a second.
-// =====================================================================================================
-
 interface WorkerJob { ids: string[]; hz: number; url: string }
 interface WorkerTick { connected: number; published: number; errors: number }
 
@@ -39,7 +22,6 @@ async function worker() {
   const timers: ReturnType<typeof setInterval>[] = [];
   const period = 1000 / job.hz;
 
-  // Connect in small batches: thousands of simultaneous TCP handshakes would measure the SYN queue.
   for (let i = 0; i < job.ids.length; i += 50) {
     await Promise.all(job.ids.slice(i, i + 50).map((id) => new Promise<void>((resolve) => {
       const k = Number(id.slice(2));
@@ -63,7 +45,6 @@ async function worker() {
           };
           c.publish(`fleet/${siteId}/${id}/telemetry`, JSON.stringify(t), { qos: 0 }, (e) => (e ? stat.errors++ : stat.published++));
         };
-        // Each robot reports at its own offset inside the period, like real radios.
         setTimeout(() => {
           send();
           timers.push(setInterval(send, period));
@@ -79,14 +60,10 @@ async function worker() {
     timers.forEach(clearInterval);
     let open = clients.length;
     if (!open) process.exit(0);
-    for (const c of clients) c.end(false, {}, () => --open === 0 && process.exit(0)); // clean: no last will
+    for (const c of clients) c.end(false, {}, () => --open === 0 && process.exit(0));
     setTimeout(() => process.exit(0), 5000);
   });
 }
-
-// =====================================================================================================
-// Orchestrator
-// =====================================================================================================
 
 type Metrics = Map<string, number>;
 
@@ -104,13 +81,11 @@ async function scrape(server: string): Promise<Metrics> {
 const get = (m: Metrics, key: string) => m.get(key) ?? 0;
 const delta = (a: Metrics, b: Metrics, key: string) => get(b, key) - get(a, key);
 
-/** Quantile from the difference of two cumulative Prometheus histograms, interpolated inside the bucket. */
 function histQuantile(a: Metrics, b: Metrics, name: string, q: number, labels = ''): number | null {
   const buckets: [number, number][] = [];
   for (const key of b.keys()) {
     const m = key.match(new RegExp(`^${name}_bucket\\{(.*)\\}$`));
     if (!m) continue;
-    // prom-client puts `le` first; match the other labels wherever they are.
     const le = /le="([^"]+)"/.exec(m[1])?.[1];
     if (!le || (labels && !m[1].split(',').includes(labels))) continue;
     buckets.push([le === '+Inf' ? Infinity : Number(le), delta(a, b, key)]);
@@ -177,7 +152,6 @@ async function runStep(o: { robots: number; hz: number; warmup: number; duration
   log(`  ${sum().connected}/${o.robots} connected in ${((Date.now() - t0) / 1000).toFixed(1)} s over ${n} workers; warming up ${o.warmup} s`);
   await sleep(o.warmup * 1000);
 
-  // Browser probe.
   const delays: number[] = [];
   let wsReports = 0;
   const ws = new WebSocket(`${o.server.replace(/^http/, 'ws')}/ws`);
@@ -278,10 +252,9 @@ async function main() {
       const r = await runStep({ robots, hz, warmup, duration, server, workers });
       results.push(r);
       log(`  published ${r.published}/s, accepted ${r.accepted}/s, ingest lag p99 ${r.ingestLagP99Ms} ms, fan-out p99 ${r.fanoutP99Ms} ms, queue max ${r.queueMax}, dropped ${r.dropped}, CPU ${r.serverCpuPct}%`);
-      await sleep(12_000); // let the stopped robots go offline before the next step
+      await sleep(12_000);
     }
   } finally {
-    // Remove the load robots from the registry again (state first: robot_state references robots).
     await repo.pool.query(`DELETE FROM robot_state WHERE robot_id LIKE 'L-%'`);
     await repo.pool.query(`DELETE FROM robots WHERE id LIKE 'L-%'`);
     const size = (await repo.pool.query(`

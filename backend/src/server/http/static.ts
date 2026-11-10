@@ -13,10 +13,6 @@ const MIME: Record<string, string> = {
   '.woff2': 'font/woff2',
 };
 
-/**
- * A Content-Security-Policy for the built app shell. Inline scripts (the pre-paint theme snippet) are
- * allowed by hash, computed from the index.html actually being served.
- */
 export function shellCsp(dir: string): string | undefined {
   const index = path.join(path.resolve(dir), 'index.html');
   if (!fs.existsSync(index)) return undefined;
@@ -38,7 +34,6 @@ export function shellCsp(dir: string): string | undefined {
   ].join('; ');
 }
 
-/** Serve the built client from `dir`, with index.html as the fallback for client-side routes. */
 export function serveStatic(dir: string, pathname: string, res: ServerResponse, csp?: string): boolean {
   const root = path.resolve(dir);
   let file = path.join(root, decodeURIComponent(pathname));

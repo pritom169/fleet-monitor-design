@@ -53,7 +53,7 @@ describe('startFleet', () => {
     const { startFleet } = await boot();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(FakeSocket.all.map((s) => s.url)).toEqual(['ws://fleet.test/ws']);
-    startFleet(); // only once
+    startFleet();
     await vi.advanceTimersByTimeAsync(0);
     expect(FakeSocket.all.length).toBe(1);
   });
@@ -72,7 +72,7 @@ describe('messages', () => {
     expect(fleet.get()).toMatchObject({ ready: true, connection: 'live' });
     s.send({ type: 'report', r: rep('R-001', { t: T + 1000, battery: 70 }) });
     s.send({ type: 'report', r: rep('R-002', { t: T + 1000 }) });
-    expect(fleet.get().robots['R-001'].report!.battery).toBe(80); // not yet: batched
+    expect(fleet.get().robots['R-001'].report!.battery).toBe(80);
     await vi.advanceTimersByTimeAsync(250);
     expect(fleet.get().robots['R-001'].report!.battery).toBe(70);
     expect(fleet.get().robots['R-002'].status).toBe('ok');
@@ -81,13 +81,13 @@ describe('messages', () => {
     expect(fleet.get().liveEvents[0].text).toBe('Wi-Fi weak');
 
     s.send({ type: 'report', r: rep('R-001', { t: T + 2000, battery: 60 }) });
-    s.send({ type: 'ingest', ingest: { state: 'paused', frozenAt: T + 2000 } }); // flushes pending reports first
+    s.send({ type: 'ingest', ingest: { state: 'paused', frozenAt: T + 2000 } });
     expect(fleet.get().robots['R-001'].report!.battery).toBe(60);
     expect(fleet.get().ingest.state).toBe('paused');
 
     s.send({ type: 'heartbeat', serverTime: T + 9000 });
     expect(fleet.get().lastMessageAt).toBe(T + 9000);
-    s.onmessage?.({ data: JSON.stringify({ type: 'future-thing' }) }); // ignored
+    s.onmessage?.({ data: JSON.stringify({ type: 'future-thing' }) });
   });
 
   it('drops reports buffered before a fresh hello', async () => {
@@ -101,7 +101,6 @@ describe('messages', () => {
 });
 
 describe('validation', () => {
-  /** A fresh module, so the warn-once memory does not leak between tests. */
   async function parser() {
     vi.resetModules();
     return (await import('./socket')).parseServerMessage;
@@ -117,7 +116,7 @@ describe('validation', () => {
     const parse = await parser();
     const { taskKind: _, ...noKind } = rep('R-001');
     const m = parse(raw({ type: 'report', r: { ...noKind, extra: 'from a newer server' } }));
-    expect(m).toEqual({ type: 'report', r: { ...noKind, taskKind: 'other' } }); // defaults applied, unknown keys stripped
+    expect(m).toEqual({ type: 'report', r: { ...noKind, taskKind: 'other' } });
     expect(warn).not.toHaveBeenCalled();
   });
 
@@ -136,7 +135,7 @@ describe('validation', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0][0]).toMatch(/"report".*r\.battery/);
 
-    expect(parse(raw({ type: 'heartbeat' }))).toBeNull(); // another type gets its own warning
+    expect(parse(raw({ type: 'heartbeat' }))).toBeNull();
     expect(warn).toHaveBeenCalledTimes(2);
     expect(warn.mock.calls[1][0]).toMatch(/"heartbeat".*serverTime/);
   });
@@ -172,7 +171,7 @@ describe('reconnect', () => {
     last().send({ type: 'report', r: rep('R-001', { t: T + 100, battery: 50 }) });
     last().onclose?.();
     expect(fleet.get().connection).toBe('lost');
-    expect(fleet.get().robots['R-001'].report!.battery).toBe(50); // pending reports are kept
+    expect(fleet.get().robots['R-001'].report!.battery).toBe(50);
     expect(fleet.get()).toMatchObject({ attempt: 1, nextRetryAt: T + 1000 });
     const delays: number[] = [];
     for (let i = 0; i < 5; i++) {
@@ -181,7 +180,7 @@ describe('reconnect', () => {
       delays.push(at);
       await vi.advanceTimersByTimeAsync(at);
       expect(FakeSocket.all.length).toBe(before + 1);
-      last().onerror?.(); // fails again
+      last().onerror?.();
     }
     expect(delays).toEqual([1000, 2000, 5000, 10000, 10000]);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -196,7 +195,7 @@ describe('reconnect', () => {
     s.send(hello());
     await vi.advanceTimersByTimeAsync(5000);
     expect(fleet.get().connection).toBe('live');
-    s.throwOnClose = true; // closing an already dead socket must not break the reconnect
+    s.throwOnClose = true;
     await vi.advanceTimersByTimeAsync(1000);
     expect(s.closed).toBe(true);
     expect(fleet.get().connection).toBe('lost');
@@ -212,7 +211,7 @@ describe('reconnect', () => {
     retryNow();
     await vi.advanceTimersByTimeAsync(0);
     expect(FakeSocket.all.length).toBe(2);
-    await vi.advanceTimersByTimeAsync(1000); // the scheduled retry was cancelled by the open socket
+    await vi.advanceTimersByTimeAsync(1000);
     expect(FakeSocket.all.length).toBe(2);
   });
 });

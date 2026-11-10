@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
 
-// Unit tests: fast, no Docker. Integration tests (*.int.test.ts) run with `npm run test:int`.
 export default defineConfig({
   test: {
     name: 'backend',

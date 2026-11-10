@@ -5,13 +5,11 @@
 }
 .lg { height: 28px; padding: 0 12px 0 10px; border-radius: 14px; gap: 6px; font-size: 13px; }
 
-/* OK is not a capsule: healthy stays quiet. */
 .ok { padding: 0; gap: 7px; height: auto; color: var(--ink2); font-weight: 400; font-size: 13px; }
 .lg.ok { padding: 0 12px 0 10px; height: 28px; background: var(--fill); font-weight: 600; }
 
 .low { background: var(--amb-tint); color: var(--amb-text); }
 .error { background: var(--err-tint); color: var(--err-text); }
 .solid.error { background: var(--err-solid); color: var(--err-solid-ink); }
-/* Offline means "we do not know": an outline, never a fill colour. */
 .offline { background: var(--off-tint); color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off); }
 .never { color: var(--off-text); box-shadow: inset 0 0 0 1px var(--off); }

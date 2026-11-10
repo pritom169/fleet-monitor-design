@@ -8,7 +8,6 @@ import { useTheme } from '../lib/theme';
 import { Logo, MoonIcon, SpinnerIcon, SunIcon } from './Icons';
 import css from './TopBar.module.css';
 
-/** The frosted bar. Pages put their own controls (site picker, search) in `children`. */
 export function TopBar({ children }: { children?: ReactNode }) {
   const [theme, toggle] = useTheme();
   return (
@@ -76,7 +75,6 @@ export function ConnectionIndicatorView({ connection, paused, now }: { connectio
   );
 }
 
-/** Non-blocking. The page underneath stays usable; values stay visible but are marked stale. */
 export function ConnectionBanner() {
   const connection = useFleet((s) => s.connection);
   const attempt = useFleet((s) => s.attempt);
@@ -113,10 +111,6 @@ export function BannerView({ connection, attempt, now, last, retryInMs, onRetry,
   );
 }
 
-/**
- * Our link to the server is fine, but the server lost its link to the robots (the MQTT broker).
- * Same banner, same rules: statuses frozen, "last seen" keeps counting. Nothing to retry from here.
- */
 export function IngestBannerView({ now, frozenAt, inline }: { now: number; frozenAt: number | null; inline?: boolean }) {
   return (
     <div className={`${css.banner} ${inline ? css.inline : ''}`}>

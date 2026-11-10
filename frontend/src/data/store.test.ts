@@ -13,12 +13,12 @@ describe('reducers', () => {
     expect(applyReports(s, [])).toBe(s);
     const a = applyReports(s, [rep('R-999'), rep('R-001', { t: T + 1000, battery: 79 })]);
     expect(a.robots['R-999']).toBeUndefined();
-    expect(a.robots['R-001'].ghosts).toBe(s.robots['R-001'].ghosts); // same position
+    expect(a.robots['R-001'].ghosts).toBe(s.robots['R-001'].ghosts);
     let b = a;
     for (let i = 1; i <= 8; i++) b = applyReports(b, [rep('R-001', { t: T + 1000 + i, x: 10 + i })]);
     expect(b.robots['R-001'].ghosts.length).toBe(6);
     expect(b.robots['R-001'].ghosts.at(-1)).toEqual([18, 6.1]);
-    expect(applyReports(s, [rep('R-005', { t: T - 5 })]).lastMessageAt).toBe(T); // an older report does not move the clock back
+    expect(applyReports(s, [rep('R-005', { t: T - 5 })]).lastMessageAt).toBe(T);
   });
 
   it('keeps the previous status, latch and trail across a reconnect hello, so changes are highlighted', () => {
@@ -26,7 +26,7 @@ describe('reducers', () => {
     const again = applyHello(s, { serverTime: T + 5000, robots: [info('R-001'), info('R-002'), info('R-006')], reports: [rep('R-001', { t: T + 5000, x: 30 }), rep('R-002', { t: T + 5000, battery: 21 })] }, T + 5000);
     expect(again.ids).toEqual(['R-001', 'R-002', 'R-006']);
     expect(again.robots['R-001'].ghosts).toEqual([[10, 6.1], [30, 6.1]]);
-    expect(again.robots['R-002'].status).toBe('low'); // 21 % is still low with the latch
+    expect(again.robots['R-002'].status).toBe('low');
     expect(again.robots['R-006'].status).toBe('never');
     expect(again.robots['R-006'].ghosts).toEqual([]);
   });
@@ -106,7 +106,7 @@ describe('useFleet', () => {
     });
     const first = result.current;
     expect(first.length).toBe(7);
-    act(() => actions.heartbeat(T + 1)); // ids and statuses unchanged: same array kept
+    act(() => actions.heartbeat(T + 1));
     expect(result.current).toBe(first);
     act(() => actions.reports([rep('R-001', { t: T + 2, battery: 10 })]));
     expect(result.current).not.toBe(first);

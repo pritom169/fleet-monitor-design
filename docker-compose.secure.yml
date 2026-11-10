@@ -1,16 +1,4 @@
-# Production-style security on top of docker-compose.yml (SYSTEM_DESIGN.md §16):
-#   - MQTT over TLS only (8883), one client certificate per robot, broker ACL generated from the registry
-#   - HTTPS/WSS for the browser (https://localhost:8443)
-#   - /metrics behind a bearer token
-#
-#   docker compose -f docker-compose.yml -f docker-compose.secure.yml up --build
-#
-# The certificates come from a development CA in the `certs` volume. Browsers do not trust it: import
-# ca.crt (`docker compose cp pki:/certs/ca.crt .` while it exists, or see README) or accept the warning.
-# In production, use certificates from your PKI.
-
 services:
-  # Certificates for the broker, the ingest server and HTTPS, one per robot, and the ACL.
   pki:
     build: .
     image: fleet-monitor:dev
@@ -43,7 +31,6 @@ services:
       TLS_CERT_FILE: /certs/web.crt
       TLS_KEY_FILE: /certs/web.key
       METRICS_TOKEN: ${METRICS_TOKEN:-dev-metrics-token}
-      # Trust the development CA (the healthcheck calls https://localhost:8443).
       NODE_EXTRA_CA_CERTS: /certs/ca.crt
     volumes: [certs:/certs:ro]
     healthcheck:

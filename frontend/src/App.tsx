@@ -32,11 +32,9 @@ function NotFound() {
   );
 }
 
-/** Exported so tests can mount the same tree in a memory router. */
 export const routes: RouteObject[] = [
   {
     element: <Shell />,
-    // A page that throws shows the crash screen, not a blank page (components/ErrorScreen.tsx).
     errorElement: <RouteError />,
     children: [
       { path: '/', element: <Overview /> },

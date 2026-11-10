@@ -1,7 +1,3 @@
-/**
- * Integration-test harness: real Postgres and Mosquitto in containers (Testcontainers), the app started
- * in process, and small HTTP / WebSocket / MQTT helpers that can trust a test CA.
- */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -23,7 +19,6 @@ export function startPostgres(): Promise<StartedPostgreSqlContainer> {
   return new PostgreSqlContainer('postgres:16-alpine').withDatabase('fleet').withUsername('fleet').withPassword('fleet').start();
 }
 
-/** Plain broker on 1883, or a TLS broker (8883) with the given conf and a directory of certs + ACL. */
 export async function startMosquitto(o: { conf?: string; certsDir?: string } = {}): Promise<{ c: StartedTestContainer; url: string }> {
   const tls = !!o.certsDir;
   const port = tls ? 8883 : 1883;
@@ -32,7 +27,6 @@ export async function startMosquitto(o: { conf?: string; certsDir?: string } = {
     .withCopyContentToContainer([
       { content: o.conf ?? 'listener 1883\nallow_anonymous true\npersistence false\nlog_dest stdout\n', target: '/mosquitto/config/mosquitto.conf' },
     ])
-    // The secure config logs no "running" banner (information level is off), so wait for the port there.
     .withWaitStrategy(o.certsDir ? Wait.forListeningPorts() : Wait.forLogMessage(/mosquitto version .* running/));
   if (o.certsDir) {
     const files = ['ca.crt', 'broker.crt', 'broker.key', 'acl'].map((f) => ({ source: path.join(o.certsDir!, f), target: `/mosquitto/certs/${f}`, mode: 0o644 }));
@@ -42,7 +36,6 @@ export async function startMosquitto(o: { conf?: string; certsDir?: string } = {
   return { c, url: `${tls ? 'mqtts' : 'mqtt'}://localhost:${c.getMappedPort(port)}` };
 }
 
-/** Freeze a container's processes (the database "hangs") without closing its sockets. */
 export const pause = (c: StartedTestContainer) => execFileSync('docker', ['pause', c.getId()]);
 export const unpause = (c: StartedTestContainer) => execFileSync('docker', ['unpause', c.getId()]);
 
@@ -93,8 +86,6 @@ export function freePort(): Promise<number> {
   });
 }
 
-// ---------- MQTT ----------
-
 export function connect(url: string, opts: IClientOptions = {}): Promise<MqttClient> {
   return new Promise((resolve, reject) => {
     const c = mqtt.connect(url, { reconnectPeriod: 0, connectTimeout: 5000, ...opts });
@@ -110,8 +101,6 @@ export function connect(url: string, opts: IClientOptions = {}): Promise<MqttCli
 export const publishTel = (c: MqttClient, t: Telemetry) =>
   new Promise<void>((resolve, reject) => c.publish(`fleet/${t.siteId}/${t.id}/telemetry`, JSON.stringify(t), { qos: 0 }, (e) => (e ? reject(e) : resolve())));
 
-// ---------- HTTP ----------
-
 export interface Res {
   status: number;
   headers: http.IncomingHttpHeaders;
@@ -119,7 +108,6 @@ export interface Res {
   json<T = any>(): T;
 }
 
-/** fetch-like, but never follows redirects and can trust a custom CA. */
 export function request(url: string, o: { method?: string; headers?: Record<string, string>; body?: string; ca?: Buffer } = {}): Promise<Res> {
   const u = new URL(url);
   const lib = u.protocol === 'https:' ? https : http;
@@ -136,23 +124,13 @@ export function request(url: string, o: { method?: string; headers?: Record<stri
   });
 }
 
-// ---------- WebSocket ----------
-
 export interface Socket {
   ws: WebSocket;
-  /** Every frame so far, as the browser client would see it after validation. */
   messages: (ServerMessage & { at: number })[];
-  /** Rejects as soon as the server sends a frame that breaks the protocol. */
   next(pred: (m: ServerMessage) => boolean, timeoutMs?: number): Promise<ServerMessage & { at: number }>;
-  /** Throws if the server sent a frame that breaks the protocol, so tests that only read `messages` fail too. */
   close(): void;
 }
 
-/**
- * Check a frame the way the browser does (frontend/src/data/socket.ts), but strictly: the client drops a
- * known type with a bad shape and ignores unknown types, and here both fail the test. An unknown type from
- * our own server means `ServerMessage` is missing a variant.
- */
 function parseFrame(text: string): ServerMessage | Error {
   let json: unknown;
   try {

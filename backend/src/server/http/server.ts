@@ -1,8 +1,3 @@
-/**
- * HTTP + WebSocket API (SYSTEM_DESIGN.md §14). The only module that knows about HTTP.
- * The browser contract is the same as the demo backend's; production adds range queries.
- * Errors use application/problem+json (RFC 9457).
- */
 import http from 'node:http';
 import https from 'node:https';
 import { timingSafeEqual } from 'node:crypto';
@@ -27,7 +22,6 @@ export interface HttpDeps {
   repo: Repo;
   fanout: Fanout;
   ready: () => Readiness;
-  /** False while the database is failing: history endpoints return 503. */
   dbOk: () => boolean;
   staticDir?: string;
   https?: TlsFiles;
@@ -63,7 +57,6 @@ function sendProblem(res: http.ServerResponse, p: Problem, instance: string) {
   sendJson(res, p.status, { type: 'about:blank', title: p.title, status: p.status, detail: p.detail, instance }, 'application/problem+json');
 }
 
-/** Epoch ms or an ISO 8601 string. */
 function parseTime(v: string | null, name: string, fallback: number): number {
   if (v === null || v === '') return fallback;
   const n = /^\d+$/.test(v) ? Number(v) : Date.parse(v);

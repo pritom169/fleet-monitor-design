@@ -1,21 +1,12 @@
-/**
- * WebSocket fan-out to browsers (SYSTEM_DESIGN.md §14).
- *
- * - Reports are coalesced per client to at most one per robot per second.
- * - If a client's send buffer passes 1 MB, only the newest report per robot is kept for it.
- *   If the buffer does not drain within 10 s, the socket is closed. The client reconnects and
- *   gets a fresh `hello`, so nothing is lost but staleness.
- */
 import type { Report, ServerMessage } from '@fleet/shared/protocol';
 
 export interface Sink {
   send(data: string): void;
   readonly bufferedAmount: number;
-  /** Close at once. `reason` is for metrics. */
   terminate(reason: 'slow' | 'shutdown'): void;
 }
 
-export const MIN_GAP_MS = 900; // 1 Hz with radio jitter
+export const MIN_GAP_MS = 900;
 export const BUFFER_LIMIT = 1 << 20;
 export const DRAIN_TIMEOUT_MS = 10_000;
 
@@ -42,13 +33,11 @@ export class Fanout {
     return () => this.clients.delete(c);
   }
 
-  /** Small, rare messages for everyone (ingest state, heartbeats) go straight out. */
   broadcast(msg: ServerMessage) {
     const data = JSON.stringify(msg);
     for (const c of this.clients) c.sink.send(data);
   }
 
-  /** Send every client a fresh snapshot, e.g. after the registry changed. */
   resync(hello: ServerMessage) {
     const data = JSON.stringify(hello);
     for (const c of this.clients) {
@@ -68,12 +57,11 @@ export class Fanout {
         c.lastSent.set(r.id, now);
         c.pending.delete(r.id);
       } else {
-        c.pending.set(r.id, r); // newest per robot wins
+        c.pending.set(r.id, r);
       }
     }
   }
 
-  /** Call every ~250 ms: send coalesced reports that are due, and cut clients that never drain. */
   flush() {
     const now = this.now();
     for (const c of [...this.clients]) {

@@ -1,13 +1,3 @@
-/**
- * What the screen shows when a view throws while rendering. A control-room screen must never go blank:
- * the manager has to see that the view failed, not an empty page that looks like an empty fleet.
- *
- * Two layers use it. The router's `errorElement` (App.tsx) catches a page that throws. `AppErrorBoundary`
- * wraps the router itself, for anything above the routes. The live connection (data/socket.ts) runs outside
- * React and survives both; reloading restarts the view.
- *
- * No router hooks and no TopBar here: either may be what failed. Links are plain anchors for the same reason.
- */
 import { Component, useEffect, type ErrorInfo, type ReactNode } from 'react';
 import { useRouteError } from 'react-router';
 import css from './ErrorScreen.module.css';
@@ -31,7 +21,6 @@ export function CrashView({ error, onReload = () => location.reload() }: { error
   );
 }
 
-/** `errorElement` of the root route: a page that throws while rendering lands here. */
 export function RouteError() {
   const error = useRouteError();
   useEffect(() => {
@@ -40,7 +29,6 @@ export function RouteError() {
   return <CrashView error={error} />;
 }
 
-/** Last line of defence around the router. */
 export class AppErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean; error: unknown }> {
   state = { failed: false, error: null as unknown };
 

@@ -1,4 +1,3 @@
-/** jsdom lacks a few browser APIs the app uses; stub them, and reset the store and the DOM after each test. */
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 import { fleet, initialState } from '../data/store';
@@ -17,7 +16,6 @@ if (typeof window !== 'undefined') {
       removeEventListener: (_: string, l: () => void) => m.listeners.delete(l),
     } as unknown as MediaQueryList;
   });
-  /** Tests flip a media query and notify its listeners, as the OS would. */
   (window as unknown as { setMedia: (q: string, v: boolean) => void }).setMedia = (q, v) => {
     const m = media.get(q) ?? { matches: v, listeners: new Set<() => void>() };
     m.matches = v;

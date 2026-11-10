@@ -17,7 +17,6 @@ import css from './Overview.module.css';
 const FILTERS: Filter[] = ['all', 'ok', 'low', 'error', 'offline', 'never'];
 const FILTER_NAME: Record<Filter, string> = { all: 'all robots', ok: 'OK', low: 'Low battery', error: 'Error', offline: 'Offline', never: 'Never reported' };
 
-/** Filter, site and search live in the URL, so any view can be shared or bookmarked. */
 function useOverviewParams() {
   const [params, setParams] = useSearchParams();
   const asked = params.get('site') ?? '';

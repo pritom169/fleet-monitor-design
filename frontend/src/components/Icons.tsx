@@ -1,7 +1,6 @@
 import { useId, type SVGProps } from 'react';
 import type { Status } from '../data/types';
 
-/** All icons: 16 px grid, 1.5 px stroke, round caps and joins. Only Error is filled, so the worst state carries the most ink. */
 type P = { size?: number; stroke?: number } & Omit<SVGProps<SVGSVGElement>, 'stroke'>;
 
 const svg = (size: number, p: P) => {
@@ -34,7 +33,6 @@ export const LowIcon = ({ size = 15, stroke = 1.4, ...p }: P) => (
   </svg>
 );
 
-/** Filled triangle with a true cut-out, so it reads on any background. */
 export const ErrorIcon = ({ size = 12, ...p }: P) => {
   const id = useId();
   return (
@@ -63,7 +61,6 @@ export const NeverIcon = ({ size = 13, stroke = 1.5, ...p }: P) => (
   </svg>
 );
 
-/** "!" used inside a red map pin, where the pin itself is the triangle's job. */
 export const BangIcon = ({ size = 12, stroke = 2.6, ...p }: P) => (
   <svg {...svg(size, p)}>
     <path d="M8 3.2v6" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" />
@@ -130,7 +127,6 @@ export const MoonIcon = ({ size = 15, ...p }: P) => (
   </svg>
 );
 
-/** The one status glyph component. */
 export function StatusIcon({ status, size }: { status: Status; size?: number }) {
   switch (status) {
     case 'ok': return <OkIcon size={size ?? 14} />;
@@ -141,7 +137,6 @@ export function StatusIcon({ status, size }: { status: Status; size?: number }) 
   }
 }
 
-/** Glyph inside a map pin: 0.2 px heavier so it still reads at 13 px. */
 export function PinGlyph({ status, big }: { status: Status; big?: boolean }) {
   if (status === 'low') return <LowIcon size={big ? 15 : 13} stroke={big ? 1.6 : 1.7} />;
   if (status === 'error') return <BangIcon size={big ? 14 : 12} stroke={big ? 2.4 : 2.6} />;

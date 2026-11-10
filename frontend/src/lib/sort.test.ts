@@ -14,11 +14,10 @@ function boot() {
     robots: ids.map(info),
     reports: [
       rep('R-001', T, 80),
-      rep('R-002', T, 15), // low
-      rep('R-003', T - 30_000, 60), // offline
+      rep('R-002', T, 15),
+      rep('R-003', T - 30_000, 60),
       rep('R-004', T, 70, { state: 'error', fault: 'Motor overcurrent' }),
       rep('R-005', T, 55),
-      // R-006 never reported
     ],
   }, T);
 }
@@ -34,9 +33,9 @@ describe('sort by severity', () => {
     const before = order(s);
     for (let i = 1; i <= 30; i++) {
       s = applyReports(s, [
-        rep('R-001', T + i * 1000, 80 - i, { x: 10 + i, y: 5 + i / 2 }), // 80 → 50, still OK
-        rep('R-005', T + i * 1000, 55 + i / 3, { x: 20 - i }), // rising, still OK
-        rep('R-002', T + i * 1000, 15 - (i % 3)), // still low
+        rep('R-001', T + i * 1000, 80 - i, { x: 10 + i, y: 5 + i / 2 }),
+        rep('R-005', T + i * 1000, 55 + i / 3, { x: 20 - i }),
+        rep('R-002', T + i * 1000, 15 - (i % 3)),
         rep('R-004', T + i * 1000, 70, { state: 'error', fault: 'Motor overcurrent' }),
       ]);
       expect(order(s)).toEqual(before);
@@ -45,7 +44,7 @@ describe('sort by severity', () => {
 
   it('moves a row only when its status changes', () => {
     let s = boot();
-    s = applyReports(s, [rep('R-005', T + 1000, 19)]); // OK → low
+    s = applyReports(s, [rep('R-005', T + 1000, 19)]);
     expect(order(s)).toEqual(['R-003', 'R-004', 'R-002', 'R-005', 'R-006', 'R-001']);
   });
 });

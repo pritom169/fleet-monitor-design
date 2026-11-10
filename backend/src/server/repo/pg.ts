@@ -1,6 +1,3 @@
-/**
- * PostgreSQL access. The only module that imports `pg`.
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,11 +9,8 @@ import type { StoredState, TelemetryRow } from '../domain/fleet';
 const MIGRATIONS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../migrations');
 const DAY = 86_400_000;
 
-/** History responses never exceed this many points (§13). */
 export const MAX_POINTS = 500;
-/** Longest range the telemetry endpoint accepts (§14). */
 export const MAX_RANGE_MS = 7 * DAY;
-/** Partitions older than this are dropped (§13). */
 export const RETENTION_DAYS = 7;
 
 export interface TelemetryPoint {
@@ -36,10 +30,7 @@ export class Repo {
   readonly pool: pg.Pool;
 
   constructor(connectionString: string) {
-    // query_timeout: a database that hangs (rather than refusing connections) must fail the write, so the
-    // batch writer retries and readiness turns red. Without it one hung flush blocks the queue forever.
     this.pool = new pg.Pool({ connectionString, max: 10, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 5_000, query_timeout: 10_000 });
-    // An idle client error must not crash the process; the next query reports it.
     this.pool.on('error', () => {});
   }
 
@@ -51,9 +42,6 @@ export class Repo {
     await this.pool.query('SELECT 1');
   }
 
-  // ---------- schema ----------
-
-  /** Apply migrations/*.sql in name order, once each. Safe to run from several processes. */
   async migrate(dir = MIGRATIONS): Promise<string[]> {
     const c = await this.pool.connect();
     try {
@@ -81,10 +69,6 @@ export class Repo {
     }
   }
 
-  /**
-   * Daily partitions by received_at (server clock, UTC). Creates today and the next `ahead` days,
-   * drops partitions older than the retention. Dropping a partition is instant; a DELETE is not.
-   */
   async maintainPartitions(now = Date.now(), ahead = 2, keepDays = RETENTION_DAYS): Promise<{ created: string[]; dropped: string[] }> {
     const created: string[] = [];
     const dropped: string[] = [];
@@ -112,8 +96,6 @@ export class Repo {
     }
     return { created, dropped };
   }
-
-  // ---------- registry and state ----------
 
   async loadRegistry(): Promise<RobotInfo[]> {
     const r = await this.pool.query(`SELECT id, site_id, model, model_full, firmware, network, registered_at FROM robots ORDER BY id`);
@@ -150,8 +132,6 @@ export class Repo {
 
   async loadState(): Promise<StoredState[]> {
     const r = await this.pool.query(`SELECT robot_id, report, boot, seq, status FROM robot_state`);
-    // Parsed, not cast: a row stored by an older build lacks newer fields (`taskKind` reads as `other`).
-    // A row that does not parse at all is skipped; the robot's next sample replaces it.
     return r.rows.flatMap((row) => {
       const report = Report.safeParse(row.report);
       if (!report.success) return [];
@@ -160,13 +140,9 @@ export class Repo {
   }
 
   async upsertStates(input: StoredState[]): Promise<void> {
-    // One row per robot: a batch built up while the database was away holds many rows for the same
-    // robot, and Postgres refuses to update one row twice in a single INSERT … ON CONFLICT.
     const rows = [...new Map(input.map((r) => [r.robotId, r])).values()];
     if (!rows.length) return;
     await this.pool.query(
-      // The join skips robots removed from the registry since the row was queued: one stale row must not
-      // fail the batch (robot_state references robots) and block every later state write.
       `INSERT INTO robot_state (robot_id, report, boot, seq, status, last_seen_at)
        SELECT u.* FROM unnest($1::text[], $2::jsonb[], $3::int[], $4::bigint[], $5::text[], $6::timestamptz[])
               AS u(robot_id, report, boot, seq, status, last_seen_at)
@@ -184,9 +160,6 @@ export class Repo {
     );
   }
 
-  // ---------- writes ----------
-
-  /** One multi-row INSERT … SELECT FROM unnest(…) per batch (§12). */
   async insertTelemetry(rows: TelemetryRow[]): Promise<void> {
     if (!rows.length) return;
     await this.pool.query(
@@ -228,13 +201,6 @@ export class Repo {
     );
   }
 
-  // ---------- reads ----------
-
-  /**
-   * Downsampled telemetry: at most MAX_POINTS buckets. Position is the last value in each bucket,
-   * never an average (the average of two positions can be inside a rack). Empty buckets return no row,
-   * so gaps stay gaps.
-   */
   async telemetry(robotId: string, from: number, to: number, maxPoints = MAX_POINTS): Promise<{ bucketMs: number; points: TelemetryPoint[] }> {
     const bucketMs = Math.max(1000, Math.ceil((to - from) / maxPoints / 1000) * 1000);
     const r = await this.pool.query(
@@ -260,7 +226,6 @@ export class Repo {
     };
   }
 
-  /** Newest first, keyset-paginated by (t, id). */
   async events(robotId: string, from: number, to: number, cursor: string | null, limit = 100): Promise<EventPage> {
     const c = cursor ? decodeCursor(cursor) : null;
     const r = await this.pool.query(
@@ -287,7 +252,6 @@ export class Repo {
     return { events, next: r.rows.length > limit && last ? encodeCursor(last.t, last.seq) : null };
   }
 
-  /** The detail page's default view, in the same shape as the demo (§14). */
   async history(robotId: string, now: number, dayStart: number): Promise<RobotHistory> {
     const [battery, trail, events] = await Promise.all([
       this.pool.query(

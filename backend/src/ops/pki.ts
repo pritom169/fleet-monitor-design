@@ -1,17 +1,3 @@
-/**
- * Certificates and the broker ACL (SYSTEM_DESIGN.md §16).
- *
- *   tsx src/ops/pki.ts init   <dir>            dev CA + broker, ingest-client and web certificates
- *   tsx src/ops/pki.ts robots <dir> [--sim]    one client certificate per registered robot + the ACL
- *
- * `robots` reads the registry from DATABASE_URL (or from the simulator with --sim) and writes `acl`:
- * each robot may publish only to fleet/{its site}/{its id}/…, and the ingest server may read fleet/#.
- * Mosquitto maps a client certificate's CN to the ACL user (use_identity_as_username). Re-run after
- * provisioning robots, then reload the broker (SIGHUP).
- *
- * Uses the openssl CLI (OpenSSL 3 or LibreSSL). EC P-256 keys. Idempotent: existing files are kept.
- * The CA here is for development. In production, robot certificates come from your PKI.
- */
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -65,7 +51,6 @@ export interface LeafOptions {
   days?: number;
 }
 
-/** Issue `<dir>/<name>.crt` and `.key`, signed by the CA in `caDir`. Skips if both exist. */
 export function issue(caDir: string, dir: string, name: string, o: LeafOptions): { cert: string; key: string } {
   fs.mkdirSync(dir, { recursive: true });
   const cert = path.join(dir, `${name}.crt`);
@@ -100,7 +85,6 @@ export function issue(caDir: string, dir: string, name: string, o: LeafOptions):
 
 export const INGEST_USER = 'fleet-ingest';
 
-/** The broker ACL, generated from the registry. */
 export function aclFor(robots: Pick<RobotInfo, 'id' | 'siteKey'>[]): string {
   const lines = [
     '# Generated from the robot registry by backend/src/ops/pki.ts. Do not edit; re-run it and SIGHUP the broker.',
@@ -118,7 +102,6 @@ export function aclFor(robots: Pick<RobotInfo, 'id' | 'siteKey'>[]): string {
   return lines.join('\n');
 }
 
-/** Everything a dev stack needs except robot certificates. */
 export function initPki(dir: string, extraDns: string[] = []) {
   ensureCa(dir);
   issue(dir, dir, 'broker', { cn: 'mosquitto', usage: 'server', dns: ['localhost', 'mosquitto', ...extraDns], ip: ['127.0.0.1'] });
@@ -138,7 +121,6 @@ export function robotPki(dir: string, robots: Pick<RobotInfo, 'id' | 'siteKey'>[
   return { issued, total: robots.length };
 }
 
-/** Let the broker's unprivileged user read its own key (the official image runs as uid 1883). */
 function shareWithBroker(dir: string) {
   const uid = Number(process.env.BROKER_UID ?? 1883);
   if (process.getuid?.() !== 0) return;
@@ -148,7 +130,6 @@ function shareWithBroker(dir: string) {
   }
 }
 
-// CLI
 if (process.argv[1]?.endsWith('pki.ts')) {
   const [cmd, dir = 'deploy/certs', ...flags] = process.argv.slice(2);
   if (cmd === 'init') {

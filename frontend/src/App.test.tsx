@@ -5,9 +5,9 @@ import { fleetState, load } from './test/fixtures';
 
 describe('App', () => {
   it('routes, shows a not-found page, and resets scroll and hover on navigation', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Promise(() => {}))); // robot detail history: never answers here
+    vi.stubGlobal('fetch', vi.fn(async () => new Promise(() => {})));
     window.history.pushState({}, '', '/no/such/page');
-    const { App } = await import('./App'); // the browser router reads the URL when the module loads
+    const { App } = await import('./App');
     load(fleetState());
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('This page does not exist. Check the address, or go back to the fleet.');

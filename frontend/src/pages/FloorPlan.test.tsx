@@ -54,7 +54,7 @@ describe('FloorPlan', () => {
     fireEvent.click(screen.getByRole('button', { name: 'R-003, Error, Motor overcurrent' }));
     expect(panel().getByText('Motor overcurrent. The robot has stopped.')).toBeTruthy();
     fireEvent.click(panel().getByRole('button', { name: /Hamburg DC/ }));
-    fireEvent.click(panel().getByText('R-001').closest('button')!); // a healthy robot, from the second group
+    fireEvent.click(panel().getByText('R-001').closest('button')!);
     expect(loc()).toBe('/?robot=R-001');
   });
 
@@ -79,7 +79,7 @@ describe('FloorPlan', () => {
     load();
     renderAt(<FloorPlan />, '/floor-plan?robot=R-010');
     expect(zoom()).toBe('160%');
-    expect(panel().getByText('Hamburg DC')).toBeTruthy(); // R-010 is in Leipzig: no selection here
+    expect(panel().getByText('Hamburg DC')).toBeTruthy();
   });
 
   it('zooms in and out within limits, and fits the floor', () => {
@@ -124,7 +124,7 @@ describe('FloorPlan', () => {
     expect(screen.getByRole('button', { name: 'Show robot labels' }).getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: 'Show movement trails' }));
     fireEvent.click(screen.getByRole('switch'));
-    expect(ghosts()).toBe(4); // still drawn, but invisible
+    expect(ghosts()).toBe(4);
   });
 
   it('tracks hover from the list and the map', () => {

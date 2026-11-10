@@ -1,14 +1,3 @@
-/**
- * Robot fleet model. Deterministic (seeded) robots that work along aisles, drain battery, return to
- * dock and charge, plus scripted incidents. Used by:
- *   - demo/simulator.ts   the Part A in-process backend (`npm run dev`)
- *   - sim/mqtt-robots.ts  real MQTT clients, one per robot, for the Part B ingest server
- *
- * Events carry an origin, from their code. `robot` events (task, charging, fault, Wi-Fi) are things a robot
- * knows and would publish itself. `server` events (battery low, back above 22 %, went offline) are status
- * transitions, which in production the ingest server derives with the shared status rules; only the demo
- * backend emits them from here.
- */
 import { SITE_BY_KEY, type Line, type Site } from '@fleet/shared/sites';
 import { isRobotEventCode, type EventCode, type Report, type RobotEvent, type RobotInfo, type TaskKind } from '@fleet/shared/protocol';
 import { nextLow } from '@fleet/shared/status';
@@ -26,13 +15,12 @@ export interface SimRobot {
   site: Site;
   mode: Mode;
   battery: number;
-  drain: number; // % per second while not charging
+  drain: number;
   x: number;
   y: number;
   aisle: Line | null;
-  u: number; // 0..2 ping-pong along the aisle
-  speed: number; // m/s while working
-  /** Display text, as reported. */
+  u: number;
+  speed: number;
   task: string;
   taskKind: TaskKind;
   order: number | null;
@@ -45,13 +33,10 @@ export interface SimRobot {
   since: number;
   returnBelow: number;
   goneAt?: number;
-  /** How the robot goes away at `goneAt`: `crash` drops the network link (MQTT LWT), `silent` stays connected and sends nothing. */
   goneHow?: 'crash' | 'silent';
   waitUntil?: number;
   chargeFrom?: number;
-  /** Offset inside each second at which this robot reports, like real radios. */
   phase: number;
-  /** Battery hysteresis latch, the same rule the status model uses. */
   low?: boolean;
   last: Report | null;
   battHist: [number, number][];
@@ -60,14 +45,8 @@ export interface SimRobot {
 }
 
 export interface FleetOptions {
-  /** Server time the live run starts at. The model simulates the 15 minutes before it. */
   start?: number;
-  /**
-   * `demo`: incidents happened before start, so the dashboard opens with them (Part A).
-   * `live`: incidents happen shortly after start, so a fresh ingest server and database see them happen.
-   */
   incidents?: 'demo' | 'live';
-  /** Robots that report. 50 by default; more for load tests. R-051 (never reports) is always added. */
   count?: number;
   onEvent?: (e: RobotEvent, origin: EventOrigin) => void;
 }
@@ -76,7 +55,6 @@ export interface Fleet {
   start: number;
   robots: SimRobot[];
   byId: (id: string) => SimRobot | undefined;
-  /** Advance every robot to second `t` (epoch ms, whole second). */
   tick: (t: number) => void;
   registry: () => RobotInfo[];
 }
@@ -95,7 +73,6 @@ const onAisle = (a: Line, f: number): [number, number] => [a[0] + (a[2] - a[0]) 
 const aisleName = (site: Site, a: Line) => `${site.prefix}${site.aisles.indexOf(a) + 1}`;
 export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-/** u at time t0 so that the robot is at fraction f, moving forward, after `seconds` of work. */
 function u0For(a: Line, f: number, speed: number, seconds: number) {
   const du = speed / len(a);
   let u = (f - du * seconds) % 2;
@@ -109,7 +86,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
   const count = opts.count ?? 50;
   const T0 = START - BACKFILL_S * S;
 
-  // ---------- deterministic randomness ----------
   let seed = 20261104;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const pick = <T,>(xs: T[]) => xs[Math.floor(rnd() * xs.length)];
@@ -120,7 +96,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     return [c[0] + 1.5 + rnd() * (c[2] - 3), c[1] + 2 + rnd() * (c[3] - 3)];
   }
 
-  /** Aisle end nearest the charge zone, then a corridor point, then a bay. */
   function pathToCharge(r: SimRobot): [number, number][] {
     const spot = chargeSpot(r.site);
     if (!r.aisle) return [spot];
@@ -226,8 +201,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
         if (r.battery >= 95) {
           r.info.lastCharge = [r.chargeFrom ?? t - 40 * MIN, t];
           log(r, t, 'info', 'charging_finished', 'Charging finished', `Battery ${Math.floor(r.battery)}%`);
-          // Scripted robots never return to dock on their own (returnBelow −1). After their first
-          // charge they behave like the rest of the fleet, so long runs do not end at 0 %.
           if (r.returnBelow < 0) {
             r.returnBelow = 25;
             r.drain = 1 / 95;
@@ -265,14 +238,12 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     const now = Math.floor(r.battery);
 
     if (r.mode !== 'gone' && r.mode !== 'never') {
-      // Battery threshold events, with the same hysteresis as the status model.
       const wasLow = r.low;
       r.low = nextLow(now, wasLow ?? false);
       if (wasLow === false && r.low) log(r, t, 'low', 'battery_low', 'Battery below 20%', 'Low-battery threshold reached');
       if (wasLow === true && !r.low) log(r, t, 'ok', 'battery_recovered', 'Battery back above 22%', 'Charging');
     }
 
-    // Server-side offline detection, for the event log.
     if (r.mode === 'gone' && r.last && t - r.last.t >= 10 * S && t - r.last.t < 11 * S) {
       log(r, t, 'off', 'went_offline', 'Went offline', 'No report for 10 s');
     }
@@ -297,7 +268,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     while (r.trail.length && r.trail[0][0] < t - 4 * MIN) r.trail.shift();
   }
 
-  // ---------- build the fleet ----------
   const SITE_ROTA = [SITE_BY_KEY.hh, SITE_BY_KEY.le, SITE_BY_KEY.mu];
   const SITE_OF = (i: number) => (i <= 18 ? SITE_BY_KEY.hh : i <= 35 ? SITE_BY_KEY.le : i <= 50 ? SITE_BY_KEY.mu : SITE_ROTA[i % 3]);
 
@@ -306,7 +276,7 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     const site = SITE_OF(i);
     const roll = rnd();
     const [model, modelFull] = pick(MODELS);
-    const since = START - (300 + Math.floor(rnd() * 150)) * MIN; // online for 5 to 7.5 h
+    const since = START - (300 + Math.floor(rnd() * 150)) * MIN;
     const r: SimRobot = {
       info: {
         id, model, modelFull, siteKey: site.key,
@@ -358,7 +328,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
   const byId = (id: string) => index.get(id) ?? robots.find((r) => r.info.id === id);
   const must = (id: string) => byId(id)!;
 
-  // ---------- scripted incidents ----------
   interface Script { id: string; at: number; run: (r: SimRobot, t: number) => void; done?: boolean }
   const SCRIPTS: Script[] = [];
   const rel = (seconds: number) => START + seconds * S;
@@ -368,7 +337,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
   const has = (id: string) => robots.some((r) => r.info.id === id);
 
   if (has('R-017')) {
-    // Hamburg · low battery, on its way to charge, slow in power-save mode.
     const r = must('R-017');
     const a = SITE_BY_KEY.hh.aisles[1];
     Object.assign(r, { mode: 'work', aisle: a, speed: 0.5, battery: 26.05, drain: 0.8 / 60, returnBelow: -1, order: 4459, task: 'Pick order #4459', taskKind: 'picking', taskEnds: Infinity });
@@ -394,7 +362,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     } });
   }
   if (has('R-024')) {
-    // Leipzig · motor overcurrent, stopped in aisle B3. Demo: 6 min before start. Live: 8 s after.
     const r = must('R-024');
     const a = SITE_BY_KEY.le.aisles[2];
     Object.assign(r, { mode: 'work', aisle: a, speed: 0.45, battery: 71.05 + 540 / 95, order: 4481, task: 'Pick order #4481', taskKind: 'picking', taskEnds: Infinity, returnBelow: -1 });
@@ -409,7 +376,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     } });
   }
   if (has('R-028')) {
-    // Leipzig · drops below 20 % about 7 s after start. Demonstrates the status-change highlight.
     const r = must('R-028');
     const a = SITE_BY_KEY.le.aisles[4];
     Object.assign(r, { mode: 'work', aisle: a, speed: 0.4, battery: 20.07 + 900 / 95, drain: 1 / 95, returnBelow: 20, order: 4490, task: 'Pick order #4490', taskKind: 'picking', taskEnds: Infinity });
@@ -417,7 +383,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     [r.x, r.y] = onAisle(a, pp(r.u));
   }
   if (has('R-032')) {
-    // Leipzig · 9 %, idle, every charging bay busy. A dock frees up after 10 min.
     const r = must('R-032');
     const a = SITE_BY_KEY.le.aisles[6];
     Object.assign(r, { mode: 'wait', aisle: a, battery: 12.05, drain: 1 / 100, x: 38, y: 20.4, task: 'Idle — waiting for dock', taskKind: 'waiting_for_dock', order: null, waitUntil: rel(600) });
@@ -427,7 +392,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     sortEvents(r);
   }
   if (has('R-009')) {
-    // Hamburg · stops reporting but stays connected. Demo: 34 s before start. Live: 35 s after.
     const r = must('R-009');
     const a = SITE_BY_KEY.hh.aisles[2];
     Object.assign(r, { mode: 'work', aisle: a, speed: 0.4, battery: 58.05 + 866 / 95, order: 4468, task: 'Pick order #4468', taskKind: 'picking', taskEnds: Infinity, goneAt: rel(live ? 35 : -33), goneHow: 'silent', returnBelow: -1 });
@@ -436,7 +400,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     sortEvents(r);
   }
   if (has('R-041')) {
-    // Munich · weak Wi-Fi in aisle C5, then the link drops. Demo: 3 min 4 s before start. Live: 45 s after.
     const r = must('R-041');
     const a = SITE_BY_KEY.mu.aisles[4];
     Object.assign(r, { mode: 'work', aisle: a, speed: 0.35, battery: 63.6 + 716 / 400, drain: 1 / 400, order: 4502, task: 'Pick order #4502', taskKind: 'picking', taskEnds: Infinity, goneAt: rel(live ? 45 : -183), goneHow: 'crash', returnBelow: -1 });
@@ -450,13 +413,11 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     SCRIPTS.push({ id: r.info.id, at: rel(live ? 20 : -370), run: (r, t) => log(r, t, 'warn', 'wifi_weak', 'Wi-Fi signal weak', '−82 dBm in aisle C5') });
   }
   {
-    // R-051 · Munich · registered, never reported.
     const r: SimRobot = { ...makeRobot(51), site: SITE_BY_KEY.mu, mode: 'never', events: [], last: null };
     r.info = { ...r.info, id: 'R-051', siteKey: 'mu', registeredAt: rel(-43 * 60), lastCharge: null, network: '—', firmware: '4.12.1' };
     r.events = [ev('R-051', r.info.registeredAt, 'info', 'registered', 'Registered', 'Waiting for first report')];
     robots.push(r);
   }
-  // Load-test robots beyond the scripted 50.
   for (let i = 52; i <= count + 1; i++) robots.push(makeRobot(i));
   for (const r of robots) index.set(r.info.id, r);
 
@@ -469,7 +430,6 @@ export function createFleet(opts: FleetOptions = {}): Fleet {
     }
   }
 
-  // ---------- backfill ----------
   for (let t = T0; t < START; t += S) {
     runScripts(t);
     for (const r of robots) step(r, t);

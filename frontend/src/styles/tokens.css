@@ -1,10 +1,3 @@
-/*
- * Fleet Monitor design tokens. Values from reference/Main.dc.html (.fm) and FloorPlan.dc.html (.fp).
- * Theme: follows the system setting; [data-theme] on <html> is a manual override.
- *
- * Colour rule: grey for fine, colour for problems, blue (--accent) for links and selection only.
- * --ink3 is for text at 24 px and larger only (3.6:1, AA large).
- */
 :root {
   --page: #FFFFFF;
   --tile: #F5F5F7;
@@ -78,7 +71,6 @@
   --err: #FF453A;
   --err-text: #FF5A4F;
   --err-tint: rgba(255, 69, 58, 0.15);
-  /* On black a filled red capsule glares, so the "solid" error capsule is tinted in dark. */
   --err-solid: rgba(255, 69, 58, 0.15);
   --err-solid-ink: #FF5A4F;
   --amb: #FFB340;
@@ -120,7 +112,6 @@
     --err: #FF453A;
     --err-text: #FF5A4F;
     --err-tint: rgba(255, 69, 58, 0.15);
-    /* On black a filled red capsule glares, so the "solid" error capsule is tinted in dark. */
     --err-solid: rgba(255, 69, 58, 0.15);
     --err-solid-ink: #FF5A4F;
     --amb: #FFB340;

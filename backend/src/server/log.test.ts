@@ -11,9 +11,9 @@ describe('sampled', () => {
     const log = (key: string) => s(key, (skipped) => void calls.push([key, skipped]));
     log('a');
     log('a');
-    log('a'); // over the limit: counted
     log('a');
-    log('b'); // keys are independent
+    log('a');
+    log('b');
     expect(calls).toEqual([['a', 0], ['a', 0], ['b', 0]]);
     vi.setSystemTime(1001);
     log('a');

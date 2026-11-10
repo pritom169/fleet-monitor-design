@@ -1,11 +1,8 @@
 import { SERVER_MESSAGE_TYPES, ServerMessage, type Report } from '@fleet/shared/protocol';
 import { actions, fleet } from './store';
 
-/** Reconnect delays, then 10 s forever. */
 export const BACKOFF_MS = [1000, 2000, 5000, 10000];
-/** Reports arrive ~50/s. Apply them in small batches so the table renders a few times a second, not 50. */
 const FLUSH_MS = 250;
-/** If an open socket goes this long without a message, treat it as dead. */
 const STALL_MS = 5000;
 
 let ws: WebSocket | null = null;
@@ -30,13 +27,8 @@ function flush() {
   actions.reports(batch);
 }
 
-/** Message types already warned about, so a server sending 50 bad reports a second logs once, not 50 times. */
 const warned = new Set<string>();
 
-/**
- * Validate a frame against the protocol. Returns null for anything that should not reach the store:
- * not JSON, a known type with the wrong shape (warned once per type), or an unknown type (newer server; ignored).
- */
 export function parseServerMessage(data: string): ServerMessage | null {
   let json: unknown;
   try {
@@ -87,9 +79,7 @@ function drop() {
   s.onopen = s.onmessage = s.onclose = s.onerror = null;
   try {
     s.close();
-  } catch {
-    /* already closed */
-  }
+  } catch {}
   flush();
   actions.lost();
   scheduleRetry();
@@ -114,15 +104,11 @@ function open() {
   s.onerror = drop;
 }
 
-/** Start the connection and the single app clock. Call once. */
 export function startFleet() {
   if (started) return;
   started = true;
   open();
-  // One clock for the whole app, aligned to the second so "last seen" and the header clock tick together.
   const tick = () => {
-    // Watchdog first: after the laptop wakes, the socket looks open but is dead. Advancing the clock
-    // before noticing would mark every robot offline for a few seconds.
     if (ws && fleet.get().connection === 'live' && Date.now() - lastRecv > STALL_MS) drop();
     actions.tick();
   };
@@ -132,7 +118,6 @@ export function startFleet() {
   }, 1000 - (Date.now() % 1000));
 }
 
-/** "Retry now" in the banner. */
 export function retryNow() {
   open();
 }

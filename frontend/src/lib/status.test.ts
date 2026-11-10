@@ -27,7 +27,6 @@ describe('connection lost', () => {
     expect(s.connection).toBe('lost');
     s = applyTick(s, T + 60_000);
     expect(s.robots['R-001'].status).toBe('ok');
-    // …but the clock keeps running, so "last seen" keeps counting up.
     expect(s.now - s.robots['R-001'].report!.t).toBe(60_000);
   });
 });
@@ -70,7 +69,6 @@ describe('ingest paused', () => {
     expect(s.connection).toBe('live');
     expect(s.robots['R-001'].status).toBe('ok');
     expect(s.now - s.robots['R-001'].report!.t).toBe(60_000);
-    // Back live: now the robot has been silent for a minute, so it is offline.
     s = applyIngest(s, { state: 'live', frozenAt: null });
     expect(s.robots['R-001'].status).toBe('offline');
   });

@@ -106,7 +106,7 @@ describe('SitePlan', () => {
     const { container } = render(<SitePlan site={SITE_BY_KEY.le} detail emptyNote="Nothing here" />);
     expect(screen.getByText('Inbound')).toBeTruthy();
     expect(screen.getByText('B1')).toBeTruthy();
-    expect(container.querySelectorAll('svg').length).toBe(4); // charging bays
+    expect(container.querySelectorAll('svg').length).toBe(4);
     expect(screen.getByText('Nothing here')).toBeTruthy();
   });
 

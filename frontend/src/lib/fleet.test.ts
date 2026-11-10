@@ -35,7 +35,7 @@ describe('matches', () => {
     expect(matches(r('R-003'), 'overcurrent')).toBe(true);
     expect(matches(r('R-010'), 'leipzig')).toBe(true);
     expect(matches(r('R-002'), 'returning')).toBe(true);
-    expect(matches(r('R-005'), 'tote')).toBe(true); // never reported: model still matches
+    expect(matches(r('R-005'), 'tote')).toBe(true);
     expect(matches(r('R-001'), 'munich')).toBe(false);
   });
 });

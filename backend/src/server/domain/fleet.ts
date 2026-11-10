@@ -1,10 +1,3 @@
-/**
- * Current state of the fleet, and the status rules applied to it. Pure: no I/O, no timers.
- * The caller passes the time in, so tests use a fake clock and never sleep.
- *
- * Uses the same status module as the browser (@fleet/shared/status), so server events and
- * client pills follow the same rules.
- */
 import type { Ingest, Report, RobotEvent, RobotInfo } from '@fleet/shared/protocol';
 import { LOW_BATTERY, LOW_BATTERY_EXIT, deriveStatus, freshnessClock, nextLow, type Status } from '@fleet/shared/status';
 import type { RobotEventMsg, Telemetry } from '@fleet/shared/telemetry';
@@ -13,9 +6,7 @@ import { SeqWindow } from './seqWindow';
 export interface RobotState {
   info: RobotInfo;
   report: Report | null;
-  /** Robot clock of the current report. */
   robotTs: number | null;
-  /** Smoothed receivedAt − robotTs, in ms. */
   skew: number | null;
   window: SeqWindow;
   low: boolean;
@@ -24,19 +15,12 @@ export interface RobotState {
 
 export type IngestResult = 'accepted' | 'unknown' | 'duplicate' | 'out_of_order';
 
-/**
- * An event before it has an ID. The domain stays deterministic; the app stamps `eventId` once, before the
- * event is both sent to browsers and stored, so the live copy and the history copy match.
- */
 export type NewEvent = Omit<RobotEvent, 'eventId'>;
 
 export interface Accepted {
   result: IngestResult;
-  /** Set for accepted and out_of_order samples: what goes to history. */
   row?: TelemetryRow;
-  /** Set for accepted samples: what goes to browsers. */
   report?: Report;
-  /** Status transitions this sample caused. */
   events: NewEvent[];
 }
 
@@ -62,22 +46,10 @@ export interface StoredState {
   status: Status;
 }
 
-/**
- * After the broker link comes back, freshness stays frozen this long, so every live robot has reported
- * at least twice before silence counts again. Without it, the first tick after a reconnect would see
- * every robot's last report as minutes old and mark the whole fleet offline for a second.
- */
 export const SETTLE_MS = 3000;
 
-/** Weight of a new sample in the smoothed clock skew. About 10 s of memory at 1 Hz. */
 const SKEW_ALPHA = 0.1;
 
-/**
- * If the broker link is "up" but no robot at all has sent anything for this long, the silence is
- * evidence about *our* path (a stalled TCP link the keepalive has not caught yet, or this process being
- * suspended, e.g. a laptop asleep), not about every robot at once. Same 5 s as the browser's watchdog.
- * Freshness freezes, and data resuming goes through the settle window.
- */
 export const STALL_MS = 5000;
 
 type Link = 'down' | 'settling' | 'up' | 'stalled';
@@ -86,9 +58,7 @@ export class FleetDomain {
   readonly robots = new Map<string, RobotState>();
   private link: Link = 'down';
   private liveFrom = 0;
-  /** Server time of the last message received from the broker, of any kind. */
   private lastMessageAt: number | null = null;
-  /** While the link is not `up`, freshness is judged against this time. */
   private frozenAt: number | null = null;
 
   constructor(registry: RobotInfo[]) {
@@ -97,10 +67,6 @@ export class FleetDomain {
     }
   }
 
-  /**
-   * Apply a re-read registry: add new robots (status `never`), drop removed ones, refresh changed info.
-   * Returns what changed, so browsers can be sent a fresh snapshot.
-   */
   register(registry: RobotInfo[]): { added: string[]; removed: string[]; changed: string[] } {
     const added: string[] = [];
     const changed: string[] = [];
@@ -121,7 +87,6 @@ export class FleetDomain {
     return { added, removed, changed };
   }
 
-  /** Restore current state after a restart (from `robot_state`). */
   load(rows: StoredState[]) {
     for (const row of rows) {
       const r = this.robots.get(row.robotId);
@@ -133,13 +98,9 @@ export class FleetDomain {
       r.skew = row.report.skew ?? null;
       if (this.lastMessageAt === null || row.report.t > this.lastMessageAt) this.lastMessageAt = row.report.t;
     }
-    // Until the broker is connected, judge freshness at the newest evidence we have.
     if (this.link !== 'up') this.frozenAt = this.lastMessageAt;
   }
 
-  // ---------- the ingest clock ----------
-
-  /** Returns true when the ingest state seen by browsers changed. */
   setLink(up: boolean, now: number): boolean {
     if (up) {
       if (this.link !== 'down') return false;
@@ -155,15 +116,11 @@ export class FleetDomain {
     return wasUp;
   }
 
-  /**
-   * Call once a second, before `tick`. Returns true when the ingest state seen by browsers changed:
-   * the settle window ended (live), or the link stalled (paused).
-   */
   poll(now: number): boolean {
     const silent = this.lastMessageAt !== null && now - this.lastMessageAt > STALL_MS;
     if (this.link === 'settling' && now >= this.liveFrom) {
       if (silent) {
-        this.link = 'stalled'; // connected, but nothing arrived: stay paused
+        this.link = 'stalled';
         return false;
       }
       this.link = 'up';
@@ -178,7 +135,6 @@ export class FleetDomain {
     return false;
   }
 
-  /** Any message from the broker is evidence the link works. Data after a stall goes through the settle window. */
   heard(at: number) {
     if (this.lastMessageAt === null || at > this.lastMessageAt) this.lastMessageAt = at;
     if (this.link === 'stalled') {
@@ -187,7 +143,6 @@ export class FleetDomain {
     }
   }
 
-  /** The time freshness is judged against. Same rule as the client's statusClock(). */
   clock(now: number): number {
     return this.link === 'up' ? now : freshnessClock(now, this.frozenAt);
   }
@@ -200,14 +155,11 @@ export class FleetDomain {
     return this.link;
   }
 
-  // ---------- messages ----------
-
   isKnown(robotId: string, siteId?: string): boolean {
     const r = this.robots.get(robotId);
     return !!r && (siteId === undefined || r.info.siteKey === siteId);
   }
 
-  /** Steps 3–5 of the pipeline: registry check, dedupe, order check, current state and status. */
   accept(t: Telemetry, receivedAt: number): Accepted {
     this.heard(receivedAt);
     const r = this.robots.get(t.id);
@@ -234,7 +186,6 @@ export class FleetDomain {
     return { result: 'accepted', row, report, events };
   }
 
-  /** A robot-side event (task, fault, Wi-Fi). Stamped with server time. */
   robotEvent(e: RobotEventMsg, receivedAt: number): NewEvent | null {
     this.heard(receivedAt);
     if (!this.robots.has(e.id)) return null;
@@ -244,7 +195,6 @@ export class FleetDomain {
     };
   }
 
-  /** Offline is a function of time, so every robot is re-checked once a second. */
   tick(now: number): NewEvent[] {
     const at = this.clock(now);
     const out: NewEvent[] = [];
@@ -252,7 +202,6 @@ export class FleetDomain {
     return out;
   }
 
-  /** Re-derive status and return the event for the transition, if any. */
   private rederive(r: RobotState, at: number): NewEvent[] {
     const next = deriveStatus(r.report, at, r.low);
     const prev = r.status;
@@ -261,8 +210,6 @@ export class FleetDomain {
     const e = transitionEvent(r, prev, next, at);
     return e ? [e] : [];
   }
-
-  // ---------- views ----------
 
   snapshot(): { robots: RobotInfo[]; reports: Report[] } {
     const robots: RobotInfo[] = [];
@@ -291,10 +238,6 @@ const blank = (info: RobotInfo): RobotState => ({
   info, report: null, robotTs: null, skew: null, window: new SeqWindow(), low: false, status: 'never',
 });
 
-/**
- * The server's own events, from status transitions. Faults come from the robot itself
- * (an `event` message), so a transition into `error` adds nothing here.
- */
 export function transitionEvent(r: RobotState, prev: Status, next: Status, at: number): NewEvent | null {
   const id = r.info.id;
   const b = r.report ? `Battery ${Math.floor(r.report.battery)}%` : undefined;

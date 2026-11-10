@@ -11,10 +11,6 @@ export interface History {
   events: RobotEvent[];
 }
 
-/**
- * Battery (15 min), trail (4 min) and today's events for one robot.
- * Fetched on open, every 10 s, and after a reconnect; the trail is extended from live reports.
- */
 export function useRobotHistory(id: string): History {
   const [h, setH] = useState<History>({ state: 'loading', battery: [], trail: [], events: [] });
   const connection = useFleet((s) => s.connection);
@@ -25,7 +21,6 @@ export function useRobotHistory(id: string): History {
     let cancelled = false;
     const load = () => fetch(`/api/robots/${encodeURIComponent(id)}/history`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      // Validated like every socket message: events must carry the `eventId` the merge below dedupes on.
       .then((body: unknown) => RobotHistory.parse(body))
       .then((d) => {
         if (cancelled) return;
@@ -33,7 +28,6 @@ export function useRobotHistory(id: string): History {
       })
       .catch(() => !cancelled && setH((p) => ({ ...p, state: p.battery.length ? p.state : 'error' })));
     load();
-    // Battery history is kept at 0.1 % on the server; refresh it rather than appending whole-percent live values.
     const iv = setInterval(load, 10_000);
     return () => {
       cancelled = true;
@@ -41,8 +35,6 @@ export function useRobotHistory(id: string): History {
     };
   }, [id, connection]);
 
-  // Extend with live reports, at the same density as the server history. A store subscription, not an
-  // effect on a selected report: the update comes from outside React, so it is set from the store's callback.
   useEffect(() => {
     let last: Report | null = null;
     return fleet.subscribe(() => {
@@ -62,7 +54,6 @@ export function useRobotHistory(id: string): History {
   }, [id]);
 
   const events = useMemo(() => {
-    // The server gives each event one ID, on the live message and in history alike.
     const seen = new Set(h.events.map((e) => e.eventId));
     const fresh = liveEvents.filter((e) => e.id === id && !seen.has(e.eventId));
     return [...fresh, ...h.events].sort((a, b) => b.t - a.t);
@@ -71,7 +62,6 @@ export function useRobotHistory(id: string): History {
   return { ...h, events };
 }
 
-/** Battery change in % per minute over the last `minutes`, or null if not enough data. */
 export function batteryRate(points: [number, number][], minutes = 5): number | null {
   if (points.length < 2) return null;
   const end = points[points.length - 1];
@@ -81,7 +71,6 @@ export function batteryRate(points: [number, number][], minutes = 5): number | n
   return (end[1] - start[1]) / dt;
 }
 
-/** When the battery last went below 20%, if that happened inside the window. */
 export function lastCrossing(points: [number, number][], threshold = 20): number | null {
   for (let i = points.length - 1; i > 0; i--) {
     if (points[i][1] < threshold && points[i - 1][1] >= threshold) return points[i][0];

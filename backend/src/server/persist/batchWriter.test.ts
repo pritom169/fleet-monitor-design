@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BatchWriter } from './batchWriter';
 
-/** A manual timer queue, so tests never sleep. */
 function fakeTimers() {
   let now = 0;
   let timers: { at: number; fn: () => void; id: number }[] = [];
@@ -15,7 +14,6 @@ function fakeTimers() {
     clearTimer: (h: unknown) => {
       timers = timers.filter((t) => t.id !== h);
     },
-    /** Advance time, running due timers and letting their promises settle. */
     async advance(ms: number) {
       const end = now + ms;
       for (;;) {
@@ -86,9 +84,9 @@ describe('BatchWriter', () => {
     expect(w.ok).toBe(false);
     await t.advance(99);
     expect(attempts).toEqual([1]);
-    await t.advance(1); // 100 ms backoff
+    await t.advance(1);
     expect(attempts).toEqual([1, 2]);
-    await t.advance(200); // 200 ms backoff
+    await t.advance(200);
     expect(w.ok).toBe(true);
     expect(batches).toEqual([[1, 2], [3]]);
   });
@@ -214,12 +212,12 @@ describe('BatchWriter shutdown and limits', () => {
       ...t,
     });
     for (const i of [1, 2, 3]) w.push(i);
-    await t.advance(0); // 1-2-3 in flight
+    await t.advance(0);
     w.push(4);
     w.push(5);
-    expect(dropped).toBe(0); // the queue itself holds two: under capacity
+    expect(dropped).toBe(0);
     fail(new Error('db down'));
-    await t.advance(0); // 1-2-3 go back in front of 4-5: five items, capacity three
+    await t.advance(0);
     expect(w.depth).toBe(3);
     expect(dropped).toBe(2);
     mode = 'ok';
@@ -243,7 +241,7 @@ describe('BatchWriter shutdown and limits', () => {
     w.push(1);
     await new Promise((r) => setTimeout(r, 10));
     w.push(2);
-    w.push(3); // waits: the timer for 2 is already the earliest
+    w.push(3);
     await w.close();
     expect(written).toEqual([1, 1, 1]);
   });

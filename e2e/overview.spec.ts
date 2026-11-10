@@ -1,11 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const table = (page: Page) => page.getByRole('table', { name: 'Robots, most urgent first' });
-/** Robot rows: every row with a robot link (not the header, skeleton or empty state). */
 const rows = (page: Page) => table(page).getByRole('row').filter({ has: page.getByRole('link') });
 
 test('shows skeleton rows until the first snapshot, then the fleet, most urgent first', async ({ page }) => {
-  // Hold the WebSocket until the skeleton has been seen; then let it through to the real server.
   let release!: () => void;
   const gate = new Promise<void>((resolve) => (release = resolve));
   await page.routeWebSocket(/\/ws$/, async (ws) => {
@@ -21,7 +19,6 @@ test('shows skeleton rows until the first snapshot, then the fleet, most urgent 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^\d+ robots need your attention\./);
   await expect(table(page)).not.toHaveAttribute('aria-busy', 'true');
 
-  // Severity order: offline (R-009, R-041), then error (R-024), then low battery.
   await expect(rows(page).nth(0)).toContainText('R-009');
   await expect(rows(page).nth(0)).toContainText('Offline');
   await expect(rows(page).nth(1)).toContainText('R-041');

@@ -16,7 +16,6 @@ const ACCENT: Record<string, string> = { low: 'var(--amb)', error: 'var(--err)',
 
 interface RowProps {
   robot: Robot;
-  /** Pins the clock (component sheet, tests). Omitted in the app: the time-dependent leaves read the clock. */
   now?: number;
   stale: boolean;
   hovered: boolean;
@@ -31,13 +30,12 @@ export const RobotRow = memo(function RobotRow({ robot: r, now, stale, hovered, 
   const st = r.status;
   const flashing = useWithin(r.changedAt, FLASH_MS, now);
 
-  // Hovering a pin on the map brings its row into view inside the table, without moving the page.
   useEffect(() => {
     const row = el.current;
     const box = row?.closest<HTMLElement>('[data-scroll]');
     if (!scrollTo || !row || !box) return;
     const rowTop = row.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
-    const top = rowTop - 40; // keep clear of the sticky header
+    const top = rowTop - 40;
     const bottom = rowTop + row.offsetHeight;
     if (top < box.scrollTop) box.scrollTo({ top, behavior: 'smooth' });
     else if (bottom > box.scrollTop + box.clientHeight) box.scrollTo({ top: bottom - box.clientHeight + 8, behavior: 'smooth' });
@@ -100,7 +98,6 @@ export function TableHeader() {
   );
 }
 
-/** FLIP: when the same rows change order (a status changed), slide each row from its old place. */
 function useFlip(ids: string[]) {
   const refs = useRef(new Map<string, HTMLDivElement>());
   const prev = useRef<{ key: string; set: string; tops: Map<string, number> }>({ key: '', set: '', tops: new Map() });
@@ -122,14 +119,11 @@ function useFlip(ids: string[]) {
     }
     prev.current = { key, set, tops };
   }, [key, set]);
-  // One callback per ID while that robot is in the list. A new callback on each render would defeat
-  // memo(RobotRow) and re-render all 1,000 rows on every hover and every report batch. The callback is not
-  // dropped when React detaches it (`null`): a row re-attaches on each render of its own.
   const callbacks = useRef(new Map<string, (el: HTMLDivElement | null) => void>());
   useLayoutEffect(() => {
     const keep = new Set(set.split(','));
     for (const id of callbacks.current.keys()) if (!keep.has(id)) callbacks.current.delete(id);
-  }, [set]); // `set` is the ID set: prune only when membership changes
+  }, [set]);
   return (id: string) => {
     let cb = callbacks.current.get(id);
     if (!cb) {
@@ -145,7 +139,6 @@ function useFlip(ids: string[]) {
 
 export function RobotTable({ robots, now, stale, hover, loading, connecting, empty }: {
   robots: Robot[];
-  /** Pins the clock (tests). The app omits it, so a tick does not re-render the rows. */
   now?: number;
   stale: boolean;
   hover: { id: string; from: string } | null;

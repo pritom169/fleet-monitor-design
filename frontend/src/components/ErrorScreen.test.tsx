@@ -14,7 +14,6 @@ describe('error screen', () => {
 
   it('shows the crash screen, not a blank page, when a page throws', () => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // The app's own root route (its errorElement included), with a page that throws.
     const [{ element, errorElement }] = routes;
     const router = createMemoryRouter([{ element, errorElement, children: [{ path: '/', element: <Boom /> }] }], { initialEntries: ['/'] });
     render(<RouterProvider router={router} />);
