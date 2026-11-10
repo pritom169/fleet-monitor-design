@@ -238,7 +238,7 @@ describe('persistence', () => {
     expect(h.http.ready()).toEqual({ ok: false, checks: { database: false, broker: true, state: true } });
     expect(await counter(m.ingestDropped, { queue: 'telemetry' })).toBeGreaterThanOrEqual(1);
     expect(h.log.warn).toHaveBeenCalledWith(expect.objectContaining({ queue: 'telemetry', err: '08006 connection lost' }), 'database write failed, retrying');
-    expect(h.log.error).toHaveBeenCalledWith(expect.objectContaining({ queue: 'events', dropped: 1, err: '22P02 bad' }), 'batch rejected by the database; dropped');
+    expect(h.log.error).toHaveBeenCalledWith(expect.objectContaining({ queue: 'events', dropped: 1, err: '22P02 bad' }), 'rows rejected by the database; dropped');
 
     h.repo.insertTelemetry.mockResolvedValue(undefined);
     await vi.advanceTimersByTimeAsync(10_000);
