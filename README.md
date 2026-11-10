@@ -11,10 +11,6 @@ This file is the only document. It holds how to run the project, the reason for 
 ## In short
 
 - **What it is.** A React dashboard on a real ingest path: robots → MQTT (Mosquitto) → one Node server → WebSocket to the browser, with PostgreSQL for history. A demo backend with scripted incidents runs in one container, so the interface can be reviewed without the full stack.
-- **Review it in 10 minutes:**
-  1. Run `docker compose --profile demo up --build demo` and open http://localhost:8788. The incidents are already on screen.
-  2. Read [Part 2](#part-2--all-decisions-in-one-place): each decision, what I rejected, and what would make me change it.
-  3. Look at the core code: [fleet.ts](backend/src/server/domain/fleet.ts) (status, ordering, freshness), [batchWriter.ts](backend/src/server/persist/batchWriter.ts) (the bounded save queue), [status.ts](shared/src/status.ts) (the one status model used by server and browser), [store.ts](frontend/src/data/store.ts) (the browser state).
 - **Where it stands.** 1,000 robots use 15 % of one core. At that size a report reaches the browser in about 20 ms at p99. One server handled 10,000 messages a second with headroom, and 20,000 a second with no data lost ([load results](#measured-load)). A broker or database outage never marks robots offline and never stops the live view.
 - **What I cut first** ([Part 3](#part-3--what-is-not-done-yet)): user sign-in, a second server for failover, and browser tests against the real stack. The time went into status that stays correct when parts fail, because a false "offline" is the most expensive mistake for this user.
 
@@ -226,6 +222,48 @@ Each decision names what would make me change it.
 | D10 | **One `shared/` package**, read as TypeScript source | Copying files; publishing a built package | A client in another language → generate from a schema |
 | D11 | **Broker rules generated from the registry**, certificate name = robot ID | Passwords per robot; a dynamic auth plugin | Thousands of provisioning changes a day |
 | D12 | **A row the database refuses is dropped alone.** Text with a null character is rejected at the edge. Any other bad row is found by splitting the batch in half until only that row fails. | Dropping the whole batch (one bad row loses a second of history for every robot) | Bad rows become common → send them to a dead-letter table instead of the log |
+
+## Frontend decisions
+
+### What the manager sees
+
+| # | Decision | Why |
+|---|---|---|
+| F1 | **The answer comes first:** one sentence ("3 robots need your attention"), then a card for each robot with a problem, then the full table. | The question is answered before any scrolling. |
+| F2 | **Most urgent first:** offline, then error, low, never, OK. Ties are sorted by ID. | Problems are always on top. Rows move only when a status changes, so the list does not jump every second. |
+| F3 | **Color only for problems.** OK is plain grey. Amber means low, red means error, dashed grey means offline. | Calm when fine, loud when wrong. Each status also has a text label, so color is never the only sign. |
+| F4 | **Old data looks old.** When the link drops, a banner shows, values turn grey and "last seen" keeps counting. | The manager never acts on old data that looks live. |
+| F5 | **A row flashes for 2 s when its status changes.** It is off when the system asks for reduced motion. | It shows what just changed, with no constant motion. |
+| F6 | **Table and map side by side.** Hovering a row highlights its pin, and hovering a pin highlights its row. | The table says what is wrong, the map says where. |
+| F7 | **Site, filter and search live in the URL.** | A view can be shared, bookmarked and reloaded. |
+| F8 | **The theme follows the system,** and a saved choice is applied before the first paint. | No white flash in a dark control room. |
+| F9 | **Built for screen readers:** table roles, the headline in `aria-live`, a text summary of each chart. | The answer can be heard, not only seen. |
+
+### How the browser works
+
+| # | Decision | Why |
+|---|---|---|
+| F10 | **One small store outside React** ([store.ts](frontend/src/data/store.ts)), read with `useSyncExternalStore` and selectors. | A component redraws only when the part it reads changes. One data source does not need a state library. |
+| F11 | **Each state change is a pure function** (`applyHello`, `applyReports`, …). | Tested without a browser or a server. |
+| F12 | **Reports are collected for 250 ms, then applied in one go.** | At 1,000 robots that means 4 redraws a second, not 1,000. |
+| F13 | **Server time, not browser time.** The browser saves its offset from the server clock on connect. | A wrong laptop clock cannot mark robots offline. |
+| F14 | **On every reconnect, a full snapshot.** Retries wait 1, 2, 5, then 10 s. If nothing arrives for 5 s, the link counts as dropped. | No replay logic to get wrong (D2). A silent link is caught as quickly as a closed one. |
+| F15 | **Every server message is checked against the shared schema.** A bad message is dropped and logged once. | A server bug cannot crash the page. |
+| F16 | **Only the "12 s ago" text redraws each second** (`<Ago>`). Rows are memoized. | The clock ticks without redrawing the whole table. |
+| F17 | **History comes over plain HTTP** every 10 s, and live events are merged in. | History is not live data, so one `fetch` is enough. |
+
+### Libraries
+
+| Library | Why | Not chosen |
+|---|---|---|
+| **React 19** | Widely known. `useSyncExternalStore` fits a live store. | Svelte, Solid: smaller, but fewer people know them |
+| **React Router** | Pages and filters in the URL, plus a built-in error page | Next.js: server rendering is not needed for a live dashboard |
+| **Vite** | Fast dev server and build. Vitest uses the same setup. | webpack: slower, more setup |
+| **CSS Modules + CSS variables** | Styles stay scoped to their component, nothing runs at runtime, and a theme is one set of variables | Tailwind: long class lists for a custom design. CSS-in-JS: runtime cost on every redraw. |
+| **Hand-written SVG** for the chart and floor plan | One line chart and one map. Full control over the design: threshold line, gaps for missing data, no fill. | Recharts, D3: large for one chart, and hard to bend to this design |
+| **Zod** (in `shared/`) | One schema checks messages on server and browser, and gives the TypeScript types | Hand-written checks that drift from the types |
+| **No state or fetch library** | See F10 and F17 | Redux, Zustand, TanStack Query: more than one socket and one history call need |
+| **Vitest, Testing Library, Playwright** | Fast unit tests on the Vite setup, component tests from the user's view, and a real browser for end-to-end | Jest: needs its own build setup |
 
 ## Where I chose differently from the brief or prototypes
 
