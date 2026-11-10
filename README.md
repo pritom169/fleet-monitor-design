@@ -12,7 +12,7 @@ The challenge inputs are kept as they were given: [BRIEF.md](BRIEF.md), [HANDOFF
 
 ## Contents
 
-- [Part 1 — How to review it](#part-1--how-to-review-it) (about 15 minutes)
+- [Part 1 — Running it](#part-1--running-it)
 - [Part 2 — How it was built, step by step](#part-2--how-it-was-built-step-by-step)
   - [Step 1. Read the brief](#step-1-read-the-brief-3-nov)
   - [Step 2. Goals first](#step-2-write-the-goals-first-3-nov)
@@ -33,14 +33,14 @@ The challenge inputs are kept as they were given: [BRIEF.md](BRIEF.md), [HANDOFF
 
 ---
 
-# Part 1 — How to review it
+# Part 1 — Running it
 
-## What you need
+## Requirements
 
-- **Docker** is enough. You do not need Node.
+- **Docker** runs everything. Node is not needed.
 - To run tests or work on the code: **Node 24** (see `.nvmrc`) and Docker.
 
-## A. Start the demo (1 minute)
+## A. The demo
 
 The demo is one container. Its backend is a simulator, and the scripted incidents are already on screen when the page opens.
 
@@ -50,14 +50,14 @@ docker compose --profile demo up --build demo
 
 Open **http://localhost:8788**.
 
-## B. Look at the screens (5 minutes)
+## B. Screens and states
 
-| What to see | Where |
+| State | Where |
 |---|---|
 | Overview, dark | `/`, with your system in dark mode, or click the moon in the top bar |
 | Overview, light | `/`, click the sun. The choice is remembered. |
 | Offline filter | `/?status=offline` |
-| Connection lost | Run the command below, then watch the banner for 20 s |
+| Connection lost | The outage command below |
 | Robot with low battery | `/robots/R-017` |
 | Robot that is offline | `/robots/R-041` |
 | Robot that never reported | `/robots/R-051` |
@@ -65,7 +65,7 @@ Open **http://localhost:8788**.
 | Search with no results | `/?site=hh&status=error&q=R-09` |
 | Floor plan | `/floor-plan?site=le&robot=R-024` |
 | Component sheet | `/dev/components` (built from the real components) |
-| 1024 px laptop | Make the window narrow. Two columns hide and the site moves under the robot ID. |
+| 1024 px laptop | A narrow window. Two columns hide and the site moves under the robot ID. |
 
 To cut the connection for 20 seconds:
 
@@ -73,7 +73,7 @@ To cut the connection for 20 seconds:
 curl -X POST 'http://localhost:8788/control/outage?seconds=20'
 ```
 
-While it is cut, check that **no robot turns offline** because of it. The banner shows, values turn grey, and "last seen" keeps counting.
+While it is cut, **no robot turns offline** because of it. The banner shows, values turn grey, and "last seen" keeps counting.
 
 The scripted incidents:
 
@@ -89,7 +89,7 @@ The scripted incidents:
 
 Restart the container to replay them. After about 10 minutes the low robots charge and recover, like a real fleet.
 
-## C. Run the real stack (5 minutes)
+## C. The production stack
 
 This is the production design: robots talk MQTT to a broker, a server saves data to PostgreSQL, and the browser gets live data from the server.
 
@@ -97,14 +97,14 @@ This is the production design: robots talk MQTT to a broker, a server saves data
 docker compose up --build        # http://localhost:8787
 ```
 
-Here the incidents happen **live** in the first minute, so you can watch them start:
+Here the incidents happen **live** in the first minute:
 
 - **+8 s:** R-024 reports a fault.
 - **+20 s:** R-041 warns about weak Wi-Fi.
 - **+35 s:** R-009 goes silent but stays connected.
 - **+45 s:** R-041 drops its link, so the broker announces it is gone.
 
-Try a broker outage:
+A broker outage:
 
 ```bash
 docker compose stop mosquitto    # the dashboard says "Robot data paused". No robot turns offline.
@@ -116,7 +116,7 @@ If a port is busy, move it: `APP_PORT=9787 PG_PORT=15432 MQTT_PORT=11883 docker 
 
 Set `ROBOTS=1000` to simulate a bigger fleet.
 
-## D. Optional: the secure stack
+## D. The secure stack
 
 This adds MQTT over TLS with one certificate per robot, HTTPS, and a token on `/metrics`.
 
@@ -129,7 +129,7 @@ docker compose -f docker-compose.yml -f docker-compose.secure.yml cp server:/cer
 
 In production, set `TLS_CERT_FILE` / `TLS_KEY_FILE` and `METRICS_TOKEN`. For the broker, set `MQTT_URL=mqtts://…` with `MQTT_CA_FILE`, `MQTT_CERT_FILE` and `MQTT_KEY_FILE`.
 
-## E. Optional: run the checks and tests
+## E. Checks and tests
 
 CI runs the same commands on every push and pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
