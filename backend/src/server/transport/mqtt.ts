@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+import os from 'node:os';
 import mqtt from 'mqtt';
 import { ConnStatus, RobotEventMsg, Telemetry, parseTopic } from '@fleet/shared/telemetry';
 import type { TlsFiles } from '../config';
@@ -17,9 +19,11 @@ export interface MqttOptions {
   tls?: TlsFiles;
 }
 
+export const ingestClientId = () => `fleet-ingest-${os.hostname()}-${randomBytes(4).toString('hex')}`;
+
 export function connectMqtt(o: MqttOptions, h: MqttHandlers) {
   const client = mqtt.connect(o.url, {
-    clientId: o.clientId ?? `fleet-ingest-${process.pid}`,
+    clientId: o.clientId ?? ingestClientId(),
     clean: true,
     keepalive: 10,
     reconnectPeriod: 1000,
