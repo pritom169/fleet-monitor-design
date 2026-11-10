@@ -8,6 +8,7 @@ export interface BatchWriterOptions<T> {
   onWritten?: (n: number, seconds: number) => void;
   onError?: (err: unknown, attempt: number) => void;
   isFatal?: (err: unknown) => boolean;
+  isolate?: (err: unknown) => boolean;
   onFatal?: (err: unknown, dropped: number) => void;
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (h: unknown) => void;
@@ -21,6 +22,8 @@ export class BatchWriter<T> {
   private buf: T[] = [];
   private head = 0;
   private inFlight: T[] | null = null;
+  private splits: T[][] = [];
+  private splitItems = 0;
   private timer: unknown = null;
   private timerAt = 0;
   private attempt = 0;
@@ -38,7 +41,7 @@ export class BatchWriter<T> {
   }
 
   get depth(): number {
-    return this.buf.length - this.head;
+    return this.buf.length - this.head + this.splitItems;
   }
 
   get ok(): boolean {
@@ -84,9 +87,16 @@ export class BatchWriter<T> {
   private async flush() {
     if (this.inFlight) return;
     if (this.depth === 0) return this.settle();
-    const batch = this.buf.slice(this.head, this.head + this.o.maxBatch);
-    this.head += batch.length;
-    this.compact();
+    const split = this.splits.shift();
+    let batch: T[];
+    if (split) {
+      batch = split;
+      this.splitItems -= split.length;
+    } else {
+      batch = this.buf.slice(this.head, this.head + this.o.maxBatch);
+      this.head += batch.length;
+      this.compact();
+    }
     this.inFlight = batch;
     const t0 = this.now();
     try {
@@ -101,6 +111,13 @@ export class BatchWriter<T> {
       if (this.o.isFatal?.(err)) {
         this.inFlight = null;
         this.attempt = 0;
+        if (batch.length > 1 && this.o.isolate?.(err)) {
+          const mid = Math.ceil(batch.length / 2);
+          this.splits.unshift(batch.slice(0, mid), batch.slice(mid));
+          this.splitItems += batch.length;
+          this.kick(0);
+          return;
+        }
         this.o.onDrop?.(batch.length);
         this.o.onFatal?.(err, batch.length);
         if (this.depth > 0) this.kick(0);
@@ -117,12 +134,17 @@ export class BatchWriter<T> {
         else this.settle();
         return;
       }
-      this.buf = [...batch, ...this.buf.slice(this.head)];
-      this.head = 0;
+      if (split) {
+        this.splits.unshift(batch);
+        this.splitItems += batch.length;
+      } else {
+        this.buf = [...batch, ...this.buf.slice(this.head)];
+        this.head = 0;
+      }
       this.inFlight = null;
-      const over = this.depth - this.o.capacity;
+      const over = Math.min(this.depth - this.o.capacity, this.buf.length - this.head);
       if (over > 0) {
-        this.head = over;
+        this.head += over;
         this.o.onDrop?.(over);
         this.compact();
       }

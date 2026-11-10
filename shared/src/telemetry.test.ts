@@ -22,6 +22,15 @@ describe('payload schemas', () => {
     expect(ConnStatus.safeParse('online').success).toBe(true);
   });
 
+  it('rejects a null character in any text, because Postgres refuses it and would fail the whole batch', () => {
+    const ok = { id: 'R-1', siteId: 'hh', boot: 0, seq: 0, robotTs: 1, battery: 100, x: 0, y: 0, state: 'ok', task: 'Idle', since: 0 };
+    expect(Telemetry.safeParse({ ...ok, task: 'Pick\u0000' }).success).toBe(false);
+    expect(Telemetry.safeParse({ ...ok, fault: '\u0000' }).success).toBe(false);
+    const ev = { id: 'R-1', robotTs: 1, kind: 'info', text: 'Charging' };
+    expect(RobotEventMsg.safeParse(ev).success).toBe(true);
+    expect(RobotEventMsg.safeParse({ ...ev, sub: 'bay\u00003' }).success).toBe(false);
+  });
+
   it('reads a missing or unknown task kind and event code as other, so the message is still accepted', () => {
     const ok = { id: 'R-1', siteId: 'hh', boot: 0, seq: 0, robotTs: 1, battery: 100, x: 0, y: 0, state: 'ok', task: 'Charging', since: 0 };
     expect(Telemetry.parse({ ...ok, taskKind: 'charging' }).taskKind).toBe('charging');

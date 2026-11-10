@@ -1,5 +1,5 @@
 import type { Ingest, Report, RobotEvent, RobotInfo } from '@fleet/shared/protocol';
-import { LOW_BATTERY, LOW_BATTERY_EXIT, deriveStatus, freshnessClock, nextLow, type Status } from '@fleet/shared/status';
+import { LOW_BATTERY, LOW_BATTERY_EXIT, OFFLINE_AFTER_MS, deriveStatus, freshnessClock, nextLow, type Status } from '@fleet/shared/status';
 import type { RobotEventMsg, Telemetry } from '@fleet/shared/telemetry';
 import { SeqWindow } from './seqWindow';
 
@@ -22,6 +22,7 @@ export interface Accepted {
   row?: TelemetryRow;
   report?: Report;
   events: NewEvent[];
+  bootReset?: { from: number; to: number };
 }
 
 export interface TelemetryRow {
@@ -164,7 +165,13 @@ export class FleetDomain {
     this.heard(receivedAt);
     const r = this.robots.get(t.id);
     if (!r || r.info.siteKey !== t.siteId) return { result: 'unknown', events: [] };
-    const order = r.window.check(t.boot, t.seq);
+    let order = r.window.check(t.boot, t.seq);
+    let bootReset: Accepted['bootReset'];
+    if (order === 'older' && t.boot < r.window.boot && (!r.report || receivedAt - r.report.t > OFFLINE_AFTER_MS)) {
+      bootReset = { from: r.window.boot, to: t.boot };
+      r.window = SeqWindow.from(t.boot, t.seq);
+      order = 'newest';
+    }
     if (order === 'duplicate') return { result: 'duplicate', events: [] };
     const row: TelemetryRow = {
       robotId: t.id, boot: t.boot, seq: t.seq, receivedAt, robotTs: t.robotTs,
@@ -183,7 +190,7 @@ export class FleetDomain {
     r.robotTs = t.robotTs;
     r.low = nextLow(t.battery, r.low);
     const events = this.rederive(r, this.clock(receivedAt));
-    return { result: 'accepted', row, report, events };
+    return { result: 'accepted', row, report, events, ...(bootReset ? { bootReset } : {}) };
   }
 
   robotEvent(e: RobotEventMsg, receivedAt: number): NewEvent | null {

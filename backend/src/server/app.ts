@@ -55,8 +55,12 @@ export async function createApp(config: AppConfig): Promise<App> {
   let lastDbCheck = true;
 
   const warnSample = sampled(60_000, 1);
-  const isFatal = (err: unknown) => /^(21|22|23|42)/.test(String((err as { code?: string }).code ?? ''));
-  const onFatal = (queue: string) => (err: unknown, n: number) => log.error({ queue, dropped: n, err: errText(err) }, 'batch rejected by the database; dropped');
+  const pgCode = (err: unknown) => String((err as { code?: string }).code ?? '');
+  const isFatal = (err: unknown) => /^(21|22|23|42)/.test(pgCode(err));
+  const isolate = (err: unknown) => /^(22|23)/.test(pgCode(err));
+  const fatalSample = sampled(10_000, 5);
+  const onFatal = (queue: string) => (err: unknown, n: number) =>
+    fatalSample(`fatal:${queue}`, (skipped) => log.error({ queue, dropped: n, skipped, err: errText(err) }, 'rows rejected by the database; dropped'));
   function warnDb(queue: string, err: unknown, attempt: number) {
     warnSample(`db:${queue}`, (skipped) => log.warn({ queue, attempt, skipped, err: errText(err) }, 'database write failed, retrying'));
   }
@@ -71,6 +75,7 @@ export async function createApp(config: AppConfig): Promise<App> {
     onWritten: (_n, s) => m.dbBatchWrite.observe({ queue: 'telemetry' }, s),
     onError: (err, attempt) => warnDb('telemetry', err, attempt),
     isFatal,
+    isolate,
     onFatal: onFatal('telemetry'),
   });
   const eventsQ = new BatchWriter<RobotEvent>({
@@ -83,6 +88,7 @@ export async function createApp(config: AppConfig): Promise<App> {
     onWritten: (_n, s) => m.dbBatchWrite.observe({ queue: 'events' }, s),
     onError: (err, attempt) => warnDb('events', err, attempt),
     isFatal,
+    isolate,
     onFatal: onFatal('events'),
   });
   const stateQ = new BatchWriter<StoredState>({
@@ -94,6 +100,7 @@ export async function createApp(config: AppConfig): Promise<App> {
     onWritten: (_n, s) => m.dbBatchWrite.observe({ queue: 'state' }, s),
     onError: (err, attempt) => warnDb('state', err, attempt),
     isFatal,
+    isolate,
     onFatal: onFatal('state'),
   });
   async function withPartitions(write: () => Promise<void>) {
@@ -129,6 +136,7 @@ export async function createApp(config: AppConfig): Promise<App> {
       telemetry(t, receivedAt) {
         const a = domain.accept(t, receivedAt);
         m.ingestMessages.inc({ result: a.result });
+        if (a.bootReset) log.warn({ robot: t.id, ...a.bootReset }, 'boot counter went back after the robot was offline; accepted as a reset');
         if (a.result === 'accepted' || a.result === 'out_of_order') m.ingestLag.observe(Math.max(0, receivedAt - t.robotTs) / 1000);
         if (a.report) {
           fanout.report(a.report);

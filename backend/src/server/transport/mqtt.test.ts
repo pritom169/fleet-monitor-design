@@ -27,7 +27,7 @@ vi.mock('mqtt', () => ({
   },
 }));
 
-const { connectMqtt } = await import('./mqtt');
+const { connectMqtt, ingestClientId } = await import('./mqtt');
 
 const tel = (extra: Partial<Telemetry> = {}): Telemetry => ({
   id: 'R-001', siteId: 'hh', boot: 1, seq: 0, robotTs: 1, battery: 50, x: 1, y: 2, state: 'ok', task: 'Idle', taskKind: 'idle', since: 0, ...extra,
@@ -56,7 +56,8 @@ describe('connectMqtt', () => {
   it('subscribes to every site with QoS 1 and reports the link once per change', () => {
     const { client, conn, handlers } = setup();
     expect(h.url).toBe('mqtt://broker');
-    expect(h.opts).toMatchObject({ clean: true, keepalive: 10, clientId: `fleet-ingest-${process.pid}` });
+    expect(h.opts).toMatchObject({ clean: true, keepalive: 10 });
+    expect(h.opts.clientId).toMatch(/^fleet-ingest-.+-[0-9a-f]{8}$/);
     expect(h.opts.cert).toBeUndefined();
     expect(conn.connected).toBe(false);
     client.emit('connect');
@@ -67,6 +68,10 @@ describe('connectMqtt', () => {
     client.emit('close');
     client.emit('error', new Error('x'));
     expect(handlers.link.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('gives two ingest servers different client IDs, so the broker does not kick one off for the other', () => {
+    expect(ingestClientId()).not.toBe(ingestClientId());
   });
 
   it('subscribes to its own sites only, with a client certificate', () => {

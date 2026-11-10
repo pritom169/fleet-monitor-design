@@ -144,6 +144,68 @@ describe('BatchWriter poison batches', () => {
   });
 });
 
+describe('BatchWriter bad-row isolation', () => {
+  const badRow = (e: unknown) => (e as { code?: string }).code === '22P05';
+  const db = (batches: number[][], bad: number[]) => async (b: number[]) => {
+    if (b.some((x) => bad.includes(x))) throw Object.assign(new Error('bad row'), { code: '22P05' });
+    batches.push(b);
+  };
+
+  it('splits a rejected batch until only the bad row is dropped, keeping order', async () => {
+    const t = fakeTimers();
+    const batches: number[][] = [];
+    const fatal: number[] = [];
+    const w = new BatchWriter<number>({
+      name: 't', capacity: 100, maxBatch: 8, maxWaitMs: 0, write: db(batches, [6]),
+      isFatal: badRow, isolate: badRow, onFatal: (_e, n) => fatal.push(n), ...t,
+    });
+    for (let i = 1; i <= 8; i++) w.push(i);
+    for (let i = 0; i < 10; i++) await t.advance(0);
+    expect(batches.flat()).toEqual([1, 2, 3, 4, 5, 7, 8]);
+    expect(fatal).toEqual([1]);
+    expect(w.depth).toBe(0);
+  });
+
+  it('drops the whole batch when the error is not about one row', async () => {
+    const t = fakeTimers();
+    let dropped = 0;
+    let writes = 0;
+    const w = new BatchWriter<number>({
+      name: 't', capacity: 100, maxBatch: 4, maxWaitMs: 0,
+      write: async () => { writes++; throw Object.assign(new Error('no such column'), { code: '42703' }); },
+      isFatal: () => true, isolate: badRow, onDrop: (n) => (dropped += n), ...t,
+    });
+    for (let i = 1; i <= 4; i++) w.push(i);
+    for (let i = 0; i < 5; i++) await t.advance(0);
+    expect(writes).toBe(1);
+    expect(dropped).toBe(4);
+  });
+
+  it('retries a split half with backoff if the database goes away mid-split', async () => {
+    const t = fakeTimers();
+    const batches: number[][] = [];
+    let down = false;
+    const bad = db(batches, [1]);
+    const w = new BatchWriter<number>({
+      name: 't', capacity: 100, maxBatch: 4, maxWaitMs: 0,
+      write: async (b) => {
+        if (down) throw new Error('db down');
+        await bad(b);
+        if (b.length === 1) down = true;
+      },
+      isFatal: badRow, isolate: badRow, ...t,
+    });
+    for (let i = 1; i <= 4; i++) w.push(i);
+    for (let i = 0; i < 6; i++) await t.advance(0);
+    expect(w.ok).toBe(false);
+    expect(w.depth).toBe(2);
+    down = false;
+    await t.advance(1000);
+    expect(batches.flat()).toEqual([2, 3, 4]);
+    expect(w.depth).toBe(0);
+  });
+});
+
 describe('BatchWriter shutdown and limits', () => {
   it('ignores pushes after close, and close resolves at once when idle', async () => {
     const t = fakeTimers();

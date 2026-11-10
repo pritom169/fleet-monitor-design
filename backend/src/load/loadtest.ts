@@ -131,7 +131,9 @@ interface StepResult {
   serverCpuPct: number;
   serverRssMb: number;
   eventLoopP99Ms: number;
-  series: { t: number; accepted: number; queue: number; dropped: number }[];
+  eventLoopP99MedianMs: number | null;
+  windowsOver100Ms: number;
+  series: { t: number; accepted: number; queue: number; dropped: number; loopP99Ms: number }[];
 }
 
 async function runStep(o: { robots: number; hz: number; warmup: number; duration: number; server: string; workers: number }): Promise<StepResult> {
@@ -180,8 +182,13 @@ async function runStep(o: { robots: number; hz: number; warmup: number; duration
     const queue = get(m, 'ingest_queue_depth{queue="telemetry"}');
     queueMax = Math.max(queueMax, queue);
     rssMax = Math.max(rssMax, get(m, 'process_resident_memory_bytes'));
-    loopMax = Math.max(loopMax, get(m, 'nodejs_eventloop_lag_p99_seconds'));
-    series.push({ t: Math.round((Date.now() - (end - o.duration * 1000)) / 1000), accepted: Math.round(accepted), queue, dropped: get(m, 'ingest_dropped_total{queue="telemetry"}') - get(a, 'ingest_dropped_total{queue="telemetry"}') });
+    const loop = get(m, 'nodejs_eventloop_lag_p99_seconds');
+    loopMax = Math.max(loopMax, loop);
+    series.push({
+      t: Math.round((Date.now() - (end - o.duration * 1000)) / 1000), accepted: Math.round(accepted), queue,
+      dropped: get(m, 'ingest_dropped_total{queue="telemetry"}') - get(a, 'ingest_dropped_total{queue="telemetry"}'),
+      loopP99Ms: Math.round(loop * 10000) / 10,
+    });
     prev = m;
   }
   const b = await scrape(o.server);
@@ -209,6 +216,8 @@ async function runStep(o: { robots: number; hz: number; warmup: number; duration
     serverCpuPct: Math.round((delta(a, b, 'process_cpu_seconds_total') / secs) * 100),
     serverRssMb: Math.round(rssMax / 1e6),
     eventLoopP99Ms: Math.round(loopMax * 10000) / 10,
+    eventLoopP99MedianMs: pct(series.map((x) => x.loopP99Ms), 0.5),
+    windowsOver100Ms: series.filter((x) => x.loopP99Ms > 100).length,
     series,
   };
 }
@@ -226,6 +235,7 @@ async function main() {
   const duration = Number(arg('duration', '60'));
   const warmup = Number(arg('warmup', '15'));
   const workers = Number(arg('workers', String(Math.max(1, os.cpus().length - 2))));
+  const name = arg('name', 'load').replace(/[^\w-]/g, '');
   const server = env.SERVER ?? 'http://localhost:8787';
   const max = Math.max(...steps.map((s) => s[0]));
 
@@ -266,12 +276,12 @@ async function main() {
     const out = { at: new Date().toISOString(), host: { cpus: os.cpus().length, cpu: os.cpus()[0]?.model, memGb: Math.round(os.totalmem() / 1e9) }, steps: results, storage: { rows: Number(size.rows), bytes: Number(size.bytes), bytesPerRow: perRow } };
     if (env.OUT_DIR) {
       fs.mkdirSync(env.OUT_DIR, { recursive: true });
-      fs.writeFileSync(path.join(env.OUT_DIR, `load-${Date.now()}.json`), JSON.stringify(out, null, 2));
+      fs.writeFileSync(path.join(env.OUT_DIR, `${name}-${Date.now()}.json`), JSON.stringify(out, null, 2));
     }
-    console.log('\n| Robots × Hz | Target msg/s | Published/s | Accepted/s | Ingest lag p50 / p99 | Fan-out p50 / p99 | Queue max | Dropped | DB batch p99 | Server CPU | RSS | Event-loop p99 |');
-    console.log('|---|---|---|---|---|---|---|---|---|---|---|---|');
+    console.log('\n| Robots × Hz | Target msg/s | Published/s | Accepted/s | Ingest lag p50 / p99 | Fan-out p50 / p99 | Queue max | Dropped | DB batch p99 | Server CPU | RSS | Event-loop p99 (median / worst window) | Windows over 100 ms |');
+    console.log('|---|---|---|---|---|---|---|---|---|---|---|---|---|');
     for (const r of results) {
-      console.log(`| ${r.robots} × ${r.hz} | ${r.target} | ${r.published} | ${r.accepted} | ${r.ingestLagP50Ms} / ${r.ingestLagP99Ms} ms | ${r.fanoutP50Ms} / ${r.fanoutP99Ms} ms | ${r.queueMax} | ${r.dropped} | ${r.dbBatchP99Ms} ms | ${r.serverCpuPct} % | ${r.serverRssMb} MB | ${r.eventLoopP99Ms} ms |`);
+      console.log(`| ${r.robots} × ${r.hz} | ${r.target} | ${r.published} | ${r.accepted} | ${r.ingestLagP50Ms} / ${r.ingestLagP99Ms} ms | ${r.fanoutP50Ms} / ${r.fanoutP99Ms} ms | ${r.queueMax} | ${r.dropped} | ${r.dbBatchP99Ms} ms | ${r.serverCpuPct} % | ${r.serverRssMb} MB | ${r.eventLoopP99MedianMs} / ${r.eventLoopP99Ms} ms | ${r.windowsOver100Ms}/${r.series.length} |`);
     }
   }
 }
